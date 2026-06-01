@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////data/lg_lifecycle.db
+      APP_ENV: production
+      SECRET_KEY: change-this-in-prod
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - db_data:/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

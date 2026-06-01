@@ -1,0 +1,5 @@
+product_type,capacity_kw,visit_fee,repair_min,repair_max,purchase_price_min,purchase_price_max,subscription_monthly_fee,subscription_months,selfcare_cost_min,selfcare_cost_max,warranty_years_standard,warranty_years_core_part
+에어컨,2.5,39600,50000,350000,700000,900000,39000,36,15000,50000,1,5
+에어컨,3.6,39600,80000,500000,1000000,1300000,49000,36,15000,50000,1,5
+에어컨,5.0,39600,100000,700000,1300000,1800000,59000,36,15000,50000,1,5
+에어컨,6.0,39600,120000,900000,1600000,2200000,69000,36,15000,50000,1,5

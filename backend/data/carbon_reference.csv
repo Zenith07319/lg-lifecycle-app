@@ -1,0 +1,5 @@
+product_type,electricity_emission_factor_kgco2_kwh,use_phase_ratio,manufacturing_phase_ratio,disposal_phase_ratio,repair_carbon_proxy_kg,manufacturing_carbon_proxy_kg,lg_esg_pre_mfg_ratio,lg_esg_mfg_ratio,lg_esg_use_ratio,lg_esg_disposal_ratio
+에어컨,0.4781,0.85,0.12,0.03,15.0,350.0,0.356,0.007,0.621,0.016
+냉장고,0.4781,0.80,0.15,0.05,10.0,200.0,0.330,0.010,0.640,0.020
+세탁기,0.4781,0.75,0.18,0.07,8.0,150.0,0.350,0.010,0.610,0.030
+건조기,0.4781,0.78,0.16,0.06,8.0,160.0,0.340,0.010,0.620,0.030

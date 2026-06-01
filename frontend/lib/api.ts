@@ -1,6 +1,8 @@
 import { DiagnoseInput, DiagnoseResponse, SessionData } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://lg-lifecycle-production.up.railway.app";
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {

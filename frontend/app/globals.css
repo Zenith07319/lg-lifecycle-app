@@ -1,18 +1,31 @@
 @import "tailwindcss";
 
-/* 라이트 모드 고정 — 다크모드 무시 */
+/* 다크모드 완전 차단 */
 :root {
-  color-scheme: light;
+  color-scheme: light only;
   --background: #f9fafb;
   --foreground: #111827;
 }
 
+html {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #f9fafb !important;
+  color: #111827 !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* 시스템 다크모드 무시 */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: #f9fafb !important;
+    color: #111827 !important;
+  }
 }

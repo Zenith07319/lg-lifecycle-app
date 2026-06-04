@@ -32,7 +32,9 @@ export const SAMPLE_INPUT: DiagnoseInput = {
   daily_usage_hours: 8,
   usage_months: 4,
   contract_type: "고압",
-  base_monthly_kwh: 350,
+  summer_monthly_kwh: 460,  // 여름 고지서 총량
+  base_monthly_kwh: 350,    // 기저 fallback
+  ac_monthly_kwh_input: 0,
   season: "하계",
   symptom_type: "냉방약화",
   symptom_severity: "중간",

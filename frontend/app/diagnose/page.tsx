@@ -103,8 +103,26 @@ export default function DiagnosePage() {
           <div className="grid grid-cols-2 gap-4">
             <Input label="하루 사용시간 (시간)" field="daily_usage_hours" min={1} max={24} />
             <Input label="연간 사용 개월수" field="usage_months" min={1} max={12} />
-            <Input label="에어컨 제외 월 전력사용량 (kWh)" field="base_monthly_kwh" min={50} max={1000} />
             <Select label="계절" field="season" options={["하계","기타"]} />
+          </div>
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-semibold text-gray-600">전기 사용량 (고지서 기준)</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                여름 월 평균 전력사용량 kWh
+                <span className="ml-1 text-xs text-gray-400">(에어컨 켜는 달 고지서)</span>
+              </label>
+              <input
+                type="number" min={0} max={1000} step={10}
+                value={form.summer_monthly_kwh}
+                onChange={(e) => set("summer_monthly_kwh", Number(e.target.value))}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                입력 시 효율감퇴 모델로 에어컨 기여분을 자동 분리합니다. 0이면 카탈로그 기반 추정.
+              </p>
+            </div>
+            <Input label="기저 전력사용량 참고 kWh (겨울 고지서, 선택)" field="base_monthly_kwh" min={50} max={800} />
           </div>
         </section>
 

@@ -7,19 +7,21 @@ export type SeasonType    = "하계"|"기타";
 export type GradeType     = "A"|"B"|"C"|"D"|"E";
 
 export interface DiagnoseInput {
-  product_type:         ProductType;
-  purchase_year:        number;
-  capacity_kw:          number;
-  daily_usage_hours:    number;
-  usage_months:         number;
-  contract_type:        ContractType;
-  base_monthly_kwh:     number;
-  season:               SeasonType;
-  symptom_type:         SymptomType;
-  symptom_severity:     SeverityType;
-  filter_clean_months:  number;
-  repair_history_count: number;
-  customer_priority:    PriorityType;
+  product_type:              ProductType;
+  purchase_year:             number;
+  capacity_kw:               number;
+  daily_usage_hours:         number;
+  usage_months:              number;
+  contract_type:             ContractType;
+  summer_monthly_kwh:        number;   // 여름 고지서 총 kWh (0=미입력)
+  base_monthly_kwh:          number;   // 기저 참고값 (k_base 도출 fallback)
+  ac_monthly_kwh_input:      number;   // deprecated: 0 고정
+  season:                    SeasonType;
+  symptom_type:              SymptomType;
+  symptom_severity:          SeverityType;
+  filter_clean_months:       number;
+  repair_history_count:      number;
+  customer_priority:         PriorityType;
 }
 
 export interface DiagnoseResponse {

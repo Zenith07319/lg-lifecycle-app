@@ -2,15 +2,20 @@
 상태 진단 계산 모듈 v2
 - 고장위험도 → 점검 필요도(inspection_score)로 변경
 - 가중치: 연식 0.30 / 증상 0.30 / 수리이력 0.20 / 관리미이행 0.10 / VOC 0.10
-- 기대수명: 에어컨 15년 (v1의 10년 → 상향)
+- 기대수명: 에어컨 16.7년 (KESIS HEPS 역산. 2026-06-04. 구 15년에서 변경)
 - 모든 수치는 현재 입력 조건 기준 추정 — 정확한 고장 예측 아님
 """
 
 from dataclasses import dataclass
 
 
+# 제품별 기대수명(년) — 연식점수 정규화 분모. 연식점수 = min(사용연수 / 기대수명, 1.0)
+# 에어컨 16.7년: KESIS 가구에너지패널조사(HEPS 13차, 2022년 기준) '에어컨 신규구매율' 역산값.
+#   평균 신규구매율 5.99%(2019~2022) → 단순 역산 구매주기 = 100 / 5.99 ≈ 16.7년.
+#   (산출·출처 상세: docs/04_calculation_logic.md §1-1, docs/05_data_requirements.md §10)
+# 냉장고/세탁기/건조기는 역산값이 과대(예: 냉장고 28.9년)하여 미적용, 공학적 기대수명 유지.
 PRODUCT_EXPECTED_LIFE = {
-    "에어컨": 15,
+    "에어컨": 16.7,
     "냉장고": 15,
     "세탁기": 12,
     "건조기": 12,
@@ -36,7 +41,7 @@ SYMPTOM_INCONVENIENCE_MAP = {
     "작동불가":  0.95,
 }
 
-SEVERITY_MULTIPLIER = {"없음": 0.0, "낮음": 0.6, "중간": 1.0, "높음": 1.4}
+SEVERITY_MULTIPLIER = {"없음": 0.1, "낮음": 0.6, "중간": 1.0, "높음": 1.4}
 
 FILTER_SCORE_PER_MONTH = 0.10   # 월당 0.10, max 1.0 (10개월이면 상한)
 
@@ -75,7 +80,7 @@ def calculate_inspection_score(
     """점검 필요도 (0~1).
 
     고장 확률이 아니라 입력 조건 기준의 점검 필요도를 점수화한다.
-    가중치: 연식 0.30 / 증상 0.30 / 수리이력 0.20 / 관리미이행 0.10 / VOC 0.10
+    가중치: 연식 0.30 / 증상 0.30 / 수리이력 0.15 / 관리미이행 0.15 / VOC 0.10
     """
     # 연식 점수 (이미 0~1)
     w_age = age_score * 0.30
@@ -85,13 +90,13 @@ def calculate_inspection_score(
     severity_mult = SEVERITY_MULTIPLIER.get(symptom_severity, 1.0)
     w_symptom = symptom_base * severity_mult * 0.30
 
-    # 수리 이력 점수 (회당 0.33, max 1.0)
+    # 수리 이력 점수 (회당 0.33, max 1.0) — 가중치 0.20→0.15
     repair_score = min(repair_history_count * 0.33, 1.0)
-    w_repair = repair_score * 0.20
+    w_repair = repair_score * 0.15
 
-    # 관리 미이행 점수 (필터 미청소 월수: 월당 0.10, max 1.0)
+    # 관리 미이행 점수 (필터 미청소 월수: 월당 0.10, max 1.0) — 가중치 0.10→0.15
     filter_score = min(filter_clean_months * FILTER_SCORE_PER_MONTH, 1.0)
-    w_filter = filter_score * 0.10
+    w_filter = filter_score * 0.15
 
     # VOC 위험도 (소셜 데이터 기반 동일 증상 빈도, 0~1)
     w_voc = voc_risk_score * 0.10

@@ -101,22 +101,26 @@ def estimate_ac_monthly_kwh(
     return annual_kwh / 12
 
 
-REFERENCE_DAILY_HOURS = 8.0
+REFERENCE_DAILY_HOURS = 7.8
+# 효율관리제도 냉방기간 표준: 4개월(6~9월) × 941시간 운전 = 941h ÷ 4개월 ÷ 30일 ≈ 7.8h/일.
+# 라벨 '표준 월간 소비전력량'은 이 7.8h/일·표준 실외온도(24~38℃) 분포 기준으로 산출된 값이다.
+# ※ 실제 소비전력은 실외온도에 비선형(고온일수록 급증)하나, 라벨 월간값이 표준 온도분포를
+#    이미 내포하므로 사용시간 선형 보정(actual/7.8)으로 근사한다. [한계: 온도 비선형 미반영]
 
 
 def calc_ac_monthly_kwh(
-    annual_kwh: float,
+    monthly_kwh: float,
     actual_daily_hours: float,
     reference_daily_hours: float = REFERENCE_DAILY_HOURS,
 ) -> float:
-    """에어컨 월 소비전력량 추정 (효율관리제도 annual_kwh 기반).
+    """에어컨 월 소비전력량 추정 (효율관리제도 '표준 월간 소비전력량' 기반).
 
-    annual_kwh / 12 로 월 기준값을 구한 뒤,
+    에너지소비효율등급 라벨에 표기되는 표준 월간 소비전력량(kWh/월)을 기준값으로,
     실제 사용시간 / 기준 사용시간(8h) 보정계수를 적용한다.
+    (구버전은 annual_kwh/12로 월 기준값을 derive했으나, 라벨 월간값을 직접 베이스로 사용하도록 변경.)
     """
-    base_monthly = annual_kwh / 12.0
     correction = actual_daily_hours / reference_daily_hours
-    return round(base_monthly * correction, 1)
+    return round(monthly_kwh * correction, 1)
 
 
 def calculate_ac_delta_cost(

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from src.calculations_v2 import DiagnosisResultV2
 
 PRIORITY_WEIGHTS = {
-    "비용절감":    {"economy": 0.55, "reliability": 0.15, "carbon": 0.10, "comfort": 0.10, "initial": 0.10},
+    "비용절감":    {"economy": 0.60, "reliability": 0.15, "carbon": 0.05, "comfort": 0.10, "initial": 0.10},
     "친환경":      {"economy": 0.25, "reliability": 0.15, "carbon": 0.40, "comfort": 0.10, "initial": 0.10},
     "초기비용최소": {"economy": 0.25, "reliability": 0.15, "carbon": 0.10, "comfort": 0.10, "initial": 0.40},
     "관리편의":    {"economy": 0.25, "reliability": 0.30, "carbon": 0.10, "comfort": 0.25, "initial": 0.10},
@@ -69,16 +69,16 @@ def calculate_carbon_summary(
 
     repair_carbon = carbon_ref.get("repair_carbon_proxy_kg", 15.0)
 
-    # 3년 사용단계 탄소
-    old_use_3y = k_ac_old_monthly * usage_months * 3 * emission_factor
-    new_use_3y = k_ac_new_monthly * usage_months * 3 * emission_factor
+    # 5년 사용단계 탄소
+    old_use_3y = k_ac_old_monthly * usage_months * COMPARISON_YEARS * emission_factor
+    new_use_3y = k_ac_new_monthly * usage_months * COMPARISON_YEARS * emission_factor
 
     # 교체 시 비사용단계 탄소 proxy (LG ESG 비율 적용)
     replace_proxy = new_use_3y * (non_use_ratio / use) if use > 0 else 0.0
 
-    # 탄소 회수기간 (년)
+    # 탄소 회수기간 (년) — inf 대신 999로 처리 (Rule 6 적용 안전)
     annual_saving = (k_ac_old_monthly - k_ac_new_monthly) * usage_months * emission_factor
-    payback_years = (replace_proxy / annual_saving) if annual_saving > 0 else float("inf")
+    payback_years = (replace_proxy / annual_saving) if annual_saving > 0.1 else 999.0
 
     return CarbonSummary(
         old_use_carbon_3y=round(old_use_3y, 1),
@@ -90,26 +90,30 @@ def calculate_carbon_summary(
     )
 
 
+COMPARISON_YEARS = 5  # 비교 기준 연수
+
+
 def build_options(
     diagnosis: DiagnosisResultV2,
     cost_ref: dict,
     carbon_summary: CarbonSummary,
-    ac_delta_old_monthly: int,   # 구형 에어컨 기여 월 전기요금 (원)
-    ac_delta_new_monthly: int,   # 신형 에어컨 기여 월 전기요금 (원)
-    usage_months: int = 3,
+    ac_delta_old_monthly: int,
+    ac_delta_new_monthly: int,
+    usage_months: int = 4,
 ) -> list[OptionScoreV2]:
-    """5개 선택지별 에어컨 관련 3년 비용·점검필요도·탄소·불편도 추정."""
+    """5개 선택지별 에어컨 관련 5년 비용·점검필요도·탄소·불편도 추정."""
 
-    repair_mid = (cost_ref.get("repair_min", 100000) + cost_ref.get("repair_max", 500000)) / 2
+    repair_mid = (cost_ref.get("repair_min", 80000) + cost_ref.get("repair_max", 500000)) / 2
     visit_fee = cost_ref.get("visit_fee", 39600)
     selfcare_mid = (cost_ref.get("selfcare_cost_min", 15000) + cost_ref.get("selfcare_cost_max", 50000)) / 2
     subscription_monthly = cost_ref.get("subscription_monthly_fee", 49000)
     purchase_mid = (cost_ref.get("purchase_price_min", 1000000) + cost_ref.get("purchase_price_max", 1300000)) / 2
 
-    # 에어컨 관련 3년 전기요금 (델타 × 사용개월 × 3년)
-    seasons = usage_months * 3
-    elec_old_3y = ac_delta_old_monthly * seasons
-    elec_new_3y = ac_delta_new_monthly * seasons
+    # 에어컨 관련 5년 전기요금 (델타 × 사용개월/년 × 5년)
+    seasons = usage_months * COMPARISON_YEARS
+    elec_old_5y = ac_delta_old_monthly * seasons
+    elec_new_5y = ac_delta_new_monthly * seasons
+    sub_months  = COMPARISON_YEARS * 12  # 60개월
 
     cs = carbon_summary
 
@@ -117,7 +121,7 @@ def build_options(
         OptionScoreV2(
             key="계속사용",
             label="계속 사용",
-            three_year_cost=int(elec_old_3y),
+            three_year_cost=int(elec_old_5y),
             inspection_after=diagnosis.inspection_score,
             energy_waste_after=diagnosis.energy_waste_ratio,
             carbon_total=cs.old_use_carbon_3y,
@@ -127,8 +131,7 @@ def build_options(
         OptionScoreV2(
             key="셀프케어",
             label="셀프케어 후 사용",
-            # 셀프케어 전기요금 개선: 냄새·필터 위주 → 에너지 절감 효과 보수적(5%)
-            three_year_cost=int(elec_old_3y * 0.95 + selfcare_mid * 3),
+            three_year_cost=int(elec_old_5y * 0.95 + selfcare_mid * COMPARISON_YEARS),
             inspection_after=max(diagnosis.inspection_score - 0.12, 0.05),
             energy_waste_after=diagnosis.energy_waste_ratio * 0.97,
             carbon_total=cs.old_use_carbon_3y * 0.95 + cs.repair_proxy_carbon * 0.3,
@@ -138,8 +141,7 @@ def build_options(
         OptionScoreV2(
             key="수리후사용",
             label="수리 후 사용",
-            # 수리 후 성능 50% 회복 가정
-            three_year_cost=int(elec_old_3y * 0.60 + repair_mid + visit_fee),
+            three_year_cost=int(elec_old_5y * 0.60 + repair_mid + visit_fee),
             inspection_after=max(diagnosis.inspection_score - 0.25, 0.10),
             energy_waste_after=diagnosis.energy_waste_ratio * 0.65,
             carbon_total=cs.old_use_carbon_3y * 0.70 + cs.repair_proxy_carbon,
@@ -149,7 +151,7 @@ def build_options(
         OptionScoreV2(
             key="구독전환",
             label="구독 전환",
-            three_year_cost=int(subscription_monthly * 36 + elec_new_3y),
+            three_year_cost=int(subscription_monthly * sub_months + elec_new_5y),
             inspection_after=0.05,
             energy_waste_after=0.0,
             carbon_total=cs.new_use_carbon_3y + cs.replace_proxy_carbon * 0.8,
@@ -159,7 +161,7 @@ def build_options(
         OptionScoreV2(
             key="신제품구매",
             label="신제품 구매",
-            three_year_cost=int(purchase_mid + elec_new_3y),
+            three_year_cost=int(purchase_mid + elec_new_5y),
             inspection_after=0.03,
             energy_waste_after=0.0,
             carbon_total=cs.new_use_carbon_3y + cs.replace_proxy_carbon,
@@ -199,8 +201,8 @@ def score_options(
     comfort_norm  = [1 - v for v in _normalize(discomforts)]
     initial_norm  = [1 - v for v in _normalize(initials)]
 
-    # 경제성 = 비용 0.70 + 에너지낭비 0.30
-    eco_norm = [0.70 * c + 0.30 * w for c, w in zip(cost_norm, waste_norm)]
+    # 경제성 = 비용 0.80 + 에너지낭비 0.20 (수정: 절대비용 중심, 낭비 보조)
+    eco_norm = [0.80 * c + 0.20 * w for c, w in zip(cost_norm, waste_norm)]
 
     for i, opt in enumerate(options):
         opt.economy_score     = round(eco_norm[i], 3)
@@ -220,7 +222,11 @@ def score_options(
     if priority_mode == "오래쓰기":
         for opt in options:
             if opt.key in ("계속사용", "셀프케어", "수리후사용"):
-                opt.final_score = round(min(opt.final_score * 1.10, 1.0), 3)
+                # 수정: ×1.10 → ×1.20 (오래쓰기 취지 강화)
+                opt.final_score = round(min(opt.final_score * 1.20, 1.0), 3)
+            elif opt.key in ("구독전환", "신제품구매"):
+                # 신규 추가: 오래쓰기인데 새 가전 추천 억제
+                opt.final_score = round(max(opt.final_score - 0.10, 0.0), 3)
 
     sorted_opts = sorted(options, key=lambda o: o.final_score, reverse=True)
     for rank, opt in enumerate(sorted_opts, 1):
@@ -252,11 +258,12 @@ def apply_hard_rules(
     # Rule 3: 셀프케어 우선 (냄새·필터 미청소 + 작동 이상 없음)
     # 호출 측에서 symptom_type을 별도 전달해야 하므로 여기서는 skip (report_generator에서 처리)
 
-    # Rule 4: 구독 우선 (초기비용 민감 + 점검 필요도 높음 → 구독 가점)
+    # Rule 4: 구독 우선 (초기비용 민감 + 점검 필요도 높음 → 구독 가점 강화)
     if priority_mode == "초기비용최소" and diagnosis.inspection_score >= 0.50:
         sub_opt = next((o for o in options if o.key == "구독전환"), None)
         if sub_opt:
-            sub_opt.final_score = round(min(sub_opt.final_score + 0.05, 1.0), 3)
+            # 수정: +0.05 → +0.12 (초기비용 민감 상황에서 구독 유인 강화)
+            sub_opt.final_score = round(min(sub_opt.final_score + 0.12, 1.0), 3)
             sub_opt.highlights.append("초기비용 최소화 우선 + 점검 필요도 높음 → 구독 가점")
 
     # Rule 5: 구매 우선 (수리비 과다 + 점검 필요도 높음)
@@ -273,5 +280,21 @@ def apply_hard_rules(
                     f"탄소 회수기간 {carbon_summary.carbon_payback_years:.1f}년 — "
                     "수리·셀프케어가 탄소 기준 더 유리할 수 있음"
                 )
+
+    # Rule A (신규): 에너지낭비 없을 때 구독 패널티
+    # 절감 효과 없는데 5년 비용이 훨씬 비쌈 → 구독 비합리
+    sub_opt = next((o for o in options if o.key == "구독전환"), None)
+    if sub_opt and diagnosis.energy_waste_ratio < 0.05:
+        sub_opt.final_score = round(max(sub_opt.final_score - 0.10, 0.0), 3)
+        sub_opt.highlights.append("전기효율 차이 없음 — 구독 시 비용 절감 효과 없어 구매 대비 불리")
+
+    # Rule B (신규): 탄소회수 짧고 에너지낭비 큰 경우 → 구매 가점
+    # 5년 안에 본전 + 장기 절감 → 신제품 구매가 구독보다 명확히 유리
+    if buy_opt and carbon_summary.carbon_payback_years < 5.0 and diagnosis.energy_waste_ratio > 0.40:
+        buy_opt.final_score = round(min(buy_opt.final_score + 0.08, 1.0), 3)
+        buy_opt.highlights.append(
+            f"탄소 회수 {carbon_summary.carbon_payback_years:.1f}년·에너지낭비 "
+            f"{diagnosis.energy_waste_ratio*100:.0f}% — 신제품 구매가 장기적으로 유리"
+        )
 
     return sorted(options, key=lambda o: o.final_score, reverse=True)

@@ -1,19 +1,39 @@
 import json
 from datetime import datetime, timedelta
 from sqlalchemy import text
-from app.db.connection import get_db
+from app.db.connection import get_db, IS_SQLITE
 
 TTL_HOURS = 24
 
+# SQLite는 INSERT OR REPLACE, PostgreSQL은 ON CONFLICT 로 upsert (DB별 구문 차이)
+_UPSERT_SQLITE = """
+    INSERT OR REPLACE INTO diagnosis_session
+      (session_id, user_inputs, diagnosis, ranked_opts, carbon,
+       report, delta_old, delta_new, expires_at)
+    VALUES (:sid, :ui, :diag, :opts, :carbon, :report, :dold, :dnew, :exp)
+"""
+_UPSERT_PG = """
+    INSERT INTO diagnosis_session
+      (session_id, user_inputs, diagnosis, ranked_opts, carbon,
+       report, delta_old, delta_new, expires_at)
+    VALUES (:sid, :ui, :diag, :opts, :carbon, :report, :dold, :dnew, :exp)
+    ON CONFLICT (session_id) DO UPDATE SET
+      user_inputs = EXCLUDED.user_inputs,
+      diagnosis   = EXCLUDED.diagnosis,
+      ranked_opts = EXCLUDED.ranked_opts,
+      carbon      = EXCLUDED.carbon,
+      report      = EXCLUDED.report,
+      delta_old   = EXCLUDED.delta_old,
+      delta_new   = EXCLUDED.delta_new,
+      expires_at  = EXCLUDED.expires_at
+"""
+
+
 def save_session(session_id: str, data: dict) -> None:
     expires = datetime.utcnow() + timedelta(hours=TTL_HOURS)
+    sql = _UPSERT_SQLITE if IS_SQLITE else _UPSERT_PG
     with get_db() as db:
-        db.execute(text("""
-            INSERT OR REPLACE INTO diagnosis_session
-              (session_id, user_inputs, diagnosis, ranked_opts, carbon,
-               report, delta_old, delta_new, expires_at)
-            VALUES (:sid, :ui, :diag, :opts, :carbon, :report, :dold, :dnew, :exp)
-        """), {
+        db.execute(text(sql), {
             "sid":    session_id,
             "ui":     json.dumps(data.get("user_inputs", {}),    ensure_ascii=False),
             "diag":   json.dumps(data.get("diagnosis", {}),      ensure_ascii=False),

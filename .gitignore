@@ -35,3 +35,8 @@ backend/.venv/
 *.py[cod]
 .pytest_cache/
 _spec_test.py
+
+# secrets (DB 비밀번호 등 — 절대 커밋 금지)
+.env
+.env.*
+!.env.example

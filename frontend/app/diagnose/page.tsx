@@ -2,11 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { diagnose, SAMPLE_INPUT } from "@/lib/api";
-import type { DiagnoseInput } from "@/lib/types";
+import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
 
-const SYMPTOMS  = ["이상없음","냄새","냉방약화","소음","전기료부담","누수","작동불가"];
-const SEVERITIES = ["없음","낮음","중간","높음"];
-const PRIORITIES = ["기본","비용절감","친환경","초기비용최소","관리편의","오래쓰기"];
+const SYMPTOMS: SymptomLabel[] = ["성능저하","소음","냄새","누수","전기요금증가","작동불량"];
+const PRIORITY_AXES: { key: keyof DiagnoseInput; label: string }[] = [
+  { key: "priority_cost_score",        label: "💰 비용 중시" },
+  { key: "priority_env_score",         label: "🌱 환경 중시" },
+  { key: "priority_convenience_score", label: "🛠 편의 중시" },
+];
 
 export default function DiagnosePage() {
   const router = useRouter();
@@ -16,6 +19,23 @@ export default function DiagnosePage() {
 
   const set = (k: keyof DiagnoseInput, v: string | number) =>
     setForm((prev) => ({ ...prev, [k]: v }));
+
+  const toggleSymptom = (label: SymptomLabel) =>
+    setForm((prev) => {
+      const exists = prev.symptoms.some((s) => s.type === label);
+      return {
+        ...prev,
+        symptoms: exists
+          ? prev.symptoms.filter((s) => s.type !== label)
+          : [...prev.symptoms, { type: label, severity: 3 }],
+      };
+    });
+
+  const setSeverity = (label: SymptomLabel, severity: number) =>
+    setForm((prev) => ({
+      ...prev,
+      symptoms: prev.symptoms.map((s) => (s.type === label ? { ...s, severity } : s)),
+    }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,32 +149,55 @@ export default function DiagnosePage() {
         {/* 증상 */}
         <section className="bg-white rounded-xl border p-5 space-y-4">
           <h2 className="font-semibold text-gray-800">증상 및 관리</h2>
+          <div>
+            <Label>증상 (복수 선택 · 각 심각도 1~5점)</Label>
+            <div className="space-y-2">
+              {SYMPTOMS.map((label) => {
+                const sel = form.symptoms.find((s) => s.type === label);
+                return (
+                  <div key={label} className="flex items-center gap-3">
+                    <label className="flex-1 flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={!!sel}
+                        onChange={() => toggleSymptom(label)} />
+                      <span className="text-sm">{label}</span>
+                    </label>
+                    {sel && (
+                      <select value={sel.severity}
+                        onChange={(e) => setSeverity(label, Number(e.target.value))}
+                        className="border rounded-lg px-2 py-1 text-sm">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <option key={n} value={n}>{n}점</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">아무것도 선택하지 않으면 ‘증상없음’으로 진단합니다.</p>
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select label="주요 증상" field="symptom_type" options={SYMPTOMS} />
-            <Select label="증상 심각도" field="symptom_severity" options={SEVERITIES} />
             <Input label="마지막 필터 청소 후 경과 개월" field="filter_clean_months" min={0} max={60} />
             <Input label="최근 3년 수리 횟수" field="repair_history_count" min={0} max={10} />
           </div>
         </section>
 
-        {/* 우선순위 */}
-        <section className="bg-white rounded-xl border p-5 space-y-3">
-          <h2 className="font-semibold text-gray-800">나에게 가장 중요한 것은?</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {PRIORITIES.map((p) => (
-              <label key={p}
-                className={`flex items-center justify-center border rounded-lg p-2 text-sm cursor-pointer transition-colors
-                  ${form.customer_priority === p
-                    ? "border-red-600 bg-red-50 text-red-700 font-semibold"
-                    : "border-gray-200 hover:border-gray-400"}`}
-              >
-                <input type="radio" name="priority" value={p} className="hidden"
-                  checked={form.customer_priority === p}
-                  onChange={() => set("customer_priority", p)} />
-                {p}
-              </label>
-            ))}
-          </div>
+        {/* 우선순위 3축 */}
+        <section className="bg-white rounded-xl border p-5 space-y-4">
+          <h2 className="font-semibold text-gray-800">나에게 가장 중요한 것은? (비용 / 환경 / 편의)</h2>
+          <p className="text-xs text-gray-500">중요하게 보는 가치에 점수를 더 주세요. (미응답 시 비용 우선)</p>
+          {PRIORITY_AXES.map(({ key, label }) => (
+            <div key={key}>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-700">{label}</span>
+                <span className="font-bold text-red-700">{form[key] as number}</span>
+              </div>
+              <input type="range" min={0} max={100}
+                value={form[key] as number}
+                onChange={(e) => set(key, Number(e.target.value))}
+                className="w-full accent-red-700" />
+            </div>
+          ))}
         </section>
 
         {error && (

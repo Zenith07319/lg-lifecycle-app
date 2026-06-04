@@ -34,11 +34,14 @@ export const SAMPLE_INPUT: DiagnoseInput = {
   contract_type: "고압",
   summer_monthly_kwh: 460,  // 여름 고지서 총량
   base_monthly_kwh: 350,    // 기저 fallback
-  ac_monthly_kwh_input: 0,
   season: "하계",
-  symptom_type: "냉방약화",
-  symptom_severity: "중간",
+  symptoms: [
+    { type: "성능저하", severity: 4 },
+    { type: "냄새", severity: 2 },
+  ],
   filter_clean_months: 9,
   repair_history_count: 1,
-  customer_priority: "비용절감",
+  priority_cost_score: 70,
+  priority_env_score: 20,
+  priority_convenience_score: 10,
 };

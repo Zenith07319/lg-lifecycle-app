@@ -1,27 +1,32 @@
 export type ProductType   = "에어컨" | "냉장고" | "세탁기" | "건조기";
-export type SymptomType   = "이상없음"|"냄새"|"냉방약화"|"소음"|"전기료부담"|"누수"|"작동불가";
-export type SeverityType  = "없음"|"낮음"|"중간"|"높음";
-export type PriorityType  = "기본"|"비용절감"|"친환경"|"초기비용최소"|"관리편의"|"오래쓰기";
+// 증상 라벨(명세서 기준). "증상없음"은 아무것도 선택 안 한 상태로 처리.
+export type SymptomLabel  = "증상없음"|"전기요금증가"|"냄새"|"소음"|"성능저하"|"누수"|"작동불량";
 export type ContractType  = "고압"|"저압";
 export type SeasonType    = "하계"|"기타";
 export type GradeType     = "A"|"B"|"C"|"D"|"E";
 
+export interface SymptomInput {
+  type:     SymptomLabel;
+  severity: number;        // 1~5점
+}
+
 export interface DiagnoseInput {
-  product_type:              ProductType;
-  purchase_year:             number;
-  capacity_kw:               number;
-  daily_usage_hours:         number;
-  usage_months:              number;
-  contract_type:             ContractType;
-  summer_monthly_kwh:        number;   // 여름 고지서 총 kWh (0=미입력)
-  base_monthly_kwh:          number;   // 기저 참고값 (k_base 도출 fallback)
-  ac_monthly_kwh_input:      number;   // deprecated: 0 고정
-  season:                    SeasonType;
-  symptom_type:              SymptomType;
-  symptom_severity:          SeverityType;
-  filter_clean_months:       number;
-  repair_history_count:      number;
-  customer_priority:         PriorityType;
+  product_type:               ProductType;
+  purchase_year:              number;
+  capacity_kw:                number;
+  daily_usage_hours:          number;
+  usage_months:               number;
+  contract_type:              ContractType;
+  summer_monthly_kwh:         number;   // 여름 고지서 총 kWh (0=미입력)
+  base_monthly_kwh:           number;   // 기저 참고값 (k_base 도출 fallback)
+  season:                     SeasonType;
+  symptoms:                   SymptomInput[];   // 복수 선택 + 심각도 1~5
+  filter_clean_months:        number;
+  repair_history_count:       number;
+  // 우선순위 비용/환경/편의 3축 (각 0~100)
+  priority_cost_score:        number;
+  priority_env_score:         number;
+  priority_convenience_score: number;
 }
 
 export interface DiagnoseResponse {

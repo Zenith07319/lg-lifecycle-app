@@ -239,7 +239,7 @@ export default function ResultPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">진단 결과</h1>
           <p className="text-sm text-gray-500">
-            {inputs.product_type} · {inputs.purchase_year}년식 · 사용 {d.age_years as number}년 · {inputs.customer_priority} 우선
+            {inputs.product_type} · {inputs.purchase_year}년식 · 사용 {d.age_years as number}년 · {(["비용", "환경", "편의"] as const)[[inputs.priority_cost_score, inputs.priority_env_score, inputs.priority_convenience_score].reduce((mi, v, i, arr) => (v > arr[mi] ? i : mi), 0)]} 우선
           </p>
         </div>
         <Link href="/diagnose"

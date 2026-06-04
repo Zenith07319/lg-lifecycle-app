@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROR 앱 목업 — Replace or Repair Check</title>
+<style>
+  :root{--lg:#A50034;--lg2:#c2185b;--ink:#1a1a1a;--mut:#7a818c;--line:#eceef1;--bg:#f2f3f5;
+        --A:#1a7f3c;--B:#3d7a1a;--C:#e07b00;--D:#d44000;--E:#C40000;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:#d9dbe0;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);
+       display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:18px 0;}
+  /* ===== 폰 프레임 ===== */
+  .phone{width:390px;height:820px;background:var(--bg);border-radius:42px;overflow:hidden;position:relative;
+         box-shadow:0 18px 50px rgba(0,0,0,.35);border:10px solid #0c0c0e;}
+  .statusbar{height:34px;background:#fff;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:700;}
+  .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#0c0c0e;border-radius:0 0 16px 16px;z-index:30;}
+  /* ===== 화면 ===== */
+  .screen{position:absolute;top:34px;left:0;right:0;bottom:64px;overflow-y:auto;display:none;}
+  .screen.on{display:block;}
+  .scr-pad{padding:14px 16px 24px;}
+  .appbar{position:sticky;top:0;background:#fff;z-index:10;padding:12px 16px;border-bottom:1px solid var(--line);
+          display:flex;align-items:center;gap:10px;}
+  .appbar .back{font-size:20px;color:var(--lg);cursor:pointer;}
+  .appbar h1{font-size:16px;margin:0;font-weight:800;flex:1;}
+  .appbar .sub{font-size:11px;color:var(--mut);}
+  /* ===== 하단 탭 ===== */
+  .tabbar{position:absolute;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--line);
+          display:flex;z-index:20;}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--mut);cursor:pointer;}
+  .tab .ic{font-size:19px;}
+  .tab.on{color:var(--lg);font-weight:800;}
+  /* ===== 공통 ===== */
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:12px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .card h2{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:7px;}
+  .hero{background:linear-gradient(135deg,var(--lg),#7a0026);color:#fff;border-radius:0 0 26px 26px;padding:18px 18px 22px;}
+  .hero .brand{font-size:11px;opacity:.85;letter-spacing:1px;}
+  .hero h1{margin:3px 0 1px;font-size:21px;font-weight:900;}
+  .hero p{margin:0;font-size:12px;opacity:.92;}
+  .btn{display:block;width:100%;background:var(--lg);color:#fff;border:none;padding:14px;border-radius:13px;font-size:15px;font-weight:800;cursor:pointer;}
+  .btn:active{opacity:.85;} .btn.sec{background:#fff;color:var(--lg);border:1.5px solid var(--lg);} .btn.gray{background:#eef0f3;color:#333;}
+  .btn.sm{padding:10px;font-size:13px;}
+  .muted{color:var(--mut);font-size:12px;} .small{font-size:11.5px;}
+  .chip{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--line);border-radius:20px;padding:7px 13px;font-size:13px;margin:4px 5px 0 0;cursor:pointer;background:#fff;}
+  .chip.on{border-color:var(--lg);background:#fff0f5;color:var(--lg);font-weight:700;}
+  .kv{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid #f3f4f6;}
+  .kv:last-child{border:none;} .kv b{font-weight:800;}
+  .save{color:var(--A);font-weight:800;} .big{font-size:22px;font-weight:900;color:var(--lg);}
+  .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:9px;background:#fde7ef;color:var(--lg);}
+  .disc{background:#fff8e1;border:1px solid #ffe08a;color:#7a5b00;font-size:11px;border-radius:11px;padding:8px 11px;margin:10px 0;}
+  /* 건강등급 */
+  .grade{display:flex;align-items:center;gap:15px;}
+  .gcircle{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:33px;font-weight:900;flex:none;}
+  .gauge{height:8px;background:#eee;border-radius:6px;overflow:hidden;margin-top:5px;} .gauge>i{display:block;height:100%;background:var(--lg);}
+  /* 선택지 */
+  .opt{border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin:8px 0;position:relative;}
+  .opt.first{border:2px solid var(--lg);background:#fff5f8;}
+  .opt .rk{position:absolute;top:-9px;left:11px;font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:9px;background:var(--lg);color:#fff;}
+  .opt .rk.f{background:var(--A);}
+  .opt h3{margin:5px 0 3px;font-size:14px;} .bar{height:6px;background:#eee;border-radius:5px;overflow:hidden;margin:5px 0;}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--lg),var(--lg2));}
+  .warn{background:#fff3f3;border:1px solid #ffd1d1;color:#b00020;font-size:11px;border-radius:8px;padding:7px 9px;margin-top:7px;}
+  /* 챗봇 */
+  .chat{padding:14px 14px 6px;}
+  .bubble{max-width:80%;padding:10px 13px;border-radius:15px;font-size:13.5px;margin:7px 0;line-height:1.45;}
+  .bot{background:#fff;border:1px solid var(--line);border-top-left-radius:4px;}
+  .me{background:var(--lg);color:#fff;margin-left:auto;border-top-right-radius:4px;}
+  .chatinput{background:#fff;border-top:1px solid var(--line);padding:12px 14px;}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0;}
+  .seg span{flex:1;text-align:center;padding:8px 0;font-size:13px;cursor:pointer;border-right:1px solid var(--line);}
+  .seg span:last-child{border:none;} .seg span.on{background:var(--lg);color:#fff;font-weight:800;}
+  input[type=number]{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:14px;}
+  input[type=range]{width:100%;} label{font-size:12.5px;font-weight:700;color:#374151;display:block;margin:8px 0 3px;}
+  .axval{color:var(--lg);font-weight:800;}
+  /* 리스트 아이템 */
+  .li{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .li:last-child{border:none;} .li .ic{width:42px;height:42px;border-radius:12px;background:#f1eef2;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none;}
+  .li .t{flex:1;} .li .t b{font-size:14px;} .li .t .s{font-size:11.5px;color:var(--mut);}
+  .toggle{width:42px;height:24px;border-radius:14px;background:#cfd3da;position:relative;cursor:pointer;flex:none;transition:.2s;}
+  .toggle.on{background:var(--A);} .toggle i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;}
+  .toggle.on i{left:20px;}
+  /* OCR */
+  .camera{height:180px;border-radius:16px;background:repeating-linear-gradient(45deg,#222,#222 12px,#2a2a2a 12px,#2a2a2a 24px);
+          display:flex;align-items:center;justify-content:center;color:#fff;flex-direction:column;gap:8px;position:relative;}
+  .camera .frame{position:absolute;inset:24px;border:2px dashed rgba(255,255,255,.6);border-radius:10px;}
+  .map{height:150px;border-radius:14px;background:linear-gradient(135deg,#dbe7d8,#cfe0d6);position:relative;overflow:hidden;}
+  .map .pin{position:absolute;font-size:22px;}
+  .pdf{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fcfcfd;font-size:12px;line-height:1.7;}
+  /* ===== 홈 리디자인 ===== */
+  .home-hero{background:linear-gradient(155deg,#c20040 0%,#A50034 45%,#6e0022 100%);color:#fff;padding:22px 20px 70px;border-radius:0 0 30px 30px;position:relative;overflow:hidden;}
+  .home-hero::after{content:'';position:absolute;right:-50px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.09);border-radius:50%;}
+  .home-hero::before{content:'';position:absolute;right:40px;bottom:-30px;width:90px;height:90px;background:rgba(255,255,255,.06);border-radius:50%;}
+  .home-hero .greet{font-size:12.5px;opacity:.9;font-weight:600;}
+  .home-hero .logo{font-size:30px;font-weight:900;letter-spacing:.5px;margin:3px 0 2px;}
+  .home-hero .tag{font-size:12.5px;opacity:.92;line-height:1.5;position:relative;z-index:2;}
+  .float-card{margin:-52px 16px 0;background:#fff;border-radius:20px;padding:16px;box-shadow:0 10px 28px rgba(80,0,25,.16);position:relative;z-index:5;}
+  .dev-row{display:flex;align-items:center;gap:13px;}
+  .dev-ic{width:54px;height:54px;border-radius:17px;background:linear-gradient(135deg,#fde7ef,#f7d4e2);display:flex;align-items:center;justify-content:center;font-size:27px;flex:none;}
+  .health-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:6px 11px;border-radius:20px;color:#fff;white-space:nowrap;}
+  .hp-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.85);}
+  .cta-big{display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,var(--lg),#82002a);color:#fff;border:none;border-radius:18px;padding:15px 18px;width:100%;cursor:pointer;box-shadow:0 8px 20px rgba(165,0,52,.28);text-align:left;}
+  .cta-big:active{transform:scale(.99);} .cta-big .ci{font-size:25px;}
+  .cta-big .ct b{font-size:16px;display:block;} .cta-big .ct span{font-size:11px;opacity:.92;}
+  .cta-big .arr{margin-left:auto;font-size:20px;opacity:.8;}
+  .qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:15px 0 4px;}
+  .qa{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 4px 10px;text-align:center;cursor:pointer;transition:.15s;}
+  .qa:active{background:#faf7f9;} .qa .qic{font-size:21px;} .qa .ql{font-size:10px;color:#444;margin-top:5px;font-weight:700;}
+  .sec-title{font-size:13px;font-weight:800;margin:18px 4px 9px;display:flex;justify-content:space-between;align-items:center;}
+  .sec-title a{font-size:11.5px;color:var(--lg);cursor:pointer;font-weight:700;}
+  /* ===== 추천 제품 ===== */
+  .ptabs{display:flex;gap:8px;margin-bottom:6px;}
+  .pt{flex:1;text-align:center;padding:10px;border:1.5px solid var(--line);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;color:#555;}
+  .pt.on{border-color:var(--lg);background:#fff0f5;color:var(--lg);}
+  .pcard{border:1px solid var(--line);border-radius:15px;padding:13px;margin:11px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .pcard .pimg{width:100%;height:90px;border-radius:11px;background:linear-gradient(135deg,#eef1f6,#e1e7f0);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:8px;}
+  .pcard h3{margin:2px 0 3px;font-size:14px;} .pcard .ptag{float:right;}
+  .psave{background:#e9f7ef;color:#1a7f3c;font-weight:800;font-size:11.5px;border-radius:9px;padding:7px 10px;margin:8px 0;}
+  .lglink{display:flex;align-items:center;justify-content:center;gap:6px;background:#fff;color:var(--lg);border:1.5px solid var(--lg);border-radius:12px;padding:11px;font-size:13px;font-weight:800;text-decoration:none;}
+  .lglink:active{background:#fff0f5;} .reclink{color:var(--lg);font-weight:800;font-size:12px;margin-top:7px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>ROR</span><span>📶 🔋</span></div>
+
+  <!-- ================= 홈 ================= -->
+  <div class="screen on" id="s-home">
+    <div class="home-hero">
+      <div class="greet">안녕하세요 👋 LG ThinQ</div>
+      <div class="logo">ROR</div>
+      <div class="tag">내 에어컨, 계속 쓸까 · 고칠까 · 바꿀까?<br>데이터로 결정해 드릴게요.</div>
+    </div>
+    <div class="float-card" id="homeDevice"></div>
+    <div class="scr-pad" style="padding-top:16px">
+      <button class="cta-big" onclick="startDiagnose()">
+        <span class="ci">🩺</span>
+        <span class="ct"><b>지금 진단하기</b><span>증상 입력 → 건강등급·5선택지 비교</span></span>
+        <span class="arr">›</span>
+      </button>
+      <div class="qa-grid">
+        <div class="qa" onclick="go('s-devices')"><div class="qic">❄️</div><div class="ql">내 가전</div></div>
+        <div class="qa" onclick="go('s-register')"><div class="qic">📷</div><div class="ql">가전 등록</div></div>
+        <div class="qa" onclick="go('s-alerts')"><div class="qic">🔔</div><div class="ql">알림</div></div>
+        <div class="qa" onclick="go('s-more')"><div class="qic">⋯</div><div class="ql">더보기</div></div>
+      </div>
+      <div class="sec-title"><span>🔔 최근 알림</span><a onclick="go('s-alerts')">전체 ›</a></div>
+      <div class="card" style="margin-top:0"><div id="homeAlerts"></div></div>
+    </div>
+  </div>
+
+  <!-- ================= 내 가전 ================= -->
+  <div class="screen" id="s-devices">
+    <div class="appbar"><h1>내 가전</h1><span class="sub">등록·관리</span></div>
+    <div class="scr-pad">
+      <div class="card"><div id="deviceList"></div></div>
+      <button class="btn sec" onclick="go('s-register')">＋ 가전 등록 (OCR·수기)</button>
+    </div>
+  </div>
+
+  <!-- ===== 가전 등록 (OCR) ===== -->
+  <div class="screen" id="s-register">
+    <div class="appbar"><span class="back" onclick="go('s-devices')">‹</span><h1>가전 등록</h1></div>
+    <div class="scr-pad">
+      <div class="muted small">① 라벨 촬영(OCR) → ② 인식 확인 → ③ 챗봇 보완 → ④ 저장</div>
+      <div class="camera" style="margin:12px 0"><div class="frame"></div><span id="camTxt">📷 에너지효율등급 라벨을<br>네모 안에 맞춰 주세요</span></div>
+      <button class="btn" id="ocrBtn" onclick="runOCR()">📷 라벨 촬영하기</button>
+      <div id="manualEntry" style="text-align:center;margin-top:14px">
+        <div class="muted small">카메라·라벨 사용이 어려우신가요?</div>
+        <button class="btn sec sm" style="margin-top:8px" onclick="manualInput()">✍️ 직접 입력하기 (수기 작성)</button>
+      </div>
+      <div id="ocrResult" style="display:none">
+        <div class="disc" id="regDisc">✅ OCR 인식 완료 — 값을 확인/수정하세요. (제품 DB 매칭으로 자동 보완)</div>
+        <div class="card">
+          <label>모델명</label><input type="number" style="display:none">
+          <div class="kv"><span>모델</span><b id="oModel">LG 휘센 (2014)</b></div>
+          <label>구매 연도</label><input type="number" id="oYear" value="2014">
+          <label>냉방 용량 <span class="muted small">(제품 식별용)</span></label>
+          <div class="seg" id="oCap"><span data-v="2.5">2.5kW</span><span data-v="3.6" class="on">3.6kW</span><span data-v="5.0">5.0kW</span></div>
+          <label>에너지효율등급</label>
+          <div class="kv"><span>인식 등급</span><b id="oGrade">3등급</b></div>
+          <div class="kv"><span>표준 월간 소비전력량 <span class="badge">전기요금 계산 기준</span></span><b id="oMonthly">110 kWh/월</b></div>
+          <label>계약 종류</label>
+          <div class="seg" id="oContract"><span data-v="고압" class="on">고압(아파트)</span><span data-v="저압">저압(빌라)</span></div>
+        </div>
+        <button class="btn" onclick="saveDevice()">저장하고 내 가전에 추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 진단 (챗봇) ================= -->
+  <div class="screen" id="s-diagnose">
+    <div class="appbar"><span class="back" onclick="go('s-home')">‹</span><h1>챗봇 진단</h1><span class="sub" id="chatStepLbl">1/6</span></div>
+    <div class="chat" id="chatlog"></div>
+    <div class="chatinput" id="chatinput"></div>
+  </div>
+
+  <!-- ================= 결과 ================= -->
+  <div class="screen" id="s-result">
+    <div class="appbar"><span class="back" onclick="go('s-home')">‹</span><h1>진단 결과</h1><span class="sub">현재 입력 기준 추정</span></div>
+    <div class="scr-pad">
+      <div class="card">
+        <div class="grade">
+          <div class="gcircle" id="gCircle">C</div>
+          <div style="flex:1">
+            <div class="muted">건강점수</div><div class="big" id="gScore">58점</div>
+            <div class="muted small" id="gDesc"></div>
+            <div class="small" style="margin-top:6px">점검 필요도 <b id="inspPct">0</b>/100</div>
+            <div class="gauge"><i id="inspBar"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>⚡ 전기요금 (에어컨 기여·월)</h2>
+        <div class="kv"><span>지금 구형 에어컨</span><b id="billOld">–</b></div>
+        <div class="kv"><span>1등급 신형 교체 시</span><b id="billNew">–</b></div>
+        <div class="kv"><span>여름철 월 절감</span><b class="save" id="billSave">–</b></div>
+        <div class="muted small" id="tierNote" style="margin-top:5px"></div>
+      </div>
+      <div class="card">
+        <h2>🧭 5가지 선택지 비교 <span class="muted small">(5년·우선순위 반영)</span></h2>
+        <div id="opts"></div>
+      </div>
+      <div class="card">
+        <h2>💡 추천 근거</h2>
+        <div id="reason"></div>
+      </div>
+      <div class="card">
+        <h2>📌 다음 액션</h2>
+        <button class="btn sec sm" onclick="go('s-fastpass')" style="margin-bottom:8px">🧾 A/S Fast Pass 만들기 (수리 시)</button>
+        <button class="btn sec sm" onclick="go('s-center')" style="margin-bottom:8px">📍 주변 서비스센터 찾기</button>
+        <button class="btn sec sm" onclick="openProducts('buy')" style="margin-bottom:8px">🛒 추천 신제품 보기 (LG 연계)</button>
+        <button class="btn gray sm" onclick="openProducts('sub')">🔁 구독 상품 보기 (LG 연계)</button>
+      </div>
+      <div class="disc">현재 입력 조건 기준 추정 결과입니다. 정확한 고장 예측이 아닙니다. (가정: 하계·선택 계약 / 1등급 신형 대비 / 5년 누계)</div>
+    </div>
+  </div>
+
+  <!-- ===== A/S Fast Pass ===== -->
+  <div class="screen" id="s-fastpass">
+    <div class="appbar"><span class="back" onclick="go('s-result')">‹</span><h1>A/S Fast Pass</h1></div>
+    <div class="scr-pad">
+      <div class="disc">개인정보(연락처·주소)는 ThinQ에서 참조하며, <b>동의 시에만</b> 포함됩니다. 생성된 PDF는 수정 불가합니다.</div>
+      <div class="li" style="border:none"><div class="t"><b>개인정보 포함 동의</b><div class="s">A/S 접수 자동화를 위해</div></div>
+        <div class="toggle on" id="agreeTg" onclick="this.classList.toggle('on')"><i></i></div></div>
+      <div class="pdf" id="fpBody"></div>
+      <button class="btn" style="margin-top:12px" onclick="alert('PDF가 생성되어 저장되었습니다. (목업)')">📄 PDF 생성·저장</button>
+      <button class="btn gray sm" style="margin-top:8px" onclick="alert('공유 링크 생성 — 7일 후 자동 만료 (목업)')">🔗 공유 링크 (만료 7일)</button>
+    </div>
+  </div>
+
+  <!-- ===== 서비스센터 ===== -->
+  <div class="screen" id="s-center">
+    <div class="appbar"><span class="back" onclick="go('s-result')">‹</span><h1>주변 서비스센터</h1></div>
+    <div class="scr-pad">
+      <div class="map"><span class="pin" style="top:40%;left:46%">📍</span><span class="pin" style="top:62%;left:28%;font-size:16px">🔧</span><span class="pin" style="top:30%;left:66%;font-size:16px">🔧</span></div>
+      <div class="muted small" style="margin:8px 0">현재 위치 기준 · 가까운 순 · 에어컨 수리 가능</div>
+      <div class="card" style="margin:0">
+        <div class="li"><div class="ic">🔧</div><div class="t"><b>LG전자 서비스 강남센터</b><div class="s">1.2km · 에어컨/세탁기 · 1588-3366</div></div><span class="badge">예약</span></div>
+        <div class="li"><div class="ic">🔧</div><div class="t"><b>LG 베스트샵 서초 서비스</b><div class="s">2.4km · 에어컨 · 영업중</div></div><span class="badge">예약</span></div>
+        <div class="li"><div class="ic">🔧</div><div class="t"><b>LG전자 서비스 송파센터</b><div class="s">3.8km · 전 품목 · 영업중</div></div><span class="badge">예약</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 추천 제품 (LG 연계) ===== -->
+  <div class="screen" id="s-products">
+    <div class="appbar"><span class="back" onclick="go('s-result')">‹</span><h1>추천 제품</h1><span class="sub">LG 연계</span></div>
+    <div class="scr-pad">
+      <div class="ptabs">
+        <span id="pt-buy" class="pt on" onclick="setPTab('buy')">🛒 신제품 구매</span>
+        <span id="pt-sub" class="pt" onclick="setPTab('sub')">🔁 구독</span>
+      </div>
+      <div class="disc" id="pBanner"></div>
+      <div id="pList"></div>
+      <div class="muted small" style="margin-top:8px">※ 표시 가격·구독료는 참고용 추정이며, 실제 가격·재고·프로모션은 LG.com에서 확인하세요. 추천은 가중치 기반 비교 결과입니다.</div>
+    </div>
+  </div>
+
+  <!-- ================= 알림 ================= -->
+  <div class="screen" id="s-alerts">
+    <div class="appbar"><h1>알림</h1><span class="sub">선제 진단</span></div>
+    <div class="scr-pad">
+      <div class="card"><div id="alertList"></div></div>
+      <div class="card">
+        <h2>⚙️ 알림 설정 (가전별)</h2>
+        <div class="li"><div class="t"><b>이상 사용량 · 요금 급증</b></div><div class="toggle on" onclick="this.classList.toggle('on')"><i></i></div></div>
+        <div class="li"><div class="t"><b>부품보유기간 초과 · 점검 주기</b></div><div class="toggle on" onclick="this.classList.toggle('on')"><i></i></div></div>
+        <div class="muted small">기본값 ON. 끄면 해당 알림을 받지 않습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 더보기 ================= -->
+  <div class="screen" id="s-more">
+    <div class="appbar"><h1>더보기</h1></div>
+    <div class="scr-pad">
+      <div class="card">
+        <h2>🕘 진단 이력</h2>
+        <div id="histList"><div class="muted small">아직 진단 이력이 없어요.</div></div>
+      </div>
+      <div class="card">
+        <h2>🛒 구독·추천 제품 <span class="muted small">(LG 연계)</span></h2>
+        <div class="li" onclick="openProducts('sub')" style="cursor:pointer"><div class="ic">🔁</div><div class="t"><b>LG 휘센 1등급 (구독)</b><div class="s">월 49,000원 · 관리·청소 포함</div></div><span class="badge">보기 ›</span></div>
+        <div class="li" onclick="openProducts('buy')" style="cursor:pointer"><div class="ic">❄️</div><div class="t"><b>LG 휘센 오브제 1등급 (구매)</b><div class="s">약 115만원 · 연 전기료 ↓</div></div><span class="badge">보기 ›</span></div>
+      </div>
+      <div class="card">
+        <h2>👨‍👩‍👧 가족 공유 요약</h2>
+        <div class="pdf" id="familyShare">진단을 먼저 진행해 주세요.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 탭바 ================= -->
+  <div class="tabbar">
+    <div class="tab on" data-s="s-home" onclick="go('s-home')"><span class="ic">🏠</span>홈</div>
+    <div class="tab" data-s="s-devices" onclick="go('s-devices')"><span class="ic">📱</span>내 가전</div>
+    <div class="tab" data-s="s-diagnose" onclick="startDiagnose()"><span class="ic">🔍</span>진단</div>
+    <div class="tab" data-s="s-alerts" onclick="go('s-alerts')"><span class="ic">🔔</span>알림</div>
+    <div class="tab" data-s="s-more" onclick="go('s-more')"><span class="ic">⋯</span>더보기</div>
+  </div>
+</div>
+
+<script>
+/* ===== 계산 엔진 (app/backend 포팅, node 검증본) ===== */
+const SPEC={'2.5':{old:{m:75,a:900,g:'3등급'},neo:{m:55,a:660,g:'1등급'}},'3.6':{old:{m:110,a:1320,g:'3등급'},neo:{m:80,a:960,g:'1등급'}},'5.0':{old:{m:150,a:1800,g:'3등급'},neo:{m:100,a:1200,g:'1등급'}}};
+const COST={'2.5':{visit:39600,repair:250000,sub:39000,buy:950000,care:30000},'3.6':{visit:39600,repair:290000,sub:49000,buy:1150000,care:32500},'5.0':{visit:45000,repair:350000,sub:59000,buy:1500000,care:35000}};
+const TARIFF={'고압':[[300,730,105.0],[450,1260,174.0],[1e9,6060,242.3]],'저압':[[300,910,120.0],[450,1600,214.6],[1e9,7300,307.3]]};
+const REF_H=7.8,LIFE=16.7,DECAY=0.025,FLOOR=0.65,EF=0.4781,PARTS=8;
+const SYM=[{k:'성능저하',base:.50,inc:.65,voc:.78},{k:'소음',base:.45,inc:.40,voc:.68},{k:'냄새',base:.25,inc:.45,voc:.72},{k:'누수',base:.70,inc:.60,voc:.78},{k:'전기요금증가',base:.15,inc:.30,voc:.80},{k:'작동불량',base:.90,inc:.95,voc:.78}];
+const SEV={1:.1,2:.6,3:1.0,4:1.4,5:1.8};
+const won=v=>Math.round(v).toLocaleString('ko-KR')+'원';
+function bill(k,c){let b=0,u=0;for(const[hi,bb,uu]of TARIFF[c]){if(k<=hi){b=bb;u=uu;break;}}return(b+k*u+k*9+k*5)*1.10*1.037;}
+const kAC=(m,h,e)=>m*(h/REF_H)/e, acDelta=(kb,ka,c)=>bill(kb+ka,c)-bill(kb,c);
+function elec5(m,ef,kb,h,c,mo){let t=0;for(const e of ef)t+=acDelta(kb,kAC(m,h,e),c)*mo;return t;}
+function wAxes(c,e,v){let s=c+e+v;if(s<=0){c=1;e=0;v=0;s=1;}const pc=c/s,pe=e/s,pv=v/s,B={economy:.4,reliability:.2,carbon:.15,comfort:.15,initial:.1},P={economy:pc*.7,initial:pc*.3,carbon:pe,comfort:pv*.5,reliability:pv*.5},w={};for(const k in B)w[k]=.5*B[k]+.5*P[k];return w;}
+const norm=a=>{const mn=Math.min(...a),mx=Math.max(...a);return a.map(v=>mx===mn?.5:(v-mn)/(mx-mn));}, inv=a=>norm(a).map(v=>1-v);
+
+/* ===== 상태 ===== */
+let devices=[{model:'LG 휘센 (2014)',year:2014,cap:'3.6',grade:'3등급',contract:'고압',src:'OCR'}];
+const ALERTS=[{i:'💸',t:'전기요금 급증 감지',s:'지난달 대비 +38% — 노후 에어컨 점검 권장'},{i:'📅',t:'부품보유기간 초과 알림',s:'에어컨 12년 사용 — 부품보유기간(8년) 4년 초과 · 수리 시 부품 수급 확인'},{i:'🧹',t:'필터 점검 주기',s:'필터 미청소 8개월 — 셀프케어 권장'}];
+let S={device:devices[0],symptoms:{},hours:8,months:4,summer:460,filter:8,repair:1,axes:{cost:70,env:20,conv:10}};
+let lastResult=null;
+
+/* ===== 내비게이션 ===== */
+function go(id,tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  if(id==='s-register')resetRegister();
+  const map={'s-home':'s-home','s-devices':'s-devices','s-register':'s-devices','s-diagnose':'s-diagnose','s-result':'s-diagnose','s-fastpass':'s-diagnose','s-center':'s-diagnose','s-products':'s-diagnose','s-alerts':'s-alerts','s-more':'s-more'};
+  const active=tab||map[id];
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.s===active));
+  document.getElementById(id).scrollTop=0;
+}
+
+/* ===== 홈/가전/알림 렌더 ===== */
+function renderHome(){
+  const d=devices[0];
+  const hp = lastResult
+    ? `<span class="health-pill" style="background:var(--${lastResult.grade})"><span class="hp-dot"></span>건강 ${lastResult.grade}등급</span>`
+    : `<span class="health-pill" style="background:#9aa0a8"><span class="hp-dot"></span>진단 전</span>`;
+  document.getElementById('homeDevice').innerHTML = d?`
+    <div class="dev-row">
+      <div class="dev-ic">❄️</div>
+      <div style="flex:1;min-width:0">
+        <div class="small" style="color:var(--mut);font-weight:700">내 에어컨</div>
+        <b style="font-size:15px">${d.model}</b>
+        <div class="small" style="color:var(--mut);margin-top:2px">${d.cap}kW · ${SPEC[d.cap].old.m}kWh/월 · ${d.grade}</div>
+      </div>
+      ${hp}
+    </div>`
+    :`<div class="dev-row"><div class="dev-ic">＋</div><div style="flex:1"><b style="font-size:14px">등록된 가전이 없어요</b><div class="small" style="color:var(--lg);font-weight:800;cursor:pointer" onclick="go('s-register')">가전 등록하기 ›</div></div></div>`;
+  document.getElementById('homeAlerts').innerHTML = ALERTS.slice(0,2).map(a=>`<div class="li"><div class="ic">${a.i}</div><div class="t"><b style="font-size:13px">${a.t}</b><div class="s">${a.s}</div></div></div>`).join('');
+}
+function renderDevices(){
+  document.getElementById('deviceList').innerHTML = devices.length?devices.map(d=>`
+    <div class="li"><div class="ic">❄️</div><div class="t"><b>${d.model}</b><div class="s">${d.cap}kW · <b>${SPEC[d.cap].old.m}kWh/월</b> · ${d.grade} · ${d.year}년식 · ${d.src}</div></div>
+    <div class="toggle on" onclick="this.classList.toggle('on')"><i></i></div></div>`).join('')
+    :'<div class="muted small">등록된 가전이 없어요.</div>';
+}
+function renderAlerts(){ document.getElementById('alertList').innerHTML = ALERTS.map(a=>`<div class="li"><div class="ic">${a.i}</div><div class="t"><b style="font-size:13.5px">${a.t}</b><div class="s">${a.s}</div></div><span class="badge">진단</span></div>`).join(''); }
+
+/* ===== 추천 제품 (LG 연계) ===== */
+// recommended_product 흉내 카탈로그. 가격·구독료는 추정(cost_reference 범위). URL은 LG.com 딥링크.
+const PRODUCTS={
+  '2.5':[{n:'LG 휘센 벽걸이 오브제 1등급',kwh:640,price:850000,tag:'최고효율'},{n:'LG 듀얼인버터 벽걸이 1등급',kwh:660,price:720000,tag:'가성비'}],
+  '3.6':[{n:'LG 휘센 타워 오브제 1등급',kwh:940,price:1300000,tag:'최고효율'},{n:'LG 휘센 타워 1등급',kwh:960,price:1150000,tag:'가성비'}],
+  '5.0':[{n:'LG 휘센 타워 오브제 1등급',kwh:1160,price:1700000,tag:'최고효율'},{n:'LG 휘센 타워 1등급',kwh:1200,price:1500000,tag:'가성비'}],
+};
+const SUBS={'2.5':{n:'LG 구독 휘센 벽걸이 1등급',monthly:39000},'3.6':{n:'LG 구독 휘센 타워 1등급',monthly:49000},'5.0':{n:'LG 구독 휘센 타워 1등급',monthly:59000}};
+const LG_AIRCON='https://www.lge.co.kr/aircons', LG_SUB='https://www.lge.co.kr/subscription';
+const lgUrl=cap=>`${LG_AIRCON}?capacity=${cap}&grade=1&utm_source=ROR&utm_medium=recommend`;   // 검색/필터 딥링크 + 전환 추적
+let pTab='buy';
+function openProducts(t){ setPTab(t||'buy'); go('s-products'); }
+function setPTab(t){ pTab=t; document.getElementById('pt-buy').classList.toggle('on',t==='buy'); document.getElementById('pt-sub').classList.toggle('on',t==='sub'); renderProducts(); }
+function renderProducts(){
+  const d=S.device,cap=d.cap,sp=SPEC[cap],contract=d.contract;
+  const age=Math.max(0,new Date().getFullYear()-d.year),curEff=Math.max(1-DECAY*age,FLOOR),kOld=kAC(sp.old.m,S.hours,curEff);
+  let kBase=(S.summer&&S.summer>kOld)?S.summer-kOld:350; const billOld=acDelta(kBase,kOld,contract);
+  const save5=mo=>Math.max(0,(billOld-acDelta(kBase,kAC(mo,S.hours,1),contract))*S.months*5);
+  const dom=['비용','환경','편의'][[S.axes.cost,S.axes.env,S.axes.conv].indexOf(Math.max(S.axes.cost,S.axes.env,S.axes.conv))];
+  document.getElementById('pBanner').innerHTML=`💡 내 에어컨(<b>${cap}kW</b>)에 맞는 1등급 제품 · <b>${dom} 중시</b> 반영 정렬`;
+  if(pTab==='buy'){
+    let list=PRODUCTS[cap].map(p=>({...p,save:save5(p.kwh/12)}));
+    if(dom==='비용')list.sort((a,b)=>a.price-b.price); else if(dom==='환경')list.sort((a,b)=>a.kwh-b.kwh); else list.sort((a,b)=>b.save-a.save);
+    document.getElementById('pList').innerHTML=list.map(p=>`<div class="pcard"><div class="pimg">❄️</div>
+      <span class="badge ptag">${p.tag}</span><h3>${p.n}</h3>
+      <div class="muted small">${cap}kW · 1등급 · 연 ${p.kwh}kWh</div>
+      <div class="kv" style="border:none;padding:3px 0"><span class="muted">예상 구매가</span><b>${won(p.price)}</b></div>
+      <div class="psave">💰 5년 전기료 절감 약 ${won(p.save)} · 용량 적합 + 1등급</div>
+      <a class="lglink" href="${lgUrl(cap)}" target="_blank" rel="noopener">LG에서 보기 ›</a></div>`).join('');
+  } else {
+    const s=SUBS[cap],save=save5(sp.neo.m);
+    document.getElementById('pList').innerHTML=`<div class="pcard"><div class="pimg">🔁</div>
+      <span class="badge ptag">관리포함</span><h3>${s.n}</h3>
+      <div class="muted small">${cap}kW · 1등급 · 5년 약정 · 설치+연1회 세척·관리 포함</div>
+      <div class="kv" style="border:none;padding:3px 0"><span class="muted">월 구독료</span><b>${won(s.monthly)}/월</b></div>
+      <div class="psave">💰 초기비용 0원 · 신형 효율로 전기료 ↓(5년 약 ${won(save)}) · 청소/관리 부담 ↓</div>
+      <a class="lglink" href="${LG_SUB}?utm_source=ROR&utm_medium=recommend" target="_blank" rel="noopener">LG 구독 상담 ›</a></div>
+      <div class="muted small">구독은 초기비용 없이 1등급 신형을 쓰며 관리까지 받는 선택지예요.</div>`;
+  }
+}
+
+/* ===== OCR / 수기 등록 ===== */
+let regMode='OCR';
+function runOCR(){
+  regMode='OCR'; document.getElementById('manualEntry').style.display='none';
+  const t=document.getElementById('camTxt'); t.innerHTML='🔍 인식 중...'; document.getElementById('ocrBtn').disabled=true;
+  setTimeout(()=>{ t.innerHTML='✅ 라벨 인식 완료'; document.getElementById('regDisc').innerHTML='✅ OCR 인식 완료 — 값을 확인/수정하세요. (제품 DB 매칭으로 자동 보완)'; document.getElementById('ocrResult').style.display='block';
+    document.getElementById('ocrBtn').style.display='none'; document.getElementById('s-register').scrollTop=999; },900);
+}
+function manualInput(){
+  regMode='MANUAL';
+  document.getElementById('regDisc').innerHTML='✍️ 직접 입력 — 라벨 정보를 선택/입력하세요. (용량 선택 시 효율·월간소비전력량 자동 보완)';
+  document.getElementById('ocrResult').style.display='block';
+  document.getElementById('manualEntry').style.display='none';
+  document.getElementById('ocrBtn').style.display='none';
+  const cam=document.querySelector('#s-register .camera'); if(cam)cam.style.display='none';
+  document.getElementById('s-register').scrollTop=999;
+}
+function resetRegister(){
+  regMode='OCR';
+  document.getElementById('ocrResult').style.display='none';
+  document.getElementById('manualEntry').style.display='block';
+  const cam=document.querySelector('#s-register .camera'); if(cam)cam.style.display='flex';
+  const ob=document.getElementById('ocrBtn'); if(ob){ob.style.display='block';ob.disabled=false;}
+  const ct=document.getElementById('camTxt'); if(ct)ct.innerHTML='📷 에너지효율등급 라벨을<br>네모 안에 맞춰 주세요';
+}
+document.querySelectorAll('.seg').forEach(seg=>seg.addEventListener('click',e=>{ if(e.target.dataset.v!==undefined){seg.querySelectorAll('span').forEach(s=>s.classList.remove('on')); e.target.classList.add('on');
+  if(seg.id==='oCap'){ const v=e.target.dataset.v; document.getElementById('oMonthly').textContent=SPEC[v].old.m+' kWh/월'; document.getElementById('oGrade').textContent=SPEC[v].old.g; }
+}}));
+function saveDevice(){
+  const cap=document.querySelector('#oCap .on').dataset.v, contract=document.querySelector('#oContract .on').dataset.v;
+  const d={model:'LG 휘센 ('+document.getElementById('oYear').value+')',year:+document.getElementById('oYear').value,cap,grade:SPEC[cap].old.g,contract,src:(regMode==='MANUAL'?'수기':'OCR')};
+  devices.unshift(d); S.device=d; renderDevices(); renderHome(); go('s-devices');
+}
+
+/* ===== 챗봇 진단 ===== */
+let step=0;
+const STEPS=[
+  {bot:'어떤 에어컨을 진단할까요?',render:devicePick},
+  {bot:'요즘 어떤 증상이 있나요? (복수 선택)',render:symptomPick},
+  {bot:'각 증상이 얼마나 심한가요? (1~5점)',render:severityPick},
+  {bot:'평소 사용 환경을 알려주세요.',render:envPick},
+  {bot:'여름 한 달 전기요금 사용량과 관리 상태는요?',render:usagePick},
+  {bot:'무엇을 가장 중요하게 보시나요?',render:priorityPick},
+];
+function startDiagnose(){ if(!devices.length){alert('먼저 가전을 등록해 주세요.');go('s-register');return;}
+  step=0; S.device=devices[0]; S.symptoms={}; document.getElementById('chatlog').innerHTML=''; go('s-diagnose'); showStep(); }
+function showStep(){ document.getElementById('chatStepLbl').textContent=(step+1)+'/6';
+  addBubble(STEPS[step].bot,'bot'); STEPS[step].render(); }
+function addBubble(html,who){ const b=document.createElement('div'); b.className='bubble '+who; b.innerHTML=html;
+  document.getElementById('chatlog').appendChild(b); document.getElementById('s-diagnose').scrollTop=99999; }
+function nextStep(echo){ if(echo)addBubble(echo,'me'); step++; if(step<STEPS.length){setTimeout(showStep,250);} else {document.getElementById('chatinput').innerHTML='';setTimeout(()=>runDiagnosis(),300);} }
+const CI=()=>document.getElementById('chatinput');
+
+function devicePick(){ CI().innerHTML=devices.map((d,i)=>`<span class="chip" onclick="pickDevice(${i})">${d.model} ${d.cap}kW</span>`).join(''); }
+function pickDevice(i){ S.device=devices[i]; nextStep(devices[i].model); }
+
+function symptomPick(){ CI().innerHTML=SYM.map(s=>`<span class="chip" data-k="${s.k}" onclick="toggleSym(this)">${s.k}</span>`).join('')
+  +`<button class="btn sm" style="margin-top:10px" onclick="confirmSym()">다음</button>`; }
+function toggleSym(el){ el.classList.toggle('on'); const k=el.dataset.k; if(S.symptoms[k])delete S.symptoms[k]; else S.symptoms[k]=3; }
+function confirmSym(){ const ks=Object.keys(S.symptoms); nextStep(ks.length?ks.join(', '):'증상 없음'); }
+
+function severityPick(){ const ks=Object.keys(S.symptoms);
+  if(!ks.length){ CI().innerHTML=`<button class="btn sm" onclick="nextStep('해당 없음')">다음</button>`; return; }
+  CI().innerHTML=ks.map(k=>`<label>${k}</label><div class="seg" data-k="${k}">${[1,2,3,4,5].map(n=>`<span data-n="${n}" class="${n===3?'on':''}" onclick="setSev(this)">${n}</span>`).join('')}</div>`).join('')
+    +`<button class="btn sm" style="margin-top:10px" onclick="confirmSev()">다음</button>`; }
+function setSev(el){ const seg=el.parentElement; seg.querySelectorAll('span').forEach(s=>s.classList.remove('on')); el.classList.add('on'); S.symptoms[seg.dataset.k]=+el.dataset.n; }
+function confirmSev(){ nextStep(Object.entries(S.symptoms).map(([k,v])=>k+' '+v+'점').join(', ')||'해당 없음'); }
+
+function envPick(){ CI().innerHTML=`<label>하루 평균 사용시간 (h)</label><input type="number" id="iHours" value="${S.hours}">
+  <label>연간 냉방 사용 개월</label><input type="number" id="iMonths" value="${S.months}">
+  <button class="btn sm" style="margin-top:10px" onclick="confirmEnv()">다음</button>`; }
+function confirmEnv(){ S.hours=+iHours.value; S.months=+iMonths.value; nextStep(`하루 ${S.hours}시간 · 연 ${S.months}개월`); }
+
+function usagePick(){ CI().innerHTML=`<label>여름 한 달 고지서 사용량 (kWh)</label><input type="number" id="iSummer" value="${S.summer}">
+  <label>필터 미청소 경과 (개월)</label><input type="number" id="iFilter" value="${S.filter}">
+  <label>수리 이력 (회)</label><input type="number" id="iRepair" value="${S.repair}">
+  <button class="btn sm" style="margin-top:10px" onclick="confirmUsage()">다음</button>`; }
+function confirmUsage(){ S.summer=+iSummer.value; S.filter=+iFilter.value; S.repair=+iRepair.value; nextStep(`여름 ${S.summer}kWh · 필터 ${S.filter}개월 · 수리 ${S.repair}회`); }
+
+function priorityPick(){ const a=S.axes; CI().innerHTML=`
+  <label>💰 비용 — <span class="axval" id="vC">${a.cost}</span></label><input type="range" id="rC" min="0" max="100" value="${a.cost}" oninput="vC.textContent=this.value">
+  <label>🌱 환경 — <span class="axval" id="vE">${a.env}</span></label><input type="range" id="rE" min="0" max="100" value="${a.env}" oninput="vE.textContent=this.value">
+  <label>🛠 편의 — <span class="axval" id="vV">${a.conv}</span></label><input type="range" id="rV" min="0" max="100" value="${a.conv}" oninput="vV.textContent=this.value">
+  <button class="btn" style="margin-top:12px" onclick="confirmPriority()">🔍 진단하기</button>`; }
+function confirmPriority(){ S.axes={cost:+rC.value,env:+rE.value,conv:+rV.value}; const m=Math.max(S.axes.cost,S.axes.env,S.axes.conv);
+  nextStep(['비용','환경','편의'][[S.axes.cost,S.axes.env,S.axes.conv].indexOf(m)]+' 중시'); }
+
+/* ===== 진단 계산 + 결과 ===== */
+function runDiagnosis(){
+  const c=S.device.cap, contract=S.device.contract, sp=SPEC[c], cst=COST[c];
+  const hours=S.hours, months=S.months, age=Math.max(0,new Date().getFullYear()-S.device.year), ageScore=Math.min(age/LIFE,1);
+  let symBase=0,symInc=0,symVoc=.20,picked=[];
+  for(const [k,sv] of Object.entries(S.symptoms)){ const s=SYM.find(x=>x.k===k),m=SEV[sv];
+    symBase=Math.max(symBase,s.base*m); symInc=Math.max(symInc,s.inc*m); symVoc=Math.max(symVoc,s.voc); picked.push(k+'('+sv+')'); }
+  const insp=Math.min(ageScore*.3+Math.min(symBase,1)*.3+Math.min(S.repair*.33,1)*.15+Math.min(S.filter*.1,1)*.15+symVoc*.1,1);
+  const inc=Math.min(symInc+ageScore*.1,1), waste=Math.max(sp.old.a-sp.neo.a,0)/sp.neo.a;
+  const curEff=Math.max(1-DECAY*age,FLOOR), kOld=kAC(sp.old.m,hours,curEff), kNew=kAC(sp.neo.m,hours,1);
+  let kBase=(S.summer&&S.summer>kOld)?S.summer-kOld:350;
+  const billOldM=acDelta(kBase,kOld,contract), billNewM=acDelta(kBase,kNew,contract);
+  const risk=insp*.45+waste*.3+inc*.25, health=Math.max(0,100-risk*100);
+  const grade=health>=80?'A':health>=65?'B':health>=50?'C':health>=35?'D':'E';
+  const gdesc={A:'계속 사용 적합 — 상태 양호',B:'셀프케어 권장 — 관리 후 사용',C:'점검 권장 — 수리/정밀진단',D:'구독·교체 검토 — 점검 필요도 상승',E:'점검 필요도 높음 — 즉시 점검/교체'}[grade];
+  const seq=f=>Array.from({length:5},(_,y)=>Math.max(f-DECAY*y,FLOOR)), e5=(m,ef)=>elec5(m,ef,kBase,hours,contract,months);
+  const avg=ef=>ef.reduce((a,b)=>a+b)/ef.length, carb=(m,ef)=>kAC(m,hours,avg(ef))*months*5*EF;
+  const expiry=S.device.year+PARTS, exceeded=new Date().getFullYear()>expiry, exBy=exceeded?new Date().getFullYear()-expiry:0;
+  const rerep=Math.min(insp*ageScore*(1+(exceeded?exBy*.15:0)),1);
+  let opts=[
+    {key:'계속사용',label:'계속 사용',total:e5(sp.old.m,seq(curEff)),init:0,insp,waste,inc,carb:carb(sp.old.m,seq(curEff))},
+    {key:'셀프케어',label:'셀프케어 후 사용',total:e5(sp.old.m,seq(curEff+.03))+cst.care*5,init:cst.care,insp:Math.max(insp-.12,.05),waste:waste*.97,inc:Math.max(inc-.2,0),carb:carb(sp.old.m,seq(curEff+.03))},
+    {key:'수리후사용',label:'수리 후 사용',total:e5(sp.old.m,seq(.825))+cst.repair+cst.visit+cst.repair*rerep,init:cst.repair+cst.visit,insp:Math.max(insp-.25,.1),waste:waste*.65,inc:Math.max(inc-.35,.05),carb:carb(sp.old.m,seq(.825))},
+    {key:'구독전환',label:'구독 전환',total:cst.sub*60+e5(sp.neo.m,seq(1)),init:0,insp:.05,waste:0,inc:.05,carb:carb(sp.neo.m,seq(1))},
+    {key:'신제품구매',label:'신제품 구매',total:cst.buy+e5(sp.neo.m,seq(1)),init:cst.buy,insp:.03,waste:0,inc:.02,carb:carb(sp.neo.m,seq(1))},
+  ];
+  const cI=inv(opts.map(o=>o.total)),wI=inv(opts.map(o=>o.waste)),iI=inv(opts.map(o=>o.insp)),caI=inv(opts.map(o=>o.carb)),coI=inv(opts.map(o=>o.inc)),inI=inv(opts.map(o=>o.init));
+  const W=wAxes(S.axes.cost,S.axes.env,S.axes.conv), dom=['비용','환경','편의'][[S.axes.cost,S.axes.env,S.axes.conv].indexOf(Math.max(S.axes.cost,S.axes.env,S.axes.conv))];
+  opts.forEach((o,i)=>{o.score=(.8*cI[i]+.2*wI[i])*W.economy+iI[i]*W.reliability+caI[i]*W.carbon+coI[i]*W.comfort+inI[i]*W.initial;o.hl=[];});
+  if(insp<.25&&waste<.20)opts.forEach(o=>{if(o.key=='구독전환'||o.key=='신제품구매'){o.score-=.1;o.hl.push('점검·낭비 낮아 교체 우선순위 하향');}});
+  if(exceeded)opts.forEach(o=>{if(o.key=='수리후사용'){o.score=Math.max(o.score-.2,0);o.hl.push(`부품보유기간 ${exBy}년 초과(${expiry}년 만료) — 수리 전 부품 수급 확인`);}});
+  opts.sort((a,b)=>b.score-a.score); opts.forEach((o,i)=>o.rank=i+1);
+
+  const gc=document.getElementById('gCircle'); gc.textContent=grade; gc.style.background=getComputedStyle(document.documentElement).getPropertyValue('--'+grade);
+  document.getElementById('gScore').textContent=Math.round(health)+'점'; document.getElementById('gDesc').textContent=gdesc;
+  document.getElementById('inspPct').textContent=Math.round(insp*100); document.getElementById('inspBar').style.width=(insp*100)+'%';
+  document.getElementById('billOld').textContent=won(billOldM); document.getElementById('billNew').textContent=won(billNewM);
+  const saveM=billOldM-billNewM; document.getElementById('billSave').textContent=won(saveM)+' (5년 '+won(saveM*months*5)+')';
+  const tn=(kBase+kOld>450&&kBase+kNew<=450)?'교체 시 누진 3→2구간 하향으로 절감폭이 커집니다.':'사용량 기반 내부계산(부가세·전력기금 포함).';
+  document.getElementById('tierNote').innerHTML=`계산 기준: <b>표준 월간 ${sp.old.m}kWh/월</b> × (실사용 ${hours}h/7.8h) ÷ 잔존효율 ${Math.round(curEff*100)}% = 실사용 <b>${Math.round(kOld)}kWh/월</b><br>※ ${tn}`;
+  const mx=Math.max(...opts.map(o=>o.score));
+  document.getElementById('opts').innerHTML=opts.map(o=>`<div class="opt ${o.rank==1?'first':''}"><span class="rk ${o.rank==1?'f':''}">${o.rank==1?'★ 1순위':o.rank+'순위'}</span>
+    <h3>${o.label}</h3><div class="bar"><i style="width:${Math.max(6,o.score/mx*100)}%"></i></div>
+    <div class="kv" style="padding:2px 0;border:none"><span class="muted">5년 총비용</span><b>${won(o.total)}</b></div>
+    <div class="muted small">초기 ${won(o.init)} · 점수 ${o.score.toFixed(3)}</div>${o.hl.map(h=>`<div class="warn">⚠ ${h}</div>`).join('')}${(o.key==='신제품구매'&&o.rank<=2)?`<div class="reclink" onclick="openProducts('buy')">🛒 추천 신제품 보기 (LG) ›</div>`:''}${(o.key==='구독전환'&&o.rank<=2)?`<div class="reclink" onclick="openProducts('sub')">🔁 구독 상품 보기 (LG) ›</div>`:''}</div>`).join('');
+  const best=opts[0];
+  document.getElementById('reason').innerHTML=`<p style="font-size:13.5px;margin:2px 0 8px"><b>${best.label}</b>을(를) 1순위로 추천해요. <b>${dom} 중시</b>(${S.axes.cost}/${S.axes.env}/${S.axes.conv})를 반영했습니다.</p>
+    <span class="badge">건강 ${grade}</span> <span class="badge">점검 ${Math.round(insp*100)}%</span> <span class="badge">낭비 ${Math.round(waste*100)}%</span> <span class="badge">${age}년 사용</span>
+    ${picked.length?`<div class="muted small" style="margin-top:6px">증상: ${picked.join(', ')}</div>`:''}
+    <p class="muted small" style="margin-top:8px">근거: 5선택지를 경제성(비용0.80+낭비0.20)·신뢰성·탄소·편의·초기비용으로 점수화하고 ${dom} 가중치(최종 50%)로 정렬. 가중치 기반 추천이며 LLM 예측이 아닙니다.</p>`;
+
+  // Fast Pass / 가족공유 / 이력 채우기
+  document.getElementById('fpBody').innerHTML=`<b>[A/S Fast Pass]</b><br>제품: ${S.device.model} ${S.device.cap}kW<br>사용연수: ${age}년 · 건강등급 ${grade} · 점검필요도 ${Math.round(insp*100)}%<br>증상: ${picked.join(', ')||'없음'}<br>5년 손익 기준 권장: <b>${best.label}</b><br><span class="muted">※ 개인정보(연락처·주소)는 동의 시 ThinQ 참조로 포함</span>`;
+  document.getElementById('familyShare').innerHTML=`우리 집 에어컨(${age}년 사용)은 건강등급 <b>${grade}</b>예요. ${dom}을 중시하면 <b>${best.label}</b>이 5년 기준 가장 합리적이고, 신형 교체 시 여름 월 ${won(saveM)} 절감이 기대돼요. (추정)`;
+  document.getElementById('histList').innerHTML=`<div class="li"><div class="ic">📋</div><div class="t"><b>${S.device.model} 진단</b><div class="s">건강등급 ${grade} · 1순위 ${best.label} · 오늘</div></div><span class="badge">보기</span></div>`;
+  lastResult={grade,best:best.label}; renderHome(); go('s-result');
+}
+
+/* 초기 렌더 */
+renderHome(); renderDevices(); renderAlerts();
+</script>
+</body>
+</html>

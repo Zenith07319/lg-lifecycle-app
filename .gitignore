@@ -28,3 +28,10 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Python (backend)
+backend/.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+_spec_test.py

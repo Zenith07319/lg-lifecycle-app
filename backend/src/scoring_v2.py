@@ -11,6 +11,45 @@ Replace-or-Repair 5개 선택지 점수 계산 모듈 v2
 from dataclasses import dataclass, field
 from src.calculations_v2 import DiagnosisResultV2
 
+# ─────────────────────────────────────────────────────────────────────────
+# 우선순위 가중치 — 비용/환경/편의 3축 점수화 (2026-06-04 확정)
+#   최종 가중치 = 기본(균등 베이스) × (1 - PRIORITY_RATIO) + 우선순위 × PRIORITY_RATIO → 합 1.0
+#   미응답(합 0) 시 비용 우선 폴백. (docs/04_calculation_logic.md §5)
+# ─────────────────────────────────────────────────────────────────────────
+BASE_WEIGHTS = {
+    "economy": 0.40, "reliability": 0.20, "carbon": 0.15, "comfort": 0.15, "initial": 0.10,
+}                                # 균등 베이스(구 '기본' 모드값)
+PRIORITY_RATIO = 0.50            # 우선순위 입력이 최종 가중치에 기여하는 비중 (확정)
+AXIS_SPLIT_COST = (0.70, 0.30)   # 비용 축 → (경제성, 초기비용)
+AXIS_SPLIT_CONV = (0.50, 0.50)   # 편의 축 → (편의, 신뢰성)
+
+
+def priority_weights_from_axes(cost: float, env: float, conv: float) -> dict:
+    """비용/환경/편의 3축 점수(0~100) → 5지표 가중치 dict (합 = 1.0)."""
+    total = cost + env + conv
+    if total <= 0:                          # 미응답 → 비용 우선 폴백
+        cost, env, conv, total = 1.0, 0.0, 0.0, 1.0
+    p_cost, p_env, p_conv = cost / total, env / total, conv / total
+    pr = {
+        "economy":     p_cost * AXIS_SPLIT_COST[0],
+        "initial":     p_cost * AXIS_SPLIT_COST[1],
+        "carbon":      p_env,
+        "comfort":     p_conv * AXIS_SPLIT_CONV[0],
+        "reliability": p_conv * AXIS_SPLIT_CONV[1],
+    }
+    return {
+        k: round((1 - PRIORITY_RATIO) * BASE_WEIGHTS[k] + PRIORITY_RATIO * pr[k], 4)
+        for k in BASE_WEIGHTS
+    }
+
+
+# 구 6모드 문자열 → 3축 점수 매핑 (레거시 호출 하위호환)
+LEGACY_MODE_AXES = {
+    "비용절감": (100, 0, 0), "친환경": (0, 100, 0), "초기비용최소": (100, 0, 0),
+    "관리편의": (0, 0, 100), "오래쓰기": (20, 30, 50), "기본": (50, 15, 35),
+}
+
+# 구 6모드 가중치 표 — 폐기(3축 대체). 일부 스크립트 참조용으로만 보존.
 PRIORITY_WEIGHTS = {
     "비용절감":    {"economy": 0.60, "reliability": 0.15, "carbon": 0.05, "comfort": 0.10, "initial": 0.10},
     "친환경":      {"economy": 0.25, "reliability": 0.15, "carbon": 0.40, "comfort": 0.10, "initial": 0.10},
@@ -19,6 +58,29 @@ PRIORITY_WEIGHTS = {
     "오래쓰기":    {"economy": 0.30, "reliability": 0.20, "carbon": 0.20, "comfort": 0.10, "initial": 0.20},
     "기본":        {"economy": 0.40, "reliability": 0.20, "carbon": 0.15, "comfort": 0.15, "initial": 0.10},
 }
+
+
+def _resolve_priority(priority):
+    """우선순위 입력 정규화 → (weights, axes(비용,환경,편의), dominant 라벨).
+
+    priority: 3축 dict({"비용":..,"환경":..,"편의":..}) / tuple / 구 6모드 문자열 / None.
+    """
+    if isinstance(priority, dict):
+        cost = priority.get("비용", priority.get("cost", 0))
+        env  = priority.get("환경", priority.get("env", 0))
+        conv = priority.get("편의", priority.get("convenience", priority.get("conv", 0)))
+        axes = (cost, env, conv)
+    elif isinstance(priority, (tuple, list)):
+        axes = (tuple(priority) + (0, 0, 0))[:3]
+    else:  # 문자열(레거시 6모드) 또는 None
+        axes = LEGACY_MODE_AXES.get(priority, LEGACY_MODE_AXES["기본"])
+    cost, env, conv = axes
+    if cost + env + conv <= 0:
+        cost, env, conv = 1, 0, 0
+    weights = priority_weights_from_axes(cost, env, conv)
+    labels = ("비용", "환경", "편의")
+    dominant = labels[max(range(3), key=lambda i: (cost, env, conv)[i])]
+    return weights, (cost, env, conv), dominant
 
 
 @dataclass
@@ -181,10 +243,10 @@ def _normalize(values: list[float]) -> list[float]:
 
 def score_options(
     options: list[OptionScoreV2],
-    priority_mode: str = "기본",
+    priority_mode="기본",
 ) -> list[OptionScoreV2]:
-    """가중치 반영 최종 점수 산정 및 순위 부여."""
-    weights = PRIORITY_WEIGHTS.get(priority_mode, PRIORITY_WEIGHTS["기본"])
+    """가중치 반영 최종 점수 산정 및 순위 부여. priority_mode: 3축 입력 또는 레거시 문자열."""
+    weights, _axes, _dominant = _resolve_priority(priority_mode)
 
     costs       = [o.three_year_cost for o in options]
     inspections = [o.inspection_after for o in options]
@@ -219,6 +281,7 @@ def score_options(
             3,
         )
 
+    # 오래쓰기 보정: 구 6모드 폐기 → 3축 미적용. 레거시 문자열 "오래쓰기"만 하위호환.
     if priority_mode == "오래쓰기":
         for opt in options:
             if opt.key in ("계속사용", "셀프케어", "수리후사용"):
@@ -238,9 +301,10 @@ def apply_hard_rules(
     options: list[OptionScoreV2],
     diagnosis: DiagnosisResultV2,
     carbon_summary: CarbonSummary,
-    priority_mode: str = "기본",
+    priority_mode="기본",
 ) -> list[OptionScoreV2]:
-    """하드 룰 적용."""
+    """하드 룰 적용. priority_mode: 3축 입력 또는 레거시 문자열."""
+    _w, _axes, dominant = _resolve_priority(priority_mode)
 
     # Rule 1: 점검 필요도 낮음 + 에너지 낭비 낮음 → 교체 선택지 하향
     if diagnosis.inspection_score < 0.25 and diagnosis.energy_waste_ratio < 0.20:
@@ -258,8 +322,8 @@ def apply_hard_rules(
     # Rule 3: 셀프케어 우선 (냄새·필터 미청소 + 작동 이상 없음)
     # 호출 측에서 symptom_type을 별도 전달해야 하므로 여기서는 skip (report_generator에서 처리)
 
-    # Rule 4: 구독 우선 (초기비용 민감 + 점검 필요도 높음 → 구독 가점 강화)
-    if priority_mode == "초기비용최소" and diagnosis.inspection_score >= 0.50:
+    # Rule 4: 구독 우선 (비용 우선 = 초기비용 민감 + 점검 필요도 높음 → 구독 가점 강화)
+    if dominant == "비용" and diagnosis.inspection_score >= 0.50:
         sub_opt = next((o for o in options if o.key == "구독전환"), None)
         if sub_opt:
             # 수정: +0.05 → +0.12 (초기비용 민감 상황에서 구독 유인 강화)
@@ -271,8 +335,8 @@ def apply_hard_rules(
         if repair_opt.initial_cost > buy_opt.initial_cost * 0.60 and diagnosis.inspection_score >= 0.60:
             buy_opt.highlights.append("수리비 과다·점검 필요도 높음 → 신제품 구매 검토")
 
-    # Rule 6: 탄소 보정 (친환경 모드 + 탄소 회수기간 너무 긴 경우 교체 하향)
-    if priority_mode == "친환경" and carbon_summary.carbon_payback_years > 7.0:
+    # Rule 6: 탄소 보정 (환경 우선 + 탄소 회수기간 너무 긴 경우 교체 하향)
+    if dominant == "환경" and carbon_summary.carbon_payback_years > 7.0:
         for opt in options:
             if opt.key in ("구독전환", "신제품구매"):
                 opt.final_score = round(max(opt.final_score - 0.08, 0.0), 3)

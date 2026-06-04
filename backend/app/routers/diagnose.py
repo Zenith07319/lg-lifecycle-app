@@ -1,6 +1,7 @@
 import uuid
 from fastapi import APIRouter, HTTPException, Request
 from app.models.request import DiagnoseRequest
+from app.models.response import DiagnoseResponse
 from app.services.calculation import run_full_pipeline
 from app.services.session import save_session, load_session, log_diagnosis
 
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/api", tags=["diagnosis"])
 DISCLAIMER = "현재 입력 조건 기준 추정 결과입니다. 정확한 고장 예측이 아닙니다."
 
 
-@router.post("/diagnose")
+@router.post("/diagnose", response_model=DiagnoseResponse)
 async def diagnose(req: DiagnoseRequest):
     try:
         result = run_full_pipeline(req.model_dump())

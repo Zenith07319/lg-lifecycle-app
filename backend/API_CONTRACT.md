@@ -1,5 +1,7 @@
-# ROR 백엔드 API 계약 (초안 v1)
+# ROR 백엔드 API 계약 (v2 — 3축·복수증상·응답모델 구현)
 
+> **✅ 구현 상태 (2026-06-04)**: 요청 모델이 **3축 우선순위(`priority_*_score`)·복수증상(`symptoms[]`, 심각도 1~5)·명세서 라벨**로 전환됨(레거시 `customer_priority`·`symptom_type` 하위호환 유지). 응답은 **`DiagnoseResponse`(Pydantic) 정식화**(`app/models/response.py`). 아래 "[합의 필요]"는 이제 **구현 완료** — 프론트는 신규 필드로 전송하면 됨.
+>
 > **목적**: 프론트엔드 ↔ 백엔드가 의존하는 **요청/응답 스키마(계약)**를 고정한다.
 > 이 계약은 **계산 로직 내부(공식·상수값)와 분리**되어 있어, 로직이 바뀌어도 이 문서의 스키마는 유지된다.
 > 기준 구현: `app/backend/app/routers/diagnose.py`, `app/models/request.py`, `services/calculation.py`.

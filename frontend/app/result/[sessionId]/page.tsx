@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, FileText, Share2, ChevronDown, Trophy, Loader2 } from "lucide-react";
+import { ChevronLeft, FileText, Share2, ChevronDown, ChevronRight, Trophy, Loader2, ShoppingBag, Repeat, MapPin } from "lucide-react";
 import { getSession } from "@/lib/api";
 import type { SessionData, OptionScore } from "@/lib/types";
 import { GRADE_COLORS, OPTION_ICONS, fmt, fmtCo2 } from "@/lib/utils";
@@ -145,6 +145,22 @@ function OptionCard({ opt, max }: { opt: OptionScore; max: number }) {
   );
 }
 
+/* ── 다음 액션 한 줄 ── */
+function ActionRow({ icon: Icon, label, hint, open, onClick }: {
+  icon: React.ElementType; label: string; hint?: string; open?: boolean; onClick: () => void;
+}) {
+  return (
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#faf5f2]">
+      <Icon size={18} className="text-crimson" strokeWidth={2} />
+      <span className="flex-1 text-[14px] font-bold text-ink">{label}</span>
+      {hint && <span className="text-[10px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5">{hint}</span>}
+      {open === undefined
+        ? <ChevronRight size={16} className="text-muted" />
+        : <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />}
+    </button>
+  );
+}
+
 export default function ResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [data, setData] = useState<SessionData | null>(null);
@@ -179,6 +195,8 @@ export default function ResultPage() {
     [inputs.priority_cost_score, inputs.priority_env_score, inputs.priority_convenience_score].reduce((mi, v, i, a) => (v > a[mi] ? i : mi), 0)
   ];
   const maxScore = Math.max(...data.ranked_options.map((o) => o.final_score));
+  const top2 = data.ranked_options.slice(0, 2).map((o) => o.key);
+  const soon = (name: string) => alert(`${name}는 준비 중입니다 (3단계 기능).`);
 
   return (
     <div>
@@ -238,19 +256,34 @@ export default function ResultPage() {
           </div>
         </div>
 
-        {/* 액션 */}
-        <div className="reveal reveal-6 flex gap-2.5">
-          <button onClick={() => { setShowAS(!showAS); setShowShare(false); }}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface py-3 text-[13px] font-bold text-ink-soft">
-            <FileText size={16} /> A/S Fast Pass
-          </button>
-          <button onClick={() => { setShowShare(!showShare); setShowAS(false); }}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface py-3 text-[13px] font-bold text-ink-soft">
-            <Share2 size={16} /> 가족 공유
-          </button>
+        {/* 다음 액션 */}
+        <div className="reveal reveal-6">
+          <h3 className="text-[13px] font-extrabold text-ink mb-2 px-1">다음 액션</h3>
+          <div className="rounded-[20px] bg-surface border border-line shadow-[var(--shadow-card)] divide-y divide-line/70 overflow-hidden">
+            {top2.includes("신제품구매") && (
+              <ActionRow icon={ShoppingBag} label="추천 신제품 보기" hint="LG 연계" onClick={() => soon("추천 신제품 보기")} />
+            )}
+            {top2.includes("구독전환") && (
+              <ActionRow icon={Repeat} label="구독 상품 보기" hint="LG 연계" onClick={() => soon("구독 상품 보기")} />
+            )}
+            <ActionRow icon={MapPin} label="주변 서비스센터 찾기" onClick={() => soon("서비스센터 조회")} />
+            <ActionRow icon={FileText} label="A/S Fast Pass 초안" open={showAS}
+              onClick={() => { setShowAS(!showAS); setShowShare(false); }} />
+            {showAS && (
+              <div className="px-4 pb-4 pt-1 bg-[#faf5f2]">
+                <pre className="text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.as_fast_pass_text}</pre>
+                <p className="text-[10.5px] text-muted mt-2">※ 수리 권장 시 A/S 접수용 초안. PDF 생성·저장은 준비 중(3단계).</p>
+              </div>
+            )}
+            <ActionRow icon={Share2} label="가족 공유 요약" open={showShare}
+              onClick={() => { setShowShare(!showShare); setShowAS(false); }} />
+            {showShare && (
+              <div className="px-4 pb-4 pt-1 bg-[#f0f4fb]">
+                <pre className="text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.family_share_summary}</pre>
+              </div>
+            )}
+          </div>
         </div>
-        {showAS && <pre className="rounded-xl bg-[#faf5f2] border border-line p-4 text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.as_fast_pass_text}</pre>}
-        {showShare && <pre className="rounded-xl bg-[#f0f4fb] border border-blue-100 p-4 text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.family_share_summary}</pre>}
 
         <p className="text-[11px] text-muted text-center leading-relaxed pt-1">
           {d.disclaimer as string ?? "모든 수치는 현재 입력 조건 기준 추정 결과이며, 정확한 고장 예측이 아닙니다."}

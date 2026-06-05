@@ -1,8 +1,12 @@
 import { DiagnoseInput, DiagnoseResponse, SessionData } from "./types";
 
-const API_BASE =
+// 환경변수 입력 경로(PowerShell 등)에서 값 앞뒤에 BOM/제로폭 문자가 섞이면
+// 절대 URL이 깨져 요청이 프론트 도메인으로 새는 사고가 난다. 보이지 않는 문자를
+// 제거하고 trim 하여 항상 깨끗한 base URL을 보장한다.
+const RAW_API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://lg-lifecycle-production.up.railway.app";
+const API_BASE = RAW_API_BASE.replace(/[﻿​‌‍⁠]/g, "").trim();
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {

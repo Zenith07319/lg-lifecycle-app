@@ -70,3 +70,15 @@ body {
 ::selection { background: rgba(165,0,52,.18); }
 input[type="range"] { accent-color: var(--color-crimson); }
 input[type="checkbox"] { accent-color: var(--color-crimson); width: 1.05rem; height: 1.05rem; }
+
+/* ── 인쇄(PDF 저장) 전용 ── A/S Fast Pass 등 .printable 문서만 A4로 출력 */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .app-shell { max-width: none; box-shadow: none; background: #fff; }
+  .app-main { padding-bottom: 0; }
+  .grain::before { display: none; }
+  .printable { box-shadow: none !important; border: none !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

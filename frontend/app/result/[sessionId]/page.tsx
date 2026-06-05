@@ -288,7 +288,12 @@ export default function ResultPage() {
             {showAS && (
               <div className="px-4 pb-4 pt-1 bg-[#faf5f2]">
                 <pre className="text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.as_fast_pass_text}</pre>
-                <p className="text-[10.5px] text-muted mt-2">※ 수리 권장 시 A/S 접수용 초안. PDF 생성·저장은 준비 중(3단계).</p>
+                <button onClick={() => router.push(`/fastpass/${sessionId}`)}
+                  className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-xl text-white font-extrabold py-2.5 text-[13px]"
+                  style={{ background: "linear-gradient(135deg,#a50034,#82002a)" }}>
+                  <FileText size={15} /> 접수증 만들기 · PDF 저장
+                </button>
+                <p className="text-[10.5px] text-muted mt-2">※ 수리 권장 시 A/S 접수용 초안입니다.</p>
               </div>
             )}
             <ActionRow icon={Share2} label="가족 공유 요약" open={showShare}

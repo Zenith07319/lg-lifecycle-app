@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Snowflake, Zap, Leaf, ScanSearch, Scale } from "lucide-react";
 import MyDeviceCard from "@/components/MyDeviceCard";
+import AlertBanner from "@/components/AlertBanner";
 
 const STEPS = [
   { icon: Zap, title: "전기요금", desc: "월간 소비전력량 기반 · 누진 구간 영향 포함" },
@@ -47,8 +48,9 @@ export default function HomePage() {
       </header>
 
       {/* ── 내 에어컨 (히어로에 겹침) ── */}
-      <div className="px-5 -mt-8 relative z-10 reveal reveal-1">
+      <div className="px-5 -mt-8 relative z-10 reveal reveal-1 space-y-3">
         <MyDeviceCard />
+        <AlertBanner />
       </div>
 
       {/* ── CTA ── */}

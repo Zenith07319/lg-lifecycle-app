@@ -185,6 +185,8 @@ export default function ResultPage() {
           score:          s.diagnosis.health_score as number,
           recommendation: s.report.recommendation_1st,
           savedAt:        Date.now(),
+          age_years:      s.diagnosis.age_years as number,
+          filter_months:  s.user_inputs.filter_clean_months,
         });
       })
       .catch((e) => setError(e.message));

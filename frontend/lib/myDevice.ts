@@ -9,6 +9,9 @@ export interface SavedDevice {
   score:         number;   // 건강점수
   recommendation:string;   // 1순위 추천 라벨
   savedAt:       number;   // ms epoch
+  // 알림 도출용(구버전 저장값엔 없을 수 있어 옵셔널)
+  age_years?:    number;
+  filter_months?:number;
 }
 
 const KEY = "ror_my_devices";

@@ -43,12 +43,10 @@ export default function DiagnosePage() {
     try {
       const r = await ocrEnergyLabel(f);
       const parts: string[] = [];
-      setForm((p) => {
-        const np = { ...p };
-        if (r.monthly_kwh) { np.ac_monthly_kwh_input = r.monthly_kwh; parts.push(`월간소비전력량 ${r.monthly_kwh}kWh`); }
-        if (r.capacity_kw) { np.capacity_kw = nearestCap(r.capacity_kw); parts.push(`냉방용량 ${np.capacity_kw}kW`); }
-        return np;
-      });
+      const patch: Partial<DiagnoseInput> = {};
+      if (r.monthly_kwh) { patch.ac_monthly_kwh_input = r.monthly_kwh; parts.push(`월간소비전력량 ${r.monthly_kwh}kWh`); }
+      if (r.capacity_kw) { const cap = nearestCap(r.capacity_kw); patch.capacity_kw = cap; parts.push(`냉방용량 ${cap}kW`); }
+      if (parts.length) setForm((p) => ({ ...p, ...patch }));
       setOcrMsg(parts.length
         ? `📷 인식됨: ${parts.join(" · ")}${r.source === "mock" ? " (샘플)" : ""} — 값을 확인하고 진행하세요`
         : "사진에서 값을 못 읽었어요. 또렷하게 다시 찍거나 직접 입력해 주세요.");

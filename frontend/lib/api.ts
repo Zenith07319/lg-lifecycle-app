@@ -35,6 +35,9 @@ export const getProducts = (capacityKw: number, kind: "buy" | "sub") =>
 export const getCenters = (region = "") =>
   apiFetch<CentersResponse>(`/api/centers${region ? `?region=${encodeURIComponent(region)}` : ""}`);
 
+export const getCentersNearby = (lat: number, lng: number, limit = 10) =>
+  apiFetch<CentersResponse>(`/api/centers?lat=${lat}&lng=${lng}&limit=${limit}`);
+
 export const SAMPLE_INPUT: DiagnoseInput = {
   product_type: "에어컨",
   purchase_year: 2014,

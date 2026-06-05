@@ -106,15 +106,19 @@ export interface ProductsResponse {
 }
 
 export interface ServiceCenter {
-  name:    string;
-  region:  string;
-  address: string;
-  repair:  string;
-  note:    string;
+  name:        string;
+  region:      string;
+  address:     string;
+  repair:      string;
+  note:        string;
+  lat:         number | null;
+  lng:         number | null;
+  distance_km?:number;
 }
 export interface CentersResponse {
   regions:     string[];
   selected:    string;
+  mode:        "region" | "nearby";
   count:       number;
   tel:         string;
   hours:       string;

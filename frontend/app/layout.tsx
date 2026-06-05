@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import BottomNav from "@/components/BottomNav";
 
 export const metadata: Metadata = {
-  title: "LG LifeCycle Decision Check",
-  description: "가전 유지·수리·구독·교체 의사결정 TOOL",
+  title: "ROR — Replace or Repair Check",
+  description: "ThinQ 내 가정용 에어컨 의사결정 — 계속 쓸까 · 고칠까 · 바꿀까?",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="min-h-screen bg-gray-50">
-        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-3 sticky top-0 z-10">
-          <span className="text-2xl font-black text-red-700">LG</span>
-          <span className="text-sm font-semibold text-gray-600">LifeCycle Decision Check</span>
-        </header>
-        <main className="max-w-4xl mx-auto px-4 py-8">{children}</main>
-        <footer className="text-center text-xs text-gray-400 py-6 border-t">
-          모든 수치는 현재 입력 조건 기준 추정 결과이며, 정확한 고장 예측이 아닙니다.
-        </footer>
+      <body>
+        {/* React 19가 <head>로 hoist */}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" />
+        <div className="app-shell grain">
+          <main className="app-main">{children}</main>
+          <BottomNav />
+        </div>
       </body>
     </html>
   );

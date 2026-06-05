@@ -1,40 +1,42 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft, Sparkles, ArrowRight } from "lucide-react";
 import { diagnose, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
 
-const SYMPTOMS: SymptomLabel[] = ["성능저하","소음","냄새","누수","전기요금증가","작동불량"];
-const PRIORITY_AXES: { key: keyof DiagnoseInput; label: string }[] = [
-  { key: "priority_cost_score",        label: "💰 비용 중시" },
-  { key: "priority_env_score",         label: "🌱 환경 중시" },
-  { key: "priority_convenience_score", label: "🛠 편의 중시" },
+const SYMPTOMS: SymptomLabel[] = ["성능저하", "소음", "냄새", "누수", "전기요금증가", "작동불량"];
+const PRIORITY_AXES: { key: keyof DiagnoseInput; label: string; emoji: string }[] = [
+  { key: "priority_cost_score", label: "비용 중시", emoji: "💰" },
+  { key: "priority_env_score", label: "환경 중시", emoji: "🌱" },
+  { key: "priority_convenience_score", label: "편의 중시", emoji: "🛠" },
 ];
 
 export default function DiagnosePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
-  const [form,    setForm]    = useState<DiagnoseInput>(SAMPLE_INPUT);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState<DiagnoseInput>(SAMPLE_INPUT);
 
   const set = (k: keyof DiagnoseInput, v: string | number) =>
-    setForm((prev) => ({ ...prev, [k]: v }));
+    setForm((p) => ({ ...p, [k]: v }));
 
   const toggleSymptom = (label: SymptomLabel) =>
-    setForm((prev) => {
-      const exists = prev.symptoms.some((s) => s.type === label);
+    setForm((p) => {
+      const has = p.symptoms.some((s) => s.type === label);
       return {
-        ...prev,
-        symptoms: exists
-          ? prev.symptoms.filter((s) => s.type !== label)
-          : [...prev.symptoms, { type: label, severity: 3 }],
+        ...p,
+        symptoms: has
+          ? p.symptoms.filter((s) => s.type !== label)
+          : [...p.symptoms, { type: label, severity: 3 }],
       };
     });
 
   const setSeverity = (label: SymptomLabel, severity: number) =>
-    setForm((prev) => ({
-      ...prev,
-      symptoms: prev.symptoms.map((s) => (s.type === label ? { ...s, severity } : s)),
+    setForm((p) => ({
+      ...p,
+      symptoms: p.symptoms.map((s) => (s.type === label ? { ...s, severity } : s)),
     }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,176 +52,129 @@ export default function DiagnosePage() {
     }
   };
 
-  const Label = ({ children }: { children: React.ReactNode }) => (
-    <label className="block text-sm font-medium text-gray-700 mb-1">{children}</label>
+  const inputCls =
+    "w-full rounded-xl border border-line bg-[#fbf8f6] px-3 py-2.5 text-[14px] text-ink outline-none focus:border-crimson focus:bg-white transition-colors";
+  const L = ({ children }: { children: React.ReactNode }) => (
+    <label className="block text-[12.5px] font-bold text-ink-soft mb-1.5">{children}</label>
   );
-
-  const Input = ({ label, type = "number", field, min, max, step }: {
-    label: string; type?: string; field: keyof DiagnoseInput;
-    min?: number; max?: number; step?: number;
-  }) => (
-    <div>
-      <Label>{label}</Label>
-      <input
-        type={type}
-        min={min} max={max} step={step}
-        value={form[field] as number}
-        onChange={(e) => set(field, type === "number" ? Number(e.target.value) : e.target.value)}
-        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-      />
-    </div>
-  );
-
-  const Select = ({ label, field, options }: {
-    label: string; field: keyof DiagnoseInput; options: string[];
-  }) => (
-    <div>
-      <Label>{label}</Label>
-      <select
-        value={form[field] as string}
-        onChange={(e) => set(field, e.target.value)}
-        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-      >
-        {options.map((o) => <option key={o}>{o}</option>)}
-      </select>
-    </div>
+  const Card = ({ n, title, sub, children }: { n: string; title: string; sub?: string; children: React.ReactNode }) => (
+    <section className={`rounded-[22px] bg-surface border border-line p-5 shadow-[var(--shadow-card)] reveal reveal-${n}`}>
+      <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-ink mb-4">
+        <span className="w-5 h-5 rounded-full bg-crimson text-white text-[11px] font-bold flex items-center justify-center">{n}</span>
+        {title}
+        {sub && <span className="text-[11px] font-medium text-muted">{sub}</span>}
+      </h2>
+      {children}
+    </section>
   );
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">보유 가전 정보 입력</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        정확하지 않아도 됩니다. 대략적인 값을 입력해주세요.
-      </p>
+    <div>
+      {/* App bar */}
+      <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
+        <Link href="/" className="text-crimson"><ChevronLeft size={22} /></Link>
+        <h1 className="text-[16px] font-extrabold text-ink">진단 입력</h1>
+        <span className="ml-auto text-[11px] text-muted">대략적인 값이면 OK</span>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 제품 정보 */}
-        <section className="bg-white rounded-xl border p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">제품 정보</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Select label="제품군" field="product_type" options={["에어컨"]} />
-            <Input  label="구매 연도" field="purchase_year" min={2000} max={2026} />
-            <Select label="용량" field="capacity_kw"
-              options={["2.5","3.6","5.0","6.0"].map(String)} />
+      <form onSubmit={handleSubmit} className="px-4 py-4 space-y-4">
+        {/* 1. 제품 */}
+        <Card n="1" title="제품 정보">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>계약 종류</Label>
-              <div className="flex gap-3">
-                {(["고압","저압"] as const).map((v) => (
-                  <label key={v} className="flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="contract" value={v}
-                      checked={form.contract_type === v}
-                      onChange={() => set("contract_type", v)} />
-                    <span className="text-sm">{v === "고압" ? "고압 (아파트)" : "저압 (빌라·원룸)"}</span>
+              <L>구매 연도</L>
+              <input type="number" min={2000} max={2026} value={form.purchase_year}
+                onChange={(e) => set("purchase_year", Number(e.target.value))} className={inputCls} />
+            </div>
+            <div>
+              <L>냉방 용량</L>
+              <select value={form.capacity_kw} onChange={(e) => set("capacity_kw", Number(e.target.value))} className={inputCls}>
+                {["2.5", "3.6", "5.0"].map((c) => <option key={c} value={c}>{c} kW</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="mt-3">
+            <L>계약 종류</L>
+            <div className="grid grid-cols-2 gap-2">
+              {(["고압", "저압"] as const).map((v) => (
+                <button type="button" key={v} onClick={() => set("contract_type", v)}
+                  className={`rounded-xl border py-2.5 text-[13px] font-bold transition-colors ${form.contract_type === v ? "border-crimson bg-[#fdeef4] text-crimson" : "border-line text-ink-soft"}`}>
+                  {v === "고압" ? "고압 (아파트)" : "저압 (빌라·원룸)"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* 2. 사용 패턴 */}
+        <Card n="2" title="사용 패턴">
+          <div className="grid grid-cols-2 gap-3">
+            <div><L>하루 사용시간 (h)</L><input type="number" min={1} max={24} value={form.daily_usage_hours} onChange={(e) => set("daily_usage_hours", Number(e.target.value))} className={inputCls} /></div>
+            <div><L>연간 사용 개월</L><input type="number" min={1} max={12} value={form.usage_months} onChange={(e) => set("usage_months", Number(e.target.value))} className={inputCls} /></div>
+          </div>
+          <div className="mt-3">
+            <L>여름 한 달 전기요금 (kWh)</L>
+            <input type="number" min={0} max={1000} step={10} value={form.summer_monthly_kwh} onChange={(e) => set("summer_monthly_kwh", Number(e.target.value))} className={inputCls} />
+            <p className="text-[11px] text-muted mt-1.5">에어컨 켜는 달 고지서 총량. 입력 시 에어컨 기여분을 자동 분리합니다.</p>
+          </div>
+        </Card>
+
+        {/* 3. 증상 */}
+        <Card n="3" title="증상" sub="복수 선택 · 심각도 1~5">
+          <div className="space-y-2">
+            {SYMPTOMS.map((label) => {
+              const sel = form.symptoms.find((s) => s.type === label);
+              return (
+                <div key={label} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${sel ? "border-crimson/40 bg-[#fdeef4]" : "border-line"}`}>
+                  <label className="flex-1 flex items-center gap-2.5 cursor-pointer">
+                    <input type="checkbox" checked={!!sel} onChange={() => toggleSymptom(label)} />
+                    <span className="text-[14px] font-semibold text-ink">{label}</span>
                   </label>
-                ))}
+                  {sel && (
+                    <select value={sel.severity} onChange={(e) => setSeverity(label, Number(e.target.value))}
+                      className="rounded-lg border border-line bg-white px-2 py-1.5 text-[13px] font-bold text-crimson">
+                      {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}점</option>)}
+                    </select>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-muted mt-2">선택 안 하면 ‘증상없음’으로 진단합니다.</p>
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div><L>필터 미청소 (개월)</L><input type="number" min={0} max={60} value={form.filter_clean_months} onChange={(e) => set("filter_clean_months", Number(e.target.value))} className={inputCls} /></div>
+            <div><L>최근 수리 (회)</L><input type="number" min={0} max={10} value={form.repair_history_count} onChange={(e) => set("repair_history_count", Number(e.target.value))} className={inputCls} /></div>
+          </div>
+        </Card>
+
+        {/* 4. 우선순위 3축 */}
+        <Card n="4" title="우선순위" sub="비용 / 환경 / 편의">
+          <p className="text-[11.5px] text-muted mb-3 -mt-2">중요한 가치에 점수를 더 주세요. (미응답 시 비용 우선)</p>
+          {PRIORITY_AXES.map(({ key, label, emoji }) => (
+            <div key={key} className="mb-3.5 last:mb-0">
+              <div className="flex justify-between text-[13px] mb-1">
+                <span className="font-semibold text-ink-soft">{emoji} {label}</span>
+                <span className="font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{form[key] as number}</span>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 사용 패턴 */}
-        <section className="bg-white rounded-xl border p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">사용 패턴</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="하루 사용시간 (시간)" field="daily_usage_hours" min={1} max={24} />
-            <Input label="연간 사용 개월수" field="usage_months" min={1} max={12} />
-            <Select label="계절" field="season" options={["하계","기타"]} />
-          </div>
-          <div className="mt-3 space-y-2">
-            <p className="text-xs font-semibold text-gray-600">전기 사용량 (고지서 기준)</p>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                여름 월 평균 전력사용량 kWh
-                <span className="ml-1 text-xs text-gray-400">(에어컨 켜는 달 고지서)</span>
-              </label>
-              <input
-                type="number" min={0} max={1000} step={10}
-                value={form.summer_monthly_kwh}
-                onChange={(e) => set("summer_monthly_kwh", Number(e.target.value))}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                입력 시 효율감퇴 모델로 에어컨 기여분을 자동 분리합니다. 0이면 카탈로그 기반 추정.
-              </p>
-            </div>
-            <Input label="기저 전력사용량 참고 kWh (겨울 고지서, 선택)" field="base_monthly_kwh" min={50} max={800} />
-          </div>
-        </section>
-
-        {/* 증상 */}
-        <section className="bg-white rounded-xl border p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">증상 및 관리</h2>
-          <div>
-            <Label>증상 (복수 선택 · 각 심각도 1~5점)</Label>
-            <div className="space-y-2">
-              {SYMPTOMS.map((label) => {
-                const sel = form.symptoms.find((s) => s.type === label);
-                return (
-                  <div key={label} className="flex items-center gap-3">
-                    <label className="flex-1 flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={!!sel}
-                        onChange={() => toggleSymptom(label)} />
-                      <span className="text-sm">{label}</span>
-                    </label>
-                    {sel && (
-                      <select value={sel.severity}
-                        onChange={(e) => setSeverity(label, Number(e.target.value))}
-                        className="border rounded-lg px-2 py-1 text-sm">
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <option key={n} value={n}>{n}점</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-xs text-gray-400 mt-1">아무것도 선택하지 않으면 ‘증상없음’으로 진단합니다.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="마지막 필터 청소 후 경과 개월" field="filter_clean_months" min={0} max={60} />
-            <Input label="최근 3년 수리 횟수" field="repair_history_count" min={0} max={10} />
-          </div>
-        </section>
-
-        {/* 우선순위 3축 */}
-        <section className="bg-white rounded-xl border p-5 space-y-4">
-          <h2 className="font-semibold text-gray-800">나에게 가장 중요한 것은? (비용 / 환경 / 편의)</h2>
-          <p className="text-xs text-gray-500">중요하게 보는 가치에 점수를 더 주세요. (미응답 시 비용 우선)</p>
-          {PRIORITY_AXES.map(({ key, label }) => (
-            <div key={key}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-700">{label}</span>
-                <span className="font-bold text-red-700">{form[key] as number}</span>
-              </div>
-              <input type="range" min={0} max={100}
-                value={form[key] as number}
-                onChange={(e) => set(key, Number(e.target.value))}
-                className="w-full accent-red-700" />
+              <input type="range" min={0} max={100} value={form[key] as number}
+                onChange={(e) => set(key, Number(e.target.value))} className="w-full" />
             </div>
           ))}
-        </section>
+        </Card>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-            {error}
-          </div>
+          <div className="rounded-xl bg-[#fff2f2] border border-red-200 p-3 text-[13px] text-red-700">{error}</div>
         )}
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => setForm(SAMPLE_INPUT)}
-            className="flex-1 border border-gray-300 rounded-full py-3 text-sm text-gray-600 hover:bg-gray-50"
-          >
-            샘플 데이터 불러오기
+        <div className="flex gap-2.5 pt-1">
+          <button type="button" onClick={() => setForm(SAMPLE_INPUT)}
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface px-4 py-3.5 text-[13px] font-bold text-ink-soft">
+            <Sparkles size={16} /> 샘플
           </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-red-700 hover:bg-red-800 disabled:bg-gray-300 text-white font-bold rounded-full py-3 transition-colors"
-          >
-            {loading ? "분석 중..." : "진단 시작 →"}
+          <button type="submit" disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl text-white font-extrabold py-3.5 text-[15px] shadow-[0_8px_20px_rgba(165,0,52,.28)] disabled:opacity-50 active:scale-[.99] transition-transform"
+            style={{ background: "linear-gradient(135deg,#a50034,#82002a)" }}>
+            {loading ? "분석 중…" : <>진단 시작 <ArrowRight size={18} /></>}
           </button>
         </div>
       </form>

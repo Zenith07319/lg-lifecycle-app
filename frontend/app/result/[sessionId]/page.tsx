@@ -2,205 +2,144 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ChevronLeft, FileText, Share2, ChevronDown, Trophy, Loader2 } from "lucide-react";
 import { getSession } from "@/lib/api";
 import type { SessionData, OptionScore } from "@/lib/types";
 import { GRADE_COLORS, OPTION_ICONS, fmt, fmtCo2 } from "@/lib/utils";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from "recharts";
 
-const RANK_COLORS = ["#C40000","#d44000","#e07b00","#888","#aaa"];
-
-function GradeCard({ data }: { data: SessionData }) {
+/* ── 건강등급 링 히어로 ── */
+function GradeHero({ data }: { data: SessionData }) {
   const d = data.diagnosis;
-  const color = GRADE_COLORS[d.health_grade as string] ?? "#555";
+  const grade = d.health_grade as string;
+  const score = d.health_score as number;
+  const color = GRADE_COLORS[grade] ?? "#a50034";
+  const R = 54, CIRC = 2 * Math.PI * R;
+  const [prog, setProg] = useState(0);
+  useEffect(() => { const t = setTimeout(() => setProg(Math.min(score, 100)), 120); return () => clearTimeout(t); }, [score]);
+  const off = CIRC * (1 - prog / 100);
+
+  const metrics: [string, string][] = [
+    ["점검 필요도", `${(d.inspection_score_100 as number).toFixed(0)}`],
+    ["에너지 낭비", `${((d.energy_waste_ratio as number) * 100).toFixed(0)}%`],
+    ["생활 불편", `${((d.inconvenience as number) * 100).toFixed(0)}`],
+  ];
   return (
-    <div className="bg-white rounded-xl border p-6 text-center space-y-2">
-      <div className="text-6xl font-black" style={{ color }}>{d.health_grade}</div>
-      <div className="text-lg font-semibold text-gray-700">건강점수 {(d.health_score as number).toFixed(1)}점</div>
-      <div className="text-sm text-gray-500">{d.grade_description as string}</div>
-      <div className="grid grid-cols-3 gap-2 mt-3 text-xs text-gray-600">
-        <div className="bg-gray-50 rounded p-2">
-          <div className="font-semibold">{(d.inspection_score_100 as number).toFixed(0)}점</div>
-          <div>점검 필요도</div>
+    <div className="rounded-[26px] p-6 text-center border border-line shadow-[var(--shadow-pop)]"
+      style={{ background: `linear-gradient(180deg,#ffffff 0%, ${color}10 100%)` }}>
+      <div className="relative w-[150px] h-[150px] mx-auto">
+        <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
+          <circle cx="64" cy="64" r={R} fill="none" stroke="#ece2db" strokeWidth="11" />
+          <circle cx="64" cy="64" r={R} fill="none" stroke={color} strokeWidth="11" strokeLinecap="round"
+            strokeDasharray={CIRC} strokeDashoffset={off}
+            style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)" }} />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[58px] leading-none font-extrabold"
+            style={{ fontFamily: "var(--font-display)", color }}>{grade}</span>
         </div>
-        <div className="bg-gray-50 rounded p-2">
-          <div className="font-semibold">{((d.energy_waste_ratio as number)*100).toFixed(1)}%</div>
-          <div>에너지 낭비</div>
-        </div>
-        <div className="bg-gray-50 rounded p-2">
-          <div className="font-semibold">{((d.inconvenience as number)*100).toFixed(0)}점</div>
-          <div>생활 불편도</div>
-        </div>
+      </div>
+      <p className="mt-2 text-[14px] font-bold text-ink">
+        건강점수 <span style={{ fontFamily: "var(--font-display)" }}>{score.toFixed(0)}</span>점
+      </p>
+      <p className="text-[12.5px] text-muted">{d.grade_description as string}</p>
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        {metrics.map(([l, v]) => (
+          <div key={l} className="rounded-2xl bg-[#faf5f2] py-2.5">
+            <div className="text-[18px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{v}</div>
+            <div className="text-[10.5px] text-muted mt-0.5">{l}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
+/* ── 전기요금 카드 ── */
 function ElecCard({ data }: { data: SessionData }) {
+  const oldC = data.delta_old.ac_delta_cost as number;
+  const newC = data.delta_new.ac_delta_cost as number;
+  const months = (data.user_inputs.usage_months as number) || 4;
+  const save5 = Math.max(0, (oldC - newC) * months * 5);
   const changed = data.delta_old.tier_changed as boolean;
   return (
-    <div className="bg-white rounded-xl border p-5 space-y-3">
-      <h3 className="font-semibold text-gray-800">전기요금 비교 (하계 · AC 기여분)</h3>
-      <div className="grid grid-cols-3 gap-3 text-center text-sm">
-        <div>
-          <div className="text-gray-500">기준 월 요금</div>
-          <div className="font-bold text-lg">{fmt((data.delta_old.bill_base as number) ?? 0)}</div>
+    <div className="rounded-[22px] bg-surface border border-line p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-[14px] font-extrabold text-ink mb-3">⚡ 전기요금 (에어컨 기여 · 월)</h3>
+      <div className="flex items-end gap-3">
+        <div className="flex-1 rounded-2xl bg-[#fff6f0] p-3 text-center">
+          <p className="text-[11px] text-muted">지금 구형</p>
+          <p className="text-[19px] font-extrabold text-grade-d" style={{ fontFamily: "var(--font-display)" }}>{fmt(oldC)}</p>
         </div>
-        <div>
-          <div className="text-gray-500">구형 AC 기여</div>
-          <div className="font-bold text-lg text-orange-600">{fmt(data.delta_old.ac_delta_cost as number)}</div>
-          <div className="text-xs text-gray-400">/월</div>
-        </div>
-        <div>
-          <div className="text-gray-500">신형 AC 기여</div>
-          <div className="font-bold text-lg text-green-700">{fmt(data.delta_new.ac_delta_cost as number)}</div>
-          <div className="text-xs text-gray-400">/월</div>
+        <div className="pb-3 text-muted text-[13px] font-bold">→</div>
+        <div className="flex-1 rounded-2xl bg-[#eef8f0] p-3 text-center">
+          <p className="text-[11px] text-muted">1등급 신형</p>
+          <p className="text-[19px] font-extrabold text-grade-a" style={{ fontFamily: "var(--font-display)" }}>{fmt(newC)}</p>
         </div>
       </div>
+      <div className="mt-3 flex items-center justify-between rounded-xl bg-[#faf5f2] px-4 py-2.5">
+        <span className="text-[12.5px] text-ink-soft font-semibold">여름철 5년 절감 (교체 시)</span>
+        <span className="text-[15px] font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{fmt(save5)}</span>
+      </div>
       {changed && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-700">
-          ⚡ 누진구간 변화: 구형 AC 포함 시 {data.delta_old.tier_with_ac as string} → 신형 교체 시 {data.delta_new.tier_with_ac as string}
-        </div>
+        <p className="mt-2 text-[11px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+          ⚡ 누진 구간 이동: {data.delta_old.tier_with_ac as string} → {data.delta_new.tier_with_ac as string} (절감폭 ↑)
+        </p>
       )}
     </div>
   );
 }
 
-function OptionCard({ opt, index }: { opt: OptionScore; index: number }) {
-  const [open, setOpen] = useState(index < 2);
-  const color = RANK_COLORS[Math.min(opt.rank - 1, 4)];
-  const icon  = OPTION_ICONS[opt.key] ?? "";
-  const rankTag = opt.rank === 1 ? "🥇 1순위 추천" : opt.rank === 2 ? "🥈 2순위" : `${opt.rank}순위`;
-
+/* ── 선택지 카드 (랭킹·점수바·펼침) ── */
+function OptionCard({ opt, max }: { opt: OptionScore; max: number }) {
+  const [open, setOpen] = useState(opt.rank === 1);
+  const first = opt.rank === 1;
   return (
-    <div className="bg-white rounded-xl border overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50"
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{icon}</span>
-          <span className="font-semibold text-gray-800">{opt.label}</span>
-          <span className="text-xs text-gray-400">최종점수 {(opt.final_score*100).toFixed(1)}점</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold" style={{ color }}>{rankTag}</span>
-          <span className="text-gray-400">{open ? "▲" : "▼"}</span>
+    <div className={`rounded-[20px] overflow-hidden border shadow-[var(--shadow-card)] ${first ? "border-crimson bg-[#fff7fa]" : "border-line bg-surface"}`}>
+      <button onClick={() => setOpen(!open)} className="w-full px-4 py-3.5 text-left">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[18px]">{OPTION_ICONS[opt.key] ?? "•"}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[15px] font-extrabold text-ink">{opt.label}</span>
+              {first && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-white bg-crimson rounded-full px-2 py-0.5">
+                  <Trophy size={11} /> 1순위
+                </span>
+              )}
+              {!first && <span className="text-[11px] font-bold text-muted">{opt.rank}순위</span>}
+            </div>
+            <div className="mt-1.5 h-1.5 rounded-full bg-[#efe7e1] overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${Math.max(6, (opt.final_score / max) * 100)}%`, background: first ? "linear-gradient(90deg,#a50034,#c2185b)" : "#c9bdb4" }} />
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-[14px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{fmt(opt.three_year_cost)}</div>
+            <div className="text-[10px] text-muted">5년 총비용</div>
+          </div>
+          <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
         </div>
       </button>
-
       {open && (
-        <div className="px-5 pb-5 space-y-4 border-t">
-          <div className="grid grid-cols-3 gap-3 pt-4 text-sm text-center">
-            <div><div className="text-gray-500">3년 총비용</div><div className="font-bold text-base">{fmt(opt.three_year_cost)}</div></div>
-            <div><div className="text-gray-500">초기비용</div><div className="font-bold">{fmt(opt.initial_cost)}</div></div>
-            <div><div className="text-gray-500">3년 탄소</div><div className="font-bold">{fmtCo2(opt.carbon_total)}</div></div>
-            <div><div className="text-gray-500">점검필요도↓</div><div className="font-bold">{(opt.inspection_after*100).toFixed(0)}점</div></div>
-            <div><div className="text-gray-500">에너지낭비↓</div><div className="font-bold">{(opt.energy_waste_after*100).toFixed(0)}%</div></div>
-            <div><div className="text-gray-500">생활불편도↓</div><div className="font-bold">{(opt.inconvenience_after*100).toFixed(0)}점</div></div>
-          </div>
-
-          <div className="grid grid-cols-5 gap-1 text-xs text-center">
-            {[["경제성",opt.economy_score],["신뢰성",opt.reliability_score],["탄소",opt.carbon_score],["편의",opt.comfort_score],["초기",opt.initial_score]].map(([l,v]) => (
-              <div key={l as string} className="bg-gray-50 rounded p-2">
-                <div className="font-semibold">{((v as number)*100).toFixed(0)}</div>
-                <div className="text-gray-500">{l}</div>
+        <div className="px-4 pb-4 pt-1 border-t border-line/70 space-y-3">
+          <div className="grid grid-cols-3 gap-2 pt-3 text-center">
+            {[["초기비용", fmt(opt.initial_cost)], ["점검↓", `${(opt.inspection_after * 100).toFixed(0)}`], ["탄소", fmtCo2(opt.carbon_total)]].map(([l, v]) => (
+              <div key={l} className="rounded-xl bg-[#faf5f2] py-2">
+                <div className="text-[13px] font-extrabold text-ink">{v}</div>
+                <div className="text-[10px] text-muted">{l}</div>
               </div>
             ))}
           </div>
-
-          {opt.highlights.map((h, i) => (
-            <div key={i} className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1">ℹ {h}</div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CostChart({ options }: { options: OptionScore[] }) {
-  const data = [...options].sort((a,b) => a.three_year_cost - b.three_year_cost).map((o) => ({
-    name: o.label,
-    cost: o.three_year_cost,
-    rank: o.rank,
-  }));
-  return (
-    <div className="bg-white rounded-xl border p-5">
-      <h3 className="font-semibold text-gray-800 mb-4">3년 총비용 비교</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} layout="vertical" margin={{ left: 20, right: 30 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" tickFormatter={(v) => `${(v/10000).toFixed(0)}만`} tick={{ fontSize: 11 }} />
-          <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
-          <Tooltip formatter={(v: unknown) => fmt(v as number)} />
-          <Bar dataKey="cost" radius={[0,4,4,0]}>
-            {data.map((d, i) => (
-              <Cell key={i} fill={d.rank === 1 ? "#C40000" : "#d1d5db"} />
+          <div className="grid grid-cols-5 gap-1.5 text-center">
+            {([["경제", opt.economy_score], ["신뢰", opt.reliability_score], ["탄소", opt.carbon_score], ["편의", opt.comfort_score], ["초기", opt.initial_score]] as [string, number][]).map(([l, v]) => (
+              <div key={l} className="rounded-lg bg-[#f3ece7] py-1.5">
+                <div className="text-[12px] font-extrabold text-ink-soft" style={{ fontFamily: "var(--font-display)" }}>{(v * 100).toFixed(0)}</div>
+                <div className="text-[9.5px] text-muted">{l}</div>
+              </div>
             ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function ReportSection({ data }: { data: SessionData }) {
-  const r = data.report;
-  const [showAS, setShowAS] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const gradColor = GRADE_COLORS[data.diagnosis.health_grade as string] ?? "#555";
-
-  return (
-    <div className="space-y-4">
-      {/* 1순위 추천 */}
-      <div className="bg-red-50 border-2 border-red-600 rounded-xl p-6">
-        <div className="text-xs text-gray-500 mb-1">1순위 추천 (현재 입력 조건 기준 추정)</div>
-        <div className="text-3xl font-black text-red-700">{r.recommendation_1st}</div>
-        <div className="text-sm text-gray-600 mt-1">2순위 대안: <strong>{r.recommendation_2nd}</strong></div>
-        <div className="text-sm text-gray-700 mt-3">{r.reason_summary}</div>
-      </div>
-
-      {/* Confidence Cards */}
-      <div>
-        <h3 className="font-semibold text-gray-800 mb-2">판단 근거</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {r.confidence_cards.map((c, i) => (
-            <div key={i} className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">{c}</div>
+          </div>
+          {opt.highlights.map((h, i) => (
+            <p key={i} className="text-[11.5px] text-amber-800 bg-amber-50 rounded-lg px-3 py-2">ℹ {h}</p>
           ))}
         </div>
-      </div>
-
-      {/* 주의사항 */}
-      {r.caution_notes.length > 0 && (
-        <div className="space-y-2">
-          {r.caution_notes.map((n, i) => (
-            <div key={i} className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">{n}</div>
-          ))}
-        </div>
-      )}
-
-      {/* 행동 버튼 */}
-      <div className="flex flex-wrap gap-2">
-        <button onClick={() => setShowAS(!showAS)}
-          className="border border-gray-300 rounded-full px-4 py-2 text-sm hover:bg-gray-50">
-          📋 A/S Fast Pass 초안
-        </button>
-        <button onClick={() => setShowShare(!showShare)}
-          className="border border-gray-300 rounded-full px-4 py-2 text-sm hover:bg-gray-50">
-          📤 가족 공유 요약
-        </button>
-      </div>
-      {showAS && (
-        <pre className="bg-gray-50 border rounded-lg p-4 text-xs text-gray-700 whitespace-pre-wrap">
-          {r.as_fast_pass_text}
-        </pre>
-      )}
-      {showShare && (
-        <pre className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-xs text-gray-700 whitespace-pre-wrap">
-          {r.family_share_summary}
-        </pre>
       )}
     </div>
   );
@@ -210,77 +149,113 @@ export default function ResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [data, setData] = useState<SessionData | null>(null);
   const [error, setError] = useState("");
+  const [showAS, setShowAS] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
-    getSession(sessionId)
-      .then(setData)
-      .catch((e) => setError(e.message));
+    getSession(sessionId).then(setData).catch((e) => setError(e.message));
   }, [sessionId]);
 
-  if (error) return (
-    <div className="text-center py-16 space-y-4">
-      <div className="text-red-600">{error}</div>
-      <Link href="/diagnose" className="text-red-700 underline">다시 진단하기</Link>
-    </div>
-  );
-
-  if (!data) return (
-    <div className="text-center py-16 text-gray-400">분석 중...</div>
-  );
+  if (error)
+    return (
+      <div className="text-center py-24 px-6 space-y-4">
+        <p className="text-[14px] text-red-600">{error}</p>
+        <Link href="/diagnose" className="text-crimson font-bold underline">다시 진단하기</Link>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-muted gap-3">
+        <Loader2 className="animate-spin text-crimson" size={28} />
+        <p className="text-[14px]">분석 중…</p>
+      </div>
+    );
 
   const d = data.diagnosis;
   const inputs = data.user_inputs;
+  const r = data.report;
+  const dom = (["비용", "환경", "편의"] as const)[
+    [inputs.priority_cost_score, inputs.priority_env_score, inputs.priority_convenience_score].reduce((mi, v, i, a) => (v > a[mi] ? i : mi), 0)
+  ];
+  const maxScore = Math.max(...data.ranked_options.map((o) => o.final_score));
 
   return (
-    <div className="space-y-6">
-      {/* 상단 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">진단 결과</h1>
-          <p className="text-sm text-gray-500">
-            {inputs.product_type} · {inputs.purchase_year}년식 · 사용 {d.age_years as number}년 · {(["비용", "환경", "편의"] as const)[[inputs.priority_cost_score, inputs.priority_env_score, inputs.priority_convenience_score].reduce((mi, v, i, arr) => (v > arr[mi] ? i : mi), 0)]} 우선
-          </p>
-        </div>
-        <Link href="/diagnose"
-          className="border border-gray-300 text-sm rounded-full px-4 py-2 hover:bg-gray-50">
-          다시 진단
-        </Link>
-      </div>
-
-      {/* 건강등급 + 전기요금 */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <GradeCard data={data} />
-        <ElecCard  data={data} />
-      </div>
-
-      {/* 리포트 */}
-      <ReportSection data={data} />
-
-      {/* 비용 차트 */}
-      <CostChart options={data.ranked_options} />
-
-      {/* 선택지 상세 */}
-      <div className="space-y-2">
-        <h2 className="font-bold text-gray-800">선택지 상세 비교</h2>
-        {data.ranked_options.map((opt, i) => (
-          <OptionCard key={opt.key} opt={opt} index={i} />
-        ))}
-      </div>
-
-      {/* 탄소 */}
-      <div className="bg-white rounded-xl border p-5">
-        <h3 className="font-semibold text-gray-800 mb-3">탄소 영향</h3>
-        <div className="grid grid-cols-3 gap-3 text-center text-sm">
-          <div><div className="text-gray-500">구형 3년 탄소</div><div className="font-bold">{fmtCo2(data.carbon_summary.old_use_carbon_3y)}</div></div>
-          <div><div className="text-gray-500">신형 3년 탄소</div><div className="font-bold">{fmtCo2(data.carbon_summary.new_use_carbon_3y)}</div></div>
-          <div><div className="text-gray-500">교체 회수기간</div><div className="font-bold">{data.carbon_summary.carbon_payback_years.toFixed(1)}년</div></div>
+    <div>
+      {/* App bar */}
+      <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
+        <Link href="/diagnose" className="text-crimson"><ChevronLeft size={22} /></Link>
+        <div className="leading-tight">
+          <h1 className="text-[16px] font-extrabold text-ink">진단 결과</h1>
+          <p className="text-[10.5px] text-muted">{inputs.product_type} · {inputs.purchase_year}년식 · {d.age_years as number}년 사용 · {dom} 우선</p>
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 text-center">
-        ※ 모든 수치는 현재 입력 조건 기준 추정 결과이며, 정확한 고장 예측이 아닙니다. (KEPCO 2025.04 기준)
-      </p>
+      <div className="px-4 py-4 space-y-4">
+        <div className="reveal reveal-1"><GradeHero data={data} /></div>
+        <div className="reveal reveal-2"><ElecCard data={data} /></div>
+
+        {/* 1순위 추천 */}
+        <div className="reveal reveal-3 rounded-[22px] p-5 text-white shadow-[var(--shadow-pop)]"
+          style={{ background: "linear-gradient(140deg,#a50034,#76002a)" }}>
+          <p className="text-[11px] font-semibold text-white/80">1순위 추천 (현재 입력 기준 추정)</p>
+          <p className="text-[28px] font-extrabold mt-0.5" style={{ fontFamily: "var(--font-display)" }}>{r.recommendation_1st}</p>
+          <p className="text-[12.5px] text-white/85 mt-1">2순위 대안 · {r.recommendation_2nd}</p>
+          <p className="text-[12.5px] leading-relaxed text-white/95 mt-3 border-t border-white/20 pt-3">{r.reason_summary}</p>
+        </div>
+
+        {/* 판단 근거 */}
+        <div className="reveal reveal-4">
+          <h3 className="text-[13px] font-extrabold text-ink mb-2 px-1">판단 근거</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {r.confidence_cards.map((c, i) => (
+              <div key={i} className="rounded-xl bg-surface border border-line p-3 text-[12px] text-ink-soft shadow-[var(--shadow-card)]">{c}</div>
+            ))}
+          </div>
+          {r.caution_notes.map((n, i) => (
+            <p key={i} className="mt-2 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-800">{n}</p>
+          ))}
+        </div>
+
+        {/* 5선택지 비교 */}
+        <div className="reveal reveal-5">
+          <h3 className="text-[13px] font-extrabold text-ink mb-2 px-1">5가지 선택지 비교 <span className="text-[11px] font-medium text-muted">5년 · {dom} 우선 반영</span></h3>
+          <div className="space-y-2.5">
+            {data.ranked_options.map((opt) => <OptionCard key={opt.key} opt={opt} max={maxScore} />)}
+          </div>
+        </div>
+
+        {/* 탄소 */}
+        <div className="reveal reveal-6 rounded-[22px] bg-surface border border-line p-5 shadow-[var(--shadow-card)]">
+          <h3 className="text-[14px] font-extrabold text-ink mb-3">🌱 탄소 영향</h3>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[["구형 5년", fmtCo2(data.carbon_summary.old_use_carbon_3y)], ["신형 5년", fmtCo2(data.carbon_summary.new_use_carbon_3y)], ["회수기간", `${data.carbon_summary.carbon_payback_years.toFixed(1)}년`]].map(([l, v]) => (
+              <div key={l} className="rounded-xl bg-[#f3f6f2] py-2.5">
+                <div className="text-[13px] font-extrabold text-ink">{v}</div>
+                <div className="text-[10.5px] text-muted mt-0.5">{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 액션 */}
+        <div className="reveal reveal-6 flex gap-2.5">
+          <button onClick={() => { setShowAS(!showAS); setShowShare(false); }}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface py-3 text-[13px] font-bold text-ink-soft">
+            <FileText size={16} /> A/S Fast Pass
+          </button>
+          <button onClick={() => { setShowShare(!showShare); setShowAS(false); }}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface py-3 text-[13px] font-bold text-ink-soft">
+            <Share2 size={16} /> 가족 공유
+          </button>
+        </div>
+        {showAS && <pre className="rounded-xl bg-[#faf5f2] border border-line p-4 text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.as_fast_pass_text}</pre>}
+        {showShare && <pre className="rounded-xl bg-[#f0f4fb] border border-blue-100 p-4 text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.family_share_summary}</pre>}
+
+        <p className="text-[11px] text-muted text-center leading-relaxed pt-1">
+          {d.disclaimer as string ?? "모든 수치는 현재 입력 조건 기준 추정 결과이며, 정확한 고장 예측이 아닙니다."}
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, CentersResponse } from "./types";
+import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, CentersResponse, OcrResult } from "./types";
 
 // 환경변수 입력 경로(PowerShell 등)에서 값 앞뒤에 BOM/제로폭 문자가 섞이면
 // 절대 URL이 깨져 요청이 프론트 도메인으로 새는 사고가 난다. 보이지 않는 문자를
@@ -37,6 +37,15 @@ export const getCenters = (region = "") =>
 
 export const getCentersNearby = (lat: number, lng: number, limit = 10) =>
   apiFetch<CentersResponse>(`/api/centers?lat=${lat}&lng=${lng}&limit=${limit}`);
+
+// OCR — 멀티파트 업로드(이미지). apiFetch는 JSON 헤더라 raw fetch 사용.
+export const ocrEnergyLabel = async (file: File): Promise<OcrResult> => {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch(`${API_BASE}/api/ocr/energy-label`, { method: "POST", body: fd });
+  if (!res.ok) throw new Error(`OCR ${res.status}: ${await res.text()}`);
+  return res.json();
+};
 
 export const SAMPLE_INPUT: DiagnoseInput = {
   product_type: "에어컨",

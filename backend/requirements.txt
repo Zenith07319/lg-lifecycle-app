@@ -5,3 +5,4 @@ pydantic==2.10.2
 pandas==2.2.3
 python-dotenv==1.0.1
 psycopg2-binary==2.9.9   # PostgreSQL(Supabase) 드라이버
+python-multipart

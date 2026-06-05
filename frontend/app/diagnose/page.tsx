@@ -2,9 +2,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
-import { diagnose, SAMPLE_INPUT } from "@/lib/api";
+import { ChevronLeft, Camera, Loader2 } from "lucide-react";
+import { diagnose, ocrEnergyLabel, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
+
+const CAP_OPTIONS = [2.5, 3.6, 5.0];
+const nearestCap = (c: number) => CAP_OPTIONS.reduce((b, x) => (Math.abs(x - c) < Math.abs(b - c) ? x : b));
 
 const SYMPTOMS: SymptomLabel[] = ["성능저하", "소음", "냄새", "누수", "전기요금증가", "작동불량"];
 const AXES: { key: keyof DiagnoseInput; label: string; emoji: string }[] = [
@@ -27,7 +30,32 @@ export default function DiagnosePage() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrMsg, setOcrMsg] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onOcrFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";              // 같은 파일 재선택 허용
+    if (!f) return;
+    setOcrLoading(true); setOcrMsg("");
+    try {
+      const r = await ocrEnergyLabel(f);
+      const parts: string[] = [];
+      setForm((p) => {
+        const np = { ...p };
+        if (r.monthly_kwh) { np.ac_monthly_kwh_input = r.monthly_kwh; parts.push(`월간소비전력량 ${r.monthly_kwh}kWh`); }
+        if (r.capacity_kw) { np.capacity_kw = nearestCap(r.capacity_kw); parts.push(`냉방용량 ${np.capacity_kw}kW`); }
+        return np;
+      });
+      setOcrMsg(parts.length
+        ? `📷 인식됨: ${parts.join(" · ")}${r.source === "mock" ? " (샘플)" : ""} — 값을 확인하고 진행하세요`
+        : "사진에서 값을 못 읽었어요. 또렷하게 다시 찍거나 직접 입력해 주세요.");
+    } catch {
+      setOcrMsg("인식에 실패했어요. 직접 입력해 주세요.");
+    } finally { setOcrLoading(false); }
+  };
 
   useEffect(() => {
     const t = setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 80);
@@ -82,6 +110,13 @@ export default function DiagnosePage() {
       case 0:
         return (
           <div>
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={ocrLoading}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-crimson text-crimson font-extrabold py-2.5 text-[13px] mb-2.5 disabled:opacity-50">
+              {ocrLoading ? <Loader2 className="animate-spin" size={16} /> : <Camera size={16} />}
+              {ocrLoading ? "라벨 인식 중…" : "📷 에너지효율 라벨로 자동입력"}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onOcrFile} />
+            {ocrMsg && <p className="text-[11.5px] text-ink-soft bg-[#faf5f2] border border-line rounded-lg px-3 py-2 mb-2.5">{ocrMsg}</p>}
             <div className="grid grid-cols-2 gap-2.5">
               <div><label className={lab}>구매 연도</label><input type="number" min={2000} max={2026} value={form.purchase_year} onChange={(e) => set("purchase_year", Number(e.target.value))} className={inputCls} /></div>
               <div><label className={lab}>냉방 용량</label><select value={form.capacity_kw} onChange={(e) => set("capacity_kw", Number(e.target.value))} className={inputCls}>{["2.5", "3.6", "5.0"].map((c) => <option key={c} value={c}>{c} kW</option>)}</select></div>

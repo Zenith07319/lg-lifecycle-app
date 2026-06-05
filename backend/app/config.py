@@ -12,3 +12,6 @@ CORS_ORIGINS: list[str] = os.getenv(
     "CORS_ORIGINS",
     "http://localhost:3000,http://localhost:8501",
 ).split(",")
+
+# OCR (Google Cloud Vision). 미설정 시 OCR 엔드포인트는 mock 응답.
+GOOGLE_VISION_API_KEY: str = os.getenv("GOOGLE_VISION_API_KEY", "")

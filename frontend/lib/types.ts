@@ -105,6 +105,16 @@ export interface ProductsResponse {
   items:       CatalogItem[];
 }
 
+export interface OcrResult {
+  source:           "vision" | "mock";
+  monthly_kwh:      number | null;
+  capacity_kw:      number | null;
+  efficiency_grade: number | null;
+  confidence:       "high" | "low" | "none";
+  raw_text:         string;
+  disclaimer?:      string;
+}
+
 export interface ServiceCenter {
   name:        string;
   region:      string;

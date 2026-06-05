@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, MapPin, Phone, Clock, Loader2, Navigation, LocateFixed } from "lucide-react";
 import { getCenters, getCentersNearby } from "@/lib/api";
 import type { CentersResponse } from "@/lib/types";
+import KakaoMap from "@/components/KakaoMap";
 
 export default function CentersPage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function CentersPage() {
   const [loading, setLoading] = useState(true);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState("");
+  const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
 
   // 초기: 기본 지역
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function CentersPage() {
   }, []);
 
   const loadRegion = (region: string) => {
-    setLoading(true); setGeoError("");
+    setLoading(true); setGeoError(""); setUserLoc(null);
     getCenters(region).then(setData).catch(() => {}).finally(() => setLoading(false));
   };
 
@@ -28,6 +30,7 @@ export default function CentersPage() {
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         getCentersNearby(pos.coords.latitude, pos.coords.longitude)
           .then(setData).catch(() => setGeoError("센터를 불러오지 못했어요."))
           .finally(() => setGeoLoading(false));
@@ -86,6 +89,7 @@ export default function CentersPage() {
           <p className="text-center text-muted text-[13px] py-12">센터 정보가 없어요.</p>
         ) : (
           <div className="mt-3 space-y-2.5">
+            <KakaoMap centers={data.items} user={userLoc} />
             <p className="text-[11.5px] text-muted px-1">{nearby ? "📍 내 위치에서 가까운 순" : `${data.selected} · ${data.count}곳`}</p>
             {data.items.map((c) => (
               <div key={c.name + c.address} className="rounded-[18px] bg-surface border border-line p-4 shadow-[var(--shadow-card)]">

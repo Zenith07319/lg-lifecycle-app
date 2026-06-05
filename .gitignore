@@ -40,3 +40,7 @@ _spec_test.py
 .env
 .env.*
 !.env.example
+
+# OCR 라벨 튜닝 데이터(대용량, 런타임 불필요)
+backend/data/에너지효율등급_라벨_이미지/
+backend/data/*.zip

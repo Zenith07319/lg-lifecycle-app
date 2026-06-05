@@ -69,24 +69,25 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex items-start gap-2">
                   <h3 className="flex-1 text-[14px] font-extrabold text-ink leading-snug">{p.model_name}</h3>
-                  {p.tag && <span className="text-[10px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5 shrink-0">{p.tag}</span>}
+                  {p.form && <span className="text-[10px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5 shrink-0">{p.form}</span>}
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {p.form && <span className="text-[10px] font-bold text-ink-soft bg-[#f1efed] rounded-full px-2 py-0.5">{p.form}</span>}
-                  {p.tier && <span className="text-[10px] font-bold text-ink-soft bg-[#f1efed] rounded-full px-2 py-0.5">{p.tier}</span>}
-                  <span className="text-[11px] text-muted">{p.area_pyeong}평형 · {p.energy_grade}등급 · {p.model_code}</span>
-                </div>
+                <p className="text-[11px] text-muted mt-1">냉방 {p.capacity_kw}kW · {p.model_code}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[11px] text-muted">{tab === "buy" ? "참고 출고가" : "월 구독료"}</span>
-                  <span className="text-[15px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>
-                    {tab === "buy"
-                      ? (p.price ? fmt(p.price) : "LG에서 확인")
-                      : (p.monthly_fee ? `${fmt(p.monthly_fee)}/월` : "LG에서 확인")}
-                  </span>
+                  <span className="text-[11px] text-muted">{tab === "buy" ? "판매가(참고)" : "월 구독료"}</span>
+                  <div className="text-right">
+                    {tab === "buy" && p.list_price && p.price && p.list_price > p.price && (
+                      <span className="text-[10.5px] text-muted line-through mr-1.5">{fmt(p.list_price)}</span>
+                    )}
+                    <span className="text-[15px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+                      {tab === "buy"
+                        ? (p.price ? fmt(p.price) : "LG에서 확인")
+                        : (p.monthly_fee ? `${fmt(p.monthly_fee)}/월` : "LG에서 확인")}
+                    </span>
+                  </div>
                 </div>
                 <div className="rounded-lg bg-[#eef8f0] text-[#1a7f3c] text-[11.5px] font-bold px-3 py-2 mt-2">
                   {tab === "buy"
-                    ? `💰 5년 전기료 절감 약 ${fmt(save5)} · 용량 적합 + 1등급`
+                    ? `💰 교체 시 여름철 5년 전기료 절감 약 ${fmt(save5)} · 용량 적합`
                     : "💰 초기비용 0원 · 신형 효율로 전기료 ↓ · 설치·관리 포함"}
                 </div>
                 <a href={withUtm(p.product_url)} target="_blank" rel="noopener"
@@ -99,7 +100,7 @@ export default function ProductsPage() {
         )}
 
         <p className="text-[11px] text-muted mt-3 leading-relaxed">
-          ※ 표시가는 LG.com 기준 <b>참고 출고가 스냅샷</b>이며, 실제 판매가·재고·프로모션·구독료는 [LG에서 보기]에서 확인하세요. 추천은 진단 결과 기반 비교입니다.
+          ※ 표시가는 LG.com 기준 <b>참고 판매가</b>이며, 실제 가격·재고·프로모션·구독료는 [LG에서 보기]에서 확인하세요. 추천은 용량 적합도 기반 비교입니다.
         </p>
       </div>
     </div>

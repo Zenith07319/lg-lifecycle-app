@@ -309,7 +309,7 @@ export default function ResultPage() {
         </div>
 
         <p className="text-[11px] text-muted text-center leading-relaxed pt-1">
-          {d.disclaimer as string ?? "모든 수치는 현재 입력 조건 기준 추정 결과이며, 정확한 고장 예측이 아닙니다."}
+          {(data.disclaimer as string) || "모든 수치는 현재 입력 조건 기준 추정 결과이며, 정확한 고장 예측이 아닙니다."}
         </p>
       </div>
     </div>

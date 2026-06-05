@@ -96,4 +96,5 @@ export interface SessionData {
   report:         Report;
   delta_old:      Record<string, number|string|boolean>;
   delta_new:      Record<string, number|string|boolean>;
+  disclaimer?:    string;
 }

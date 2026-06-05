@@ -21,7 +21,7 @@ class SymptomInput(BaseModel):
 class DiagnoseRequest(BaseModel):
     # ── 제품 / 사용환경 ──
     product_type:        ProductType  = "에어컨"
-    purchase_year:       int          = Field(..., ge=2000, le=2026)
+    purchase_year:       int          = Field(..., ge=1992, le=2026)
     capacity_kw:         float        = Field(..., gt=0, le=20)
     daily_usage_hours:   float        = Field(..., ge=1, le=24)
     usage_months:        int          = Field(..., ge=1, le=12)

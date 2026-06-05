@@ -113,7 +113,7 @@ export default function DiagnosePage() {
             <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onOcrFile} />
             {ocrMsg && <p className="text-[11.5px] text-ink-soft bg-[#faf5f2] border border-line rounded-lg px-3 py-2 mb-2.5">{ocrMsg}</p>}
             <div className="grid grid-cols-2 gap-2.5">
-              <div><label className={lab}>구매 연도</label><input type="number" min={2000} max={2026} value={form.purchase_year} onChange={(e) => set("purchase_year", Number(e.target.value))} className={inputCls} /></div>
+              <div><label className={lab}>구매 연도</label><input type="number" min={1992} max={2026} value={form.purchase_year} onChange={(e) => set("purchase_year", Number(e.target.value))} className={inputCls} /></div>
               <div><label className={lab}>냉방 용량(kW)</label><input type="number" min={1.5} max={20} step={0.1} value={form.capacity_kw} onChange={(e) => set("capacity_kw", Number(e.target.value))} className={inputCls} /></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2.5">

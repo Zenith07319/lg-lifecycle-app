@@ -92,6 +92,8 @@ export interface Report {
 export interface CatalogItem {
   model_name:   string;
   model_code:   string;
+  form:         string;   // 벽걸이 / 스탠드 / 스탠드2in1
+  tier:         string;   // 가성비 / 표준 / 대형 / 프리미엄 / 구독
   energy_grade: number;
   area_pyeong:  number;
   price:        number | null;

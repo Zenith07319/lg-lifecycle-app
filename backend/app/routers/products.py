@@ -33,6 +33,8 @@ def list_products(capacity_kw: float, kind: str = "buy"):
         items.append({
             "model_name":   r["model_name"],
             "model_code":   r["model_code"],
+            "form":         r.get("form", ""),
+            "tier":         r.get("tier", ""),
             "energy_grade": int(r["energy_grade"]),
             "area_pyeong":  int(r["area_pyeong"]),
             "price":        int(r["price"]) if r["price"] else None,
@@ -41,4 +43,6 @@ def list_products(capacity_kw: float, kind: str = "buy"):
             "tag":          r.get("tag", ""),
             "capacity_kw":  target,
         })
+    # 저렴한 순(가격 미상은 뒤로)
+    items.sort(key=lambda x: x["price"] if x["price"] is not None else float("inf"))
     return {"capacity_kw": target, "kind": kind, "items": items}

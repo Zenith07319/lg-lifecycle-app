@@ -71,7 +71,11 @@ export default function ProductsPage() {
                   <h3 className="flex-1 text-[14px] font-extrabold text-ink leading-snug">{p.model_name}</h3>
                   {p.tag && <span className="text-[10px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5 shrink-0">{p.tag}</span>}
                 </div>
-                <p className="text-[11.5px] text-muted mt-0.5">{p.model_code} · {p.area_pyeong}평형 · {p.energy_grade}등급</p>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                  {p.form && <span className="text-[10px] font-bold text-ink-soft bg-[#f1efed] rounded-full px-2 py-0.5">{p.form}</span>}
+                  {p.tier && <span className="text-[10px] font-bold text-ink-soft bg-[#f1efed] rounded-full px-2 py-0.5">{p.tier}</span>}
+                  <span className="text-[11px] text-muted">{p.area_pyeong}평형 · {p.energy_grade}등급 · {p.model_code}</span>
+                </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[11px] text-muted">{tab === "buy" ? "참고 출고가" : "월 구독료"}</span>
                   <span className="text-[15px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>

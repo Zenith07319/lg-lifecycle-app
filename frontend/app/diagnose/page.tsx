@@ -6,9 +6,6 @@ import { ChevronLeft, Camera, Loader2 } from "lucide-react";
 import { diagnose, ocrEnergyLabel, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
 
-const CAP_OPTIONS = [2.5, 3.6, 5.0];
-const nearestCap = (c: number) => CAP_OPTIONS.reduce((b, x) => (Math.abs(x - c) < Math.abs(b - c) ? x : b));
-
 const SYMPTOMS: SymptomLabel[] = ["성능저하", "소음", "냄새", "누수", "전기요금증가", "작동불량"];
 const AXES: { key: keyof DiagnoseInput; label: string; emoji: string }[] = [
   { key: "priority_cost_score", label: "비용", emoji: "💰" },
@@ -45,7 +42,7 @@ export default function DiagnosePage() {
       const parts: string[] = [];
       const patch: Partial<DiagnoseInput> = {};
       if (r.monthly_kwh) { patch.ac_monthly_kwh_input = r.monthly_kwh; parts.push(`월간소비전력량 ${r.monthly_kwh}kWh`); }
-      if (r.capacity_kw) { const cap = nearestCap(r.capacity_kw); patch.capacity_kw = cap; parts.push(`냉방용량 ${cap}kW`); }
+      if (r.capacity_kw) { patch.capacity_kw = r.capacity_kw; parts.push(`냉방용량 ${r.capacity_kw}kW`); }
       if (parts.length) setForm((p) => ({ ...p, ...patch }));
       setOcrMsg(parts.length
         ? `📷 인식됨: ${parts.join(" · ")}${r.source === "mock" ? " (샘플)" : ""} — 값을 확인하고 진행하세요`
@@ -117,7 +114,7 @@ export default function DiagnosePage() {
             {ocrMsg && <p className="text-[11.5px] text-ink-soft bg-[#faf5f2] border border-line rounded-lg px-3 py-2 mb-2.5">{ocrMsg}</p>}
             <div className="grid grid-cols-2 gap-2.5">
               <div><label className={lab}>구매 연도</label><input type="number" min={2000} max={2026} value={form.purchase_year} onChange={(e) => set("purchase_year", Number(e.target.value))} className={inputCls} /></div>
-              <div><label className={lab}>냉방 용량</label><select value={form.capacity_kw} onChange={(e) => set("capacity_kw", Number(e.target.value))} className={inputCls}>{["2.5", "3.6", "5.0"].map((c) => <option key={c} value={c}>{c} kW</option>)}</select></div>
+              <div><label className={lab}>냉방 용량(kW)</label><input type="number" min={1.5} max={20} step={0.1} value={form.capacity_kw} onChange={(e) => set("capacity_kw", Number(e.target.value))} className={inputCls} /></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2.5">
               {(["고압", "저압"] as const).map((v) => (

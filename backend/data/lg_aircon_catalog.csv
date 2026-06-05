@@ -1,0 +1,7 @@
+type,capacity_kw,model_name,model_code,energy_grade,area_pyeong,price,monthly_fee,product_url,tag
+buy,2.5,LG 휘센 벽걸이에어컨,SQ06EZ1WBS,1,6,1199000,,https://www.lge.co.kr/air-conditioners/sq06ez1wbs,가성비
+buy,3.6,LG 휘센 벽걸이에어컨,SQ11EK1WES,1,11,1690000,,https://www.lge.co.kr/air-conditioners/sq11ek1wes,인기
+buy,5.0,LG 휘센 오브제컬렉션 타워I 싱글,FQ18FN9BE1,1,18,5046000,,https://www.lge.co.kr/air-conditioners/fq18fn9be1,고효율
+buy,5.0,LG 휘센 AI 오브제컬렉션 타워I 2in1,FQ25FN9BE2,1,25,6500000,,https://www.lge.co.kr/air-conditioners/fq25fn9be2,2in1
+sub,3.6,LG 휘센 벽걸이에어컨 구독,SQ11EK1WES,1,11,,,https://www.lge.co.kr/care-solutions/air-conditioners/sq11ek1wes,관리포함
+sub,5.0,LG 휘센 오브제컬렉션 타워 구독,FQ25EN9BE1,1,25,,,https://www.lge.co.kr/care-solutions/air-conditioners/fq25en9be1,관리포함

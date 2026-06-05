@@ -89,6 +89,23 @@ export interface Report {
   family_share_summary:string;
 }
 
+export interface CatalogItem {
+  model_name:   string;
+  model_code:   string;
+  energy_grade: number;
+  area_pyeong:  number;
+  price:        number | null;
+  monthly_fee:  number | null;
+  product_url:  string;
+  tag:          string;
+  capacity_kw:  number;
+}
+export interface ProductsResponse {
+  capacity_kw: number;
+  kind:        "buy" | "sub";
+  items:       CatalogItem[];
+}
+
 export interface SessionData {
   user_inputs:    DiagnoseInput;
   diagnosis:      Record<string, number|string>;

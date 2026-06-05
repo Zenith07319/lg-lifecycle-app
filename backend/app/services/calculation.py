@@ -19,6 +19,11 @@ from src.data_loader import (
 PARTS_AVAILABILITY = {"에어컨": 8, "냉장고": 9, "세탁기": 9, "건조기": 9}
 EFFICIENCY_DECAY   = 0.025
 EFFICIENCY_FLOOR   = 0.65
+# 1등급 고효율 신형의 동급 구형 대비 평균 정격소비비.
+# 효율관리제도 신고스펙상 (1등급 신형)/(3등급 구형) ≈ 0.67~0.73 → 평균 0.70 적용.
+# 이로써 신형 비교값을 '용량표'가 아니라 구형 라벨값 × 효율비로 도출 → 전력 계산이 용량과 무관해진다.
+# [한계] 구형이 이미 1등급인 경우 절감폭을 다소 과대평가(상수 비율의 근사 한계).
+NEW_EFF_RATIO      = 0.70
 
 
 @lru_cache(maxsize=50)
@@ -99,25 +104,24 @@ def run_full_pipeline(inputs: dict) -> dict:
     rep_symptom, rep_severity, symptom_labels = _resolve_symptom(inputs)
     priority = _resolve_priority(inputs)
 
-    old_spec   = dict(_cached_device_spec(pt, yr, cap))
-    new_spec   = dict(_cached_new_spec(pt, cap))
+    old_spec   = dict(_cached_device_spec(pt, yr, cap))   # 월간kwh 미입력 시 폴백용
     cost_ref   = dict(_cached_cost_ref(pt, cap))
     carbon_ref = dict(_cached_carbon_ref(pt))
     voc_risk   = get_voc_risk_score(pt, rep_symptom)
 
-    old_annual_kwh = old_spec["annual_kwh"]
-    new_annual_kwh = new_spec["annual_kwh"]
-    # 전기요금 베이스 = 라벨 표준 월간 소비전력량(kWh/월). 미존재 시 annual_kwh/12 환산.
-    old_monthly_kwh = old_spec.get("monthly_kwh", old_annual_kwh / 12)
-    new_monthly_kwh = new_spec.get("monthly_kwh", new_annual_kwh / 12)
-
-    # 사용자가 라벨 월간소비전력량을 입력하면(>0) 표 추정 대신 그 값을 구형 베이스로 사용.
-    # (라벨값은 '신품 정격값'이므로 아래에서 잔존효율로 연식 열화를 동일하게 반영한다.)
+    # ── 에너지 베이스 = 월간소비전력량 (용량 비의존) ──────────────────────
+    # 구형: 에어컨 라벨 월간소비전력량 입력값 우선. 미입력 시에만 용량표로 폴백(최후 수단).
     user_ackwh = inputs.get("ac_monthly_kwh_input") or 0
     if user_ackwh and user_ackwh > 0:
         old_monthly_kwh = float(user_ackwh)
-        old_annual_kwh  = old_monthly_kwh * 12   # 표와 동일 규약(annual = monthly×12)으로 일관성 유지
-    ac_kwh_source = "input" if (user_ackwh and user_ackwh > 0) else "estimate"
+        ac_kwh_source = "input"
+    else:
+        old_monthly_kwh = old_spec.get("monthly_kwh", old_spec["annual_kwh"] / 12)
+        ac_kwh_source = "estimate"
+    old_annual_kwh = old_monthly_kwh * 12
+    # 신형(1등급 고효율) 비교값 = 구형 라벨 × 효율비. 용량표 대신 효율비로 도출 → 전력 계산 용량 무관·연속.
+    new_monthly_kwh = round(old_monthly_kwh * NEW_EFF_RATIO, 1)
+    new_annual_kwh  = new_monthly_kwh * 12
 
     diagnosis = run_diagnosis(
         purchase_year        = yr,

@@ -1,4 +1,4 @@
-import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse } from "./types";
+import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, CentersResponse } from "./types";
 
 // 환경변수 입력 경로(PowerShell 등)에서 값 앞뒤에 BOM/제로폭 문자가 섞이면
 // 절대 URL이 깨져 요청이 프론트 도메인으로 새는 사고가 난다. 보이지 않는 문자를
@@ -31,6 +31,9 @@ export const getSession = (sessionId: string) =>
 
 export const getProducts = (capacityKw: number, kind: "buy" | "sub") =>
   apiFetch<ProductsResponse>(`/api/products?capacity_kw=${capacityKw}&kind=${kind}`);
+
+export const getCenters = (region = "") =>
+  apiFetch<CentersResponse>(`/api/centers${region ? `?region=${encodeURIComponent(region)}` : ""}`);
 
 export const SAMPLE_INPUT: DiagnoseInput = {
   product_type: "에어컨",

@@ -105,6 +105,23 @@ export interface ProductsResponse {
   items:       CatalogItem[];
 }
 
+export interface ServiceCenter {
+  name:    string;
+  region:  string;
+  address: string;
+  repair:  string;
+  note:    string;
+}
+export interface CentersResponse {
+  regions:     string[];
+  selected:    string;
+  count:       number;
+  tel:         string;
+  hours:       string;
+  reserve_url: string;
+  items:       ServiceCenter[];
+}
+
 export interface SessionData {
   user_inputs:    DiagnoseInput;
   diagnosis:      Record<string, number|string>;

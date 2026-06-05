@@ -4,6 +4,7 @@ from app.config import CORS_ORIGINS
 from app.db.connection import init_db
 from app.routers.diagnose import router
 from app.routers.products import router as products_router
+from app.routers.centers import router as centers_router
 
 app = FastAPI(
     title="LG LifeCycle Decision Check API",
@@ -22,6 +23,7 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(products_router)
+app.include_router(centers_router)
 
 
 @app.on_event("startup")

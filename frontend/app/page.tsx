@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Snowflake, Zap, Leaf, ScanSearch, Scale } from "lucide-react";
+import MyDeviceCard from "@/components/MyDeviceCard";
 
 const STEPS = [
   { icon: Zap, title: "전기요금", desc: "월간 소비전력량 기반 · 누진 구간 영향 포함" },
@@ -47,19 +48,7 @@ export default function HomePage() {
 
       {/* ── 내 에어컨 (히어로에 겹침) ── */}
       <div className="px-5 -mt-8 relative z-10 reveal reveal-1">
-        <div className="rounded-[22px] bg-surface border border-line p-4 shadow-[var(--shadow-pop)] flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#fdeef4] flex items-center justify-center shrink-0">
-            <Snowflake size={26} className="text-crimson" strokeWidth={2.2} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-bold text-muted">내 에어컨</p>
-            <p className="text-[15px] font-bold text-ink truncate">LG 휘센 (2014)</p>
-            <p className="text-[12px] text-muted">3.6kW · 110kWh/월 · 3등급</p>
-          </div>
-          <span className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[#f0ece9] text-ink-soft whitespace-nowrap">
-            진단 전
-          </span>
-        </div>
+        <MyDeviceCard />
       </div>
 
       {/* ── CTA ── */}

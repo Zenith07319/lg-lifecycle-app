@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, FileText, Share2, ChevronDown, ChevronRight, Trophy, Loader2, ShoppingBag, Repeat, MapPin } from "lucide-react";
 import { getSession } from "@/lib/api";
+import { saveDevice } from "@/lib/myDevice";
 import type { SessionData, OptionScore } from "@/lib/types";
 import { GRADE_COLORS, OPTION_ICONS, fmt, fmtCo2 } from "@/lib/utils";
 
@@ -171,7 +172,22 @@ export default function ResultPage() {
 
   useEffect(() => {
     if (!sessionId) return;
-    getSession(sessionId).then(setData).catch((e) => setError(e.message));
+    getSession(sessionId)
+      .then((s) => {
+        setData(s);
+        // 진단 완료 → 내 가전 자동 등록(localStorage upsert)
+        saveDevice({
+          sessionId,
+          product_type:   s.user_inputs.product_type,
+          purchase_year:  s.user_inputs.purchase_year,
+          capacity_kw:    s.user_inputs.capacity_kw,
+          grade:          s.diagnosis.health_grade as string,
+          score:          s.diagnosis.health_score as number,
+          recommendation: s.report.recommendation_1st,
+          savedAt:        Date.now(),
+        });
+      })
+      .catch((e) => setError(e.message));
   }, [sessionId]);
 
   if (error)

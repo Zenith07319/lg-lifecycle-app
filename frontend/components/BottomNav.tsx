@@ -6,9 +6,9 @@ import { Home, Stethoscope, LayoutGrid, Menu } from "lucide-react";
 const TABS = [
   { href: "/", label: "홈", icon: Home },
   { href: "/diagnose", label: "진단", icon: Stethoscope },
+  { href: "/devices", label: "내 가전", icon: LayoutGrid },
 ];
 const SOON = [
-  { label: "내 가전", icon: LayoutGrid },
   { label: "더보기", icon: Menu },
 ];
 

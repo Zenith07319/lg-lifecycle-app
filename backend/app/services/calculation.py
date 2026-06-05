@@ -111,6 +111,14 @@ def run_full_pipeline(inputs: dict) -> dict:
     old_monthly_kwh = old_spec.get("monthly_kwh", old_annual_kwh / 12)
     new_monthly_kwh = new_spec.get("monthly_kwh", new_annual_kwh / 12)
 
+    # 사용자가 라벨 월간소비전력량을 입력하면(>0) 표 추정 대신 그 값을 구형 베이스로 사용.
+    # (라벨값은 '신품 정격값'이므로 아래에서 잔존효율로 연식 열화를 동일하게 반영한다.)
+    user_ackwh = inputs.get("ac_monthly_kwh_input") or 0
+    if user_ackwh and user_ackwh > 0:
+        old_monthly_kwh = float(user_ackwh)
+        old_annual_kwh  = old_monthly_kwh * 12   # 표와 동일 규약(annual = monthly×12)으로 일관성 유지
+    ac_kwh_source = "input" if (user_ackwh and user_ackwh > 0) else "estimate"
+
     diagnosis = run_diagnosis(
         purchase_year        = yr,
         product_type         = pt,
@@ -241,6 +249,7 @@ def run_full_pipeline(inputs: dict) -> dict:
         "k_ac_old":        k_old,
         "k_ac_new":        k_new,
         "k_base":          k_base,
+        "ac_kwh_source":   ac_kwh_source,   # "input"=사용자 라벨값 / "estimate"=표 추정
         "current_eff":     current_eff,
         "rerep_prob":      rerep_prob,
         "parts_exceeded":  exceeded,

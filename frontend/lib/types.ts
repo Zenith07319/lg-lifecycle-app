@@ -19,6 +19,7 @@ export interface DiagnoseInput {
   contract_type:              ContractType;
   summer_monthly_kwh:         number;   // 여름 고지서 총 kWh (0=미입력)
   base_monthly_kwh:           number;   // 기저 참고값 (k_base 도출 fallback)
+  ac_monthly_kwh_input:       number;   // 에어컨 라벨 월간소비전력량 (0=미입력→표 추정)
   season:                     SeasonType;
   symptoms:                   SymptomInput[];   // 복수 선택 + 심각도 1~5
   filter_clean_months:        number;

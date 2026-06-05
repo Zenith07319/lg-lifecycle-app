@@ -54,7 +54,7 @@ export default function DiagnosePage() {
   const summary = (i: number): string => {
     const f = form;
     switch (i) {
-      case 0: return `${f.purchase_year}년식 · ${f.capacity_kw}kW · ${f.contract_type}`;
+      case 0: return `${f.purchase_year}년식 · ${f.capacity_kw}kW · ${f.contract_type}` + (f.ac_monthly_kwh_input ? ` · ${f.ac_monthly_kwh_input}kWh/월` : "");
       case 1: return f.symptoms.length ? f.symptoms.map((s) => s.type).join(", ") : "증상 없음";
       case 2: return f.symptoms.length ? f.symptoms.map((s) => `${s.type} ${s.severity}점`).join(", ") : "해당 없음";
       case 3: return `하루 ${f.daily_usage_hours}시간 · 연 ${f.usage_months}개월`;
@@ -90,6 +90,12 @@ export default function DiagnosePage() {
               {(["고압", "저압"] as const).map((v) => (
                 <button key={v} onClick={() => set("contract_type", v)} className={`rounded-xl border py-2 text-[12.5px] font-bold ${form.contract_type === v ? "border-crimson bg-[#fdeef4] text-crimson" : "border-line text-ink-soft"}`}>{v === "고압" ? "고압(아파트)" : "저압(빌라)"}</button>
               ))}
+            </div>
+            <div className="mt-2.5">
+              <label className={lab}>월간소비전력량 (kWh/월)</label>
+              <input type="number" min={0} max={500} step={1} value={form.ac_monthly_kwh_input || ""} placeholder="예: 110"
+                onChange={(e) => set("ac_monthly_kwh_input", Number(e.target.value))} className={inputCls} />
+              <p className="text-[10.5px] text-muted mt-1">에어컨 에너지효율 스티커 표기값</p>
             </div>
             {nextBtn("다음", next)}
           </div>

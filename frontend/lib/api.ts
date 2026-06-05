@@ -38,6 +38,7 @@ export const SAMPLE_INPUT: DiagnoseInput = {
   contract_type: "고압",
   summer_monthly_kwh: 460,  // 여름 고지서 총량
   base_monthly_kwh: 350,    // 기저 fallback
+  ac_monthly_kwh_input: 110, // 에어컨 라벨 월간소비전력량(스티커값)
   season: "하계",
   symptoms: [
     { type: "성능저하", severity: 4 },

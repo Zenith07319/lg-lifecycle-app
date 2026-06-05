@@ -46,4 +46,6 @@ class DiagnoseRequest(BaseModel):
     symptom_type:      Optional[SymptomKeyLegacy] = Field(None, description="(레거시) 단일 증상 내부키")
     symptom_severity:  Optional[SeverityLegacy]   = Field(None, description="(레거시) 4단계 심각도")
     customer_priority: Optional[PriorityLegacy]   = Field(None, description="(레거시) 6모드 우선순위")
-    ac_monthly_kwh_input: float = Field(0, ge=0, le=500, description="(deprecated) 미사용. 효율감퇴 모델로 대체.")
+    ac_monthly_kwh_input: float = Field(0, ge=0, le=500,
+                              description="에어컨 에너지효율 스티커의 월간소비전력량(kWh/월). "
+                                          "입력 시(>0) 표 추정 대신 이 값을 K_AC 베이스로 사용. 0=미입력→표 추정.")

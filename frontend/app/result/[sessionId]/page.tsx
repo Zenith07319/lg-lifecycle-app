@@ -62,9 +62,15 @@ function ElecCard({ data }: { data: SessionData }) {
   const months = (data.user_inputs.usage_months as number) || 4;
   const save5 = Math.max(0, (oldC - newC) * months * 5);
   const changed = data.delta_old.tier_changed as boolean;
+  const byInput = ((data.user_inputs.ac_monthly_kwh_input as number) || 0) > 0;
   return (
     <div className="rounded-[22px] bg-surface border border-line p-5 shadow-[var(--shadow-card)]">
-      <h3 className="text-[14px] font-extrabold text-ink mb-3">⚡ 전기요금 (에어컨 기여 · 월)</h3>
+      <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-[14px] font-extrabold text-ink">⚡ 전기요금 (에어컨 기여 · 월)</h3>
+        <span className={`ml-auto text-[10px] font-extrabold rounded-full px-2 py-0.5 ${byInput ? "text-crimson bg-[#fdeef4]" : "text-muted bg-[#f1efed]"}`}>
+          {byInput ? "📋 입력값 기준" : "📊 추정 기준"}
+        </span>
+      </div>
       <div className="flex items-end gap-3">
         <div className="flex-1 rounded-2xl bg-[#fff6f0] p-3 text-center">
           <p className="text-[11px] text-muted">지금 구형</p>

@@ -12,7 +12,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins=CORS_ORIGINS,                       # localhost + 환경변수 명시 도메인
+    allow_origin_regex=r"https://.*\.vercel\.app",   # Vercel 프로덕션·프리뷰 도메인 일괄 허용
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

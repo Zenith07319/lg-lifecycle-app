@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, FileText, Share2, ChevronDown, ChevronRight, Trophy, Loader2, ShoppingBag, Repeat, MapPin } from "lucide-react";
 import { getSession } from "@/lib/api";
@@ -163,6 +163,7 @@ function ActionRow({ icon: Icon, label, hint, open, onClick }: {
 
 export default function ResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const router = useRouter();
   const [data, setData] = useState<SessionData | null>(null);
   const [error, setError] = useState("");
   const [showAS, setShowAS] = useState(false);
@@ -196,7 +197,6 @@ export default function ResultPage() {
   ];
   const maxScore = Math.max(...data.ranked_options.map((o) => o.final_score));
   const top2 = data.ranked_options.slice(0, 2).map((o) => o.key);
-  const soon = (name: string) => alert(`${name}는 준비 중입니다 (3단계 기능).`);
 
   return (
     <div>
@@ -261,12 +261,12 @@ export default function ResultPage() {
           <h3 className="text-[13px] font-extrabold text-ink mb-2 px-1">다음 액션</h3>
           <div className="rounded-[20px] bg-surface border border-line shadow-[var(--shadow-card)] divide-y divide-line/70 overflow-hidden">
             {top2.includes("신제품구매") && (
-              <ActionRow icon={ShoppingBag} label="추천 신제품 보기" hint="LG 연계" onClick={() => soon("추천 신제품 보기")} />
+              <ActionRow icon={ShoppingBag} label="추천 신제품 보기" hint="LG 연계" onClick={() => router.push(`/products/${sessionId}`)} />
             )}
             {top2.includes("구독전환") && (
-              <ActionRow icon={Repeat} label="구독 상품 보기" hint="LG 연계" onClick={() => soon("구독 상품 보기")} />
+              <ActionRow icon={Repeat} label="구독 상품 보기" hint="LG 연계" onClick={() => router.push(`/products/${sessionId}`)} />
             )}
-            <ActionRow icon={MapPin} label="주변 서비스센터 찾기" onClick={() => soon("서비스센터 조회")} />
+            <ActionRow icon={MapPin} label="주변 서비스센터 찾기" onClick={() => router.push("/centers")} />
             <ActionRow icon={FileText} label="A/S Fast Pass 초안" open={showAS}
               onClick={() => { setShowAS(!showAS); setShowShare(false); }} />
             {showAS && (

@@ -9,7 +9,7 @@ from app.routers.ocr import router as ocr_router
 
 app = FastAPI(
     title="LG LifeCycle Decision Check API",
-    version="2.1.3",  # GitHub 자동배포 검증(Railway Hobby)
+    version="2.1.3",
     description="가전 유지·수리·구독·교체 의사결정 API",
 )
 

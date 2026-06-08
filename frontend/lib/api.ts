@@ -1,3 +1,4 @@
+// GitHub 자동배포 연결 검증용 주석
 import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, CentersResponse, OcrResult } from "./types";
 
 // 환경변수 입력 경로(PowerShell 등)에서 값 앞뒤에 BOM/제로폭 문자가 섞이면

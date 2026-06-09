@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, FileText, Share2, ChevronDown, ChevronRight, Trophy, Loader2, ShoppingBag, Repeat, MapPin } from "lucide-react";
+import { ChevronLeft, FileText, ChevronDown, ChevronRight, Trophy, Loader2, ShoppingBag, Repeat, MapPin } from "lucide-react";
 import { getSession } from "@/lib/api";
 import { saveDevice } from "@/lib/myDevice";
 import type { SessionData, OptionScore } from "@/lib/types";
@@ -16,13 +16,23 @@ function GradeHero({ data }: { data: SessionData }) {
   const color = GRADE_COLORS[grade] ?? "#a50034";
   const R = 54, CIRC = 2 * Math.PI * R;
   const [prog, setProg] = useState(0);
+  const [showCalc, setShowCalc] = useState(false);
   useEffect(() => { const t = setTimeout(() => setProg(Math.min(score, 100)), 120); return () => clearTimeout(t); }, [score]);
   const off = CIRC * (1 - prog / 100);
 
+  // 표시 지표: 생활 불편 제외 (직관성). 둘 다 낮을수록 건강.
   const metrics: [string, string][] = [
     ["점검 필요도", `${(d.inspection_score_100 as number).toFixed(0)}`],
     ["에너지 낭비", `${((d.energy_waste_ratio as number) * 100).toFixed(0)}%`],
-    ["생활 불편", `${((d.inconvenience as number) * 100).toFixed(0)}`],
+  ];
+  // 점수 계산 내역 (종합위험 = 점검0.45 + 에너지낭비0.30 + 생활불편0.25 → 감점)
+  const insp = (d.inspection_score_100 as number) / 100;
+  const ene = d.energy_waste_ratio as number;
+  const inc = d.inconvenience as number;
+  const calc: [string, string, number][] = [
+    ["점검 필요도", `${(d.inspection_score_100 as number).toFixed(0)}`, insp * 0.45 * 100],
+    ["에너지 낭비", `${(ene * 100).toFixed(0)}%`, ene * 0.30 * 100],
+    ["생활 불편", `${(inc * 100).toFixed(0)}`, inc * 0.25 * 100],
   ];
   return (
     <div className="rounded-[26px] p-6 text-center border border-line shadow-[var(--shadow-pop)]"
@@ -43,14 +53,34 @@ function GradeHero({ data }: { data: SessionData }) {
         건강점수 <span style={{ fontFamily: "var(--font-display)" }}>{score.toFixed(0)}</span>점
       </p>
       <p className="text-[12.5px] text-muted">{d.grade_description as string}</p>
-      <div className="grid grid-cols-3 gap-2 mt-4">
+      <div className="grid grid-cols-2 gap-2 mt-4">
         {metrics.map(([l, v]) => (
           <div key={l} className="rounded-2xl bg-[#faf5f2] py-2.5">
             <div className="text-[18px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{v}</div>
-            <div className="text-[10.5px] text-muted mt-0.5">{l}</div>
+            <div className="text-[10.5px] text-muted mt-0.5">{l} <span className="text-grade-a">↓좋음</span></div>
           </div>
         ))}
       </div>
+
+      {/* 점수 계산 내역 더보기 */}
+      <button onClick={() => setShowCalc(!showCalc)}
+        className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-bold text-crimson">
+        점수 계산 내역 {showCalc ? "접기" : "더보기"}
+        <ChevronDown size={13} className={`transition-transform ${showCalc ? "rotate-180" : ""}`} />
+      </button>
+      {showCalc && (
+        <div className="mt-2 text-left rounded-2xl bg-[#faf5f2] p-3.5 space-y-1.5">
+          <p className="text-[11px] text-muted leading-relaxed">건강점수 = <b>100 − 종합위험</b>. 종합위험은 아래 3가지를 가중합해요 (감점 클수록 등급 ↓).</p>
+          {calc.map(([l, v, contrib]) => (
+            <div key={l} className="flex items-center gap-2 text-[11.5px]">
+              <span className="w-[66px] text-ink-soft font-semibold">{l}</span>
+              <span className="text-muted">{v}</span>
+              <span className="ml-auto font-extrabold text-grade-d" style={{ fontFamily: "var(--font-display)" }}>−{contrib.toFixed(0)}</span>
+            </div>
+          ))}
+          <p className="text-[10px] text-muted pt-1.5 border-t border-line/60">반영 비율 · 점검 45% / 에너지 30% / 생활불편 25%</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -95,10 +125,21 @@ function ElecCard({ data }: { data: SessionData }) {
   );
 }
 
-/* ── 선택지 카드 (랭킹·점수바·펼침) ── */
-function OptionCard({ opt, max }: { opt: OptionScore; max: number }) {
-  const [open, setOpen] = useState(opt.rank === 1);
-  const first = opt.rank === 1;
+/* ── 5지표 점수(0~1) → 5단계 등급 ── */
+function rate5(s: number): [string, string] {
+  const v = s * 100;
+  if (v >= 80) return ["매우좋음", "#1f9d55"];
+  if (v >= 60) return ["좋음", "#5fb878"];
+  if (v >= 40) return ["보통", "#9a8f86"];
+  if (v >= 20) return ["나쁨", "#e0883c"];
+  return ["매우나쁨", "#d2453f"];
+}
+
+/* ── 선택지 카드 (순위=index 기준, 점수 숫자·등급화·펼침) ── */
+function OptionCard({ opt, rank, max }: { opt: OptionScore; rank: number; max: number }) {
+  const [open, setOpen] = useState(rank === 1);
+  const first = rank === 1;
+  const score100 = Math.round(opt.final_score * 100);   // final_score 0~1 → 점수
   return (
     <div className={`rounded-[20px] overflow-hidden border shadow-[var(--shadow-card)] ${first ? "border-crimson bg-[#fff7fa]" : "border-line bg-surface"}`}>
       <button onClick={() => setOpen(!open)} className="w-full px-4 py-3.5 text-left">
@@ -107,41 +148,49 @@ function OptionCard({ opt, max }: { opt: OptionScore; max: number }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[15px] font-extrabold text-ink">{opt.label}</span>
-              {first && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-white bg-crimson rounded-full px-2 py-0.5">
-                  <Trophy size={11} /> 1순위
-                </span>
-              )}
-              {!first && <span className="text-[11px] font-bold text-muted">{opt.rank}순위</span>}
+              {first
+                ? <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-white bg-crimson rounded-full px-2 py-0.5"><Trophy size={11} /> 1순위</span>
+                : <span className="text-[11px] font-bold text-muted">{rank}순위</span>}
+              <span className="ml-auto text-[17px] font-extrabold leading-none" style={{ fontFamily: "var(--font-display)", color: first ? "#a50034" : "#7a6c64" }}>
+                {score100}<span className="text-[11px] font-bold">점</span>
+              </span>
             </div>
             <div className="mt-1.5 h-1.5 rounded-full bg-[#efe7e1] overflow-hidden">
               <div className="h-full rounded-full" style={{ width: `${Math.max(6, (opt.final_score / max) * 100)}%`, background: first ? "linear-gradient(90deg,#a50034,#c2185b)" : "#c9bdb4" }} />
             </div>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="text-[14px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{fmt(opt.three_year_cost)}</div>
-            <div className="text-[10px] text-muted">5년 총비용</div>
           </div>
           <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
         </div>
       </button>
       {open && (
         <div className="px-4 pb-4 pt-1 border-t border-line/70 space-y-3">
-          <div className="grid grid-cols-3 gap-2 pt-3 text-center">
-            {[["초기비용", fmt(opt.initial_cost)], ["점검↓", `${(opt.inspection_after * 100).toFixed(0)}`], ["탄소", fmtCo2(opt.carbon_total)]].map(([l, v]) => (
+          {/* 비용·점검·탄소 — 낮을수록 좋음 */}
+          <div className="flex items-center justify-between pt-3">
+            <span className="text-[14px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{fmt(opt.three_year_cost)} <span className="text-[10px] font-medium text-muted">5년 총비용</span></span>
+            <span className="text-[10px] text-muted">아래 3개 <b>낮을수록 좋아요 ↓</b></span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[["초기비용", fmt(opt.initial_cost)], ["점검 필요도", `${(opt.inspection_after * 100).toFixed(0)}`], ["탄소", fmtCo2(opt.carbon_total)]].map(([l, v]) => (
               <div key={l} className="rounded-xl bg-[#faf5f2] py-2">
                 <div className="text-[13px] font-extrabold text-ink">{v}</div>
                 <div className="text-[10px] text-muted">{l}</div>
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-5 gap-1.5 text-center">
-            {([["경제", opt.economy_score], ["신뢰", opt.reliability_score], ["탄소", opt.carbon_score], ["편의", opt.comfort_score], ["초기", opt.initial_score]] as [string, number][]).map(([l, v]) => (
-              <div key={l} className="rounded-lg bg-[#f3ece7] py-1.5">
-                <div className="text-[12px] font-extrabold text-ink-soft" style={{ fontFamily: "var(--font-display)" }}>{(v * 100).toFixed(0)}</div>
-                <div className="text-[9.5px] text-muted">{l}</div>
-              </div>
-            ))}
+          {/* 5지표 — 등급(높을수록 좋음) */}
+          <div>
+            <p className="text-[10px] text-muted mb-1 px-0.5">5개 지표 (<b>높을수록 좋아요 ↑</b>)</p>
+            <div className="grid grid-cols-5 gap-1.5 text-center">
+              {([["경제", opt.economy_score], ["신뢰", opt.reliability_score], ["탄소", opt.carbon_score], ["편의", opt.comfort_score], ["초기", opt.initial_score]] as [string, number][]).map(([l, v]) => {
+                const [rt, rc] = rate5(v);
+                return (
+                  <div key={l} className="rounded-lg bg-[#f3ece7] py-1.5">
+                    <div className="text-[10px] font-extrabold leading-tight" style={{ color: rc }}>{rt}</div>
+                    <div className="text-[9.5px] text-muted mt-0.5">{l}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {opt.highlights.map((h, i) => (
             <p key={i} className="text-[11.5px] text-amber-800 bg-amber-50 rounded-lg px-3 py-2">ℹ {h}</p>
@@ -174,7 +223,6 @@ export default function ResultPage() {
   const [data, setData] = useState<SessionData | null>(null);
   const [error, setError] = useState("");
   const [showAS, setShowAS] = useState(false);
-  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -219,8 +267,10 @@ export default function ResultPage() {
   const dom = (["비용", "환경", "편의"] as const)[
     [inputs.priority_cost_score, inputs.priority_env_score, inputs.priority_convenience_score].reduce((mi, v, i, a) => (v > a[mi] ? i : mi), 0)
   ];
-  const maxScore = Math.max(...data.ranked_options.map((o) => o.final_score));
-  const top2 = data.ranked_options.slice(0, 2).map((o) => o.key);
+  // final_score 내림차순 정렬 → index로 순위 부여 (백엔드 rank는 하드룰 전 값이라 stale)
+  const ordered = [...data.ranked_options].sort((a, b) => b.final_score - a.final_score);
+  const maxScore = ordered[0]?.final_score || 1;
+  const top2 = ordered.slice(0, 2).map((o) => o.key);
 
   return (
     <div>
@@ -263,7 +313,7 @@ export default function ResultPage() {
         <div className="reveal reveal-5">
           <h3 className="text-[13px] font-extrabold text-ink mb-2 px-1">5가지 선택지 비교 <span className="text-[11px] font-medium text-muted">5년 · {dom} 우선 반영</span></h3>
           <div className="space-y-2.5">
-            {data.ranked_options.map((opt) => <OptionCard key={opt.key} opt={opt} max={maxScore} />)}
+            {ordered.map((opt, i) => <OptionCard key={opt.key} opt={opt} rank={i + 1} max={maxScore} />)}
           </div>
         </div>
 
@@ -292,7 +342,7 @@ export default function ResultPage() {
             )}
             <ActionRow icon={MapPin} label="주변 서비스센터 찾기" onClick={() => router.push("/centers")} />
             <ActionRow icon={FileText} label="A/S Fast Pass 초안" open={showAS}
-              onClick={() => { setShowAS(!showAS); setShowShare(false); }} />
+              onClick={() => setShowAS(!showAS)} />
             {showAS && (
               <div className="px-4 pb-4 pt-1 bg-[#faf5f2]">
                 <pre className="text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.as_fast_pass_text}</pre>
@@ -302,13 +352,6 @@ export default function ResultPage() {
                   <FileText size={15} /> 접수증 만들기 · PDF 저장
                 </button>
                 <p className="text-[10.5px] text-muted mt-2">※ 수리 권장 시 A/S 접수용 초안입니다.</p>
-              </div>
-            )}
-            <ActionRow icon={Share2} label="가족 공유 요약" open={showShare}
-              onClick={() => { setShowShare(!showShare); setShowAS(false); }} />
-            {showShare && (
-              <div className="px-4 pb-4 pt-1 bg-[#f0f4fb]">
-                <pre className="text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.family_share_summary}</pre>
               </div>
             )}
           </div>

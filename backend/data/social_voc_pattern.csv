@@ -1,11 +1,11 @@
-topic_id,product_type,topic_label,keywords,symptom_type,voc_risk_score,sentiment_score
-T01,에어컨,수리비_불안,수리비 견적 비쌈 출장비 고민,repair_cost,0.85,-0.72
-T02,에어컨,냉방성능_저하,안시원함 냉방약화 시원하지않음 더움,performance_decline,0.78,-0.68
-T03,에어컨,냄새_위생,냄새 곰팡이 퀴퀴함 필터 위생,odor_hygiene,0.72,-0.61
-T04,에어컨,전기료_부담,전기세 전기요금 폭탄 요금 비싸,energy_cost_burden,0.80,-0.75
-T05,에어컨,수리_교체_판단불가,교체할까요 수리할까요 어떻게 고민 어느게 나음,decision_uncertainty,0.90,-0.80
-T06,에어컨,A/S_대기_불만,대기 오래걸림 AS 기사 여름 바쁨,as_delay,0.70,-0.65
-T07,에어컨,관리공백,필터청소 안함 몇년 관리 청소주기,maintenance_gap,0.65,-0.45
-T08,에어컨,소음_이상,소음 소리 윙윙 이상한소리 시끄럽,noise_vibration,0.68,-0.55
-T09,에어컨,구독_렌탈_의구심,구독 렌탈 이득인가 월요금 비교,subscription_doubt,0.60,-0.30
-T10,에어컨,고장_재발,또고장 재고장 수리후 같은증상 불신,repair_distrust,0.88,-0.78
+topic_id,product_type,topic_label,keywords,symptom_type,voc_risk_score,sentiment_score,basis,source_url
+T01,에어컨,수리비_불안,수리비 견적 비쌈 출장비 고민,repair_cost,0.85,-0.72,정성추정(근거 미수집 — 현재 점검필요도 계산 미사용 토픽),
+T02,에어컨,냉방성능_저하,안시원함 냉방약화 시원하지않음 더움,performance_decline,0.91,-0.7,한국소비자원 피해구제 품질·AS(냉방불량 95 + 작동오류 64),https://www.kca.go.kr
+T03,에어컨,냄새_위생,냄새 곰팡이 퀴퀴함 필터 위생,odor_hygiene,0.67,-0.58,한국소비자원 피해구제 품질·AS(악취 9),https://www.kca.go.kr
+T04,에어컨,전기료_부담,전기세 전기요금 폭탄 요금 비싸,energy_cost_burden,0.74,-0.72,커뮤니티·뉴스 상위 VOC '전기세 폭탄'(결함 아닌 사용비용 → freq 정성추정),https://www.mt.co.kr/industry/2023/05/29/2023052911201650389
+T05,에어컨,수리_교체_판단불가,교체할까요 수리할까요 어떻게 고민 어느게 나음,decision_uncertainty,0.9,-0.8,정성추정(근거 미수집 — 현재 점검필요도 계산 미사용 토픽),
+T06,에어컨,A/S_대기_불만,대기 오래걸림 AS 기사 여름 바쁨,as_delay,0.7,-0.65,정성추정(근거 미수집 — 현재 점검필요도 계산 미사용 토픽),
+T07,에어컨,관리공백,필터청소 안함 몇년 관리 청소주기,maintenance_gap,0.65,-0.45,정성추정(근거 미수집 — 현재 점검필요도 계산 미사용 토픽),
+T08,에어컨,소음_이상,소음 소리 윙윙 이상한소리 시끄럽,noise_vibration,0.7,-0.55,한국소비자원 피해구제 품질·AS(소음 22),https://www.kca.go.kr
+T09,에어컨,구독_렌탈_의구심,구독 렌탈 이득인가 월요금 비교,subscription_doubt,0.6,-0.3,정성추정(근거 미수집 — 현재 점검필요도 계산 미사용 토픽),
+T10,에어컨,고장_재발,또고장 재고장 수리후 같은증상 불신,repair_distrust,0.88,-0.78,정성추정(근거 미수집 — 현재 점검필요도 계산 미사용 토픽),

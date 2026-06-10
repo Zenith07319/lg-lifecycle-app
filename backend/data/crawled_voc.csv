@@ -1,0 +1,5 @@
+symptom_type,freq_weight,kca_count,severity,sentiment_score,basis,source_url
+performance_decline,159,159,0.95,-0.70,한국소비자원 피해구제 품질·AS(냉방불량 95 + 작동오류 64),https://www.kca.go.kr
+energy_cost_burden,40,,0.65,-0.72,커뮤니티·뉴스 상위 VOC '전기세 폭탄'(결함 아닌 사용비용 → freq 정성추정),https://www.mt.co.kr/industry/2023/05/29/2023052911201650389
+noise_vibration,22,22,0.60,-0.55,한국소비자원 피해구제 품질·AS(소음 22),https://www.kca.go.kr
+odor_hygiene,9,9,0.55,-0.58,한국소비자원 피해구제 품질·AS(악취 9),https://www.kca.go.kr

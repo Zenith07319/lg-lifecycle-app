@@ -42,7 +42,16 @@
 | 증상 심각도 | 0.30 | 증상_기본값 × 심각도_배율 |
 | 수리 이력 | 0.15 | min(수리 횟수 × 0.33, 1.0) |
 | 관리 미이행 | 0.15 | min(필터_미청소_월수 × 0.10, 1.0) |
-| VOC 위험도 | 0.10 | 동일 증상 소셜 빈도 기반 (0~1) |
+| VOC 위험도 | 0.10 | 증상→VOC 토픽 매핑 후 점수 조회 (0~1) — **근거기반 산출** |
+
+> **[VOC 위험도 산출 — 가안 → 근거기반 (2026-06)]**
+> 기존 수기 가안값을 **한국소비자원 피해구제 통계 기반**으로 대체.
+> - 파이프라인: `backend/data/crawled_voc.csv`(근거) → `backend/scripts/build_voc_pattern.py` → `social_voc_pattern.csv`(점수)
+> - 공식: `voc_risk_score = clamp(0.50 + 0.42 × (0.5·freq_norm + 0.5·severity), 0.50, 0.92)`, `freq_norm = sqrt(freq / max_freq)`
+> - **빈도(freq)**: 한국소비자원 피해구제 품질·AS — 냉방불량 95 + 작동오류 64(→performance 159) / 소음 22 / 악취 9. 전기료는 결함통계 미포함 → 커뮤니티 상위 VOC 정성추정.
+> - **심각도(severity)**: 증상별 기능영향도(문서화된 가정).
+> - 결과: performance_decline 0.91 / energy_cost_burden 0.74 / noise_vibration 0.70 / odor_hygiene 0.67
+> - 한계: 심각도는 여전히 전문가 가정. 대규모 소셜 크롤로 freq 정교화 가능.
 
 > **[확정: 점검 가중치 = 수리이력 0.15 / 관리미이행 0.15]** (2026-06-03 확정) 코드 `src/calculations_v2.py` `calculate_inspection_score` 값을 정본으로 한다. 구버전 문서·docstring의 '0.20 / 0.10' 표기는 폐기한다. (합계 연식 0.30 + 증상 0.30 + 0.15 + 0.15 + VOC 0.10 = 1.00)
 

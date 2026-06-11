@@ -31,6 +31,59 @@ SYMPTOM_RISK_MAP = {
     "작동불가":  0.90,
 }
 
+# ── v4.1 전력 통일 앵커 (docs/04g) ───────────────────────────────────
+# 증상 → 전력증가 대역(%): MDPI Data 2024 9(9):106 실측 (baseline 1210.1W 대비)
+SYMPTOM_BAND = {
+    "이상없음":  (0.0, 0.0),
+    "냄새":      (2.41, 5.76),
+    "전기료부담": (2.41, 8.33),
+    "소음":      (5.76, 13.41),
+    "냉방약화":  (9.98, 24.77),
+    "작동불가":  (24.77, 36.52),
+    # 누수는 전력 대역 없음(안전 이슈) — 점검필요도 floor 0.55로 별도 처리
+}
+# 증상별 가역비율: 셀프케어(청소)로 회복되는 몫. 나머지는 수리(영구·부품) 영역. [E5 가안]
+REV_FRAC = {
+    "이상없음": 0.0, "냄새": 1.0, "전기료부담": 0.7, "소음": 0.2,
+    "냉방약화": 0.6, "작동불가": 0.0, "누수": 0.0,
+}
+R_AGE_YR = 1.5            # 연식 영구열화 %/년 (FSEC 2018 분해: 5.2 median 중 영구분)
+R_AGE_MAX = 25.0          # = 1.5 × 16.7년(기대수명 앵커)
+FILTER_MAX_PCT = 2.41     # 필터 50% 막힘 전력증가(MDPI FI50)
+EFF_FLOOR = 0.635         # 1 - 0.3652 (MDPI 실측 최대 고장 증가율)
+P_TOTAL_MAX = 36.52 + R_AGE_MAX + FILTER_MAX_PCT   # 63.93 — 점검필요도 1.0 도달 앵커
+
+
+def symptom_power_pct(symptom_type: str, severity) -> float:
+    """증상 → 전력증가율(%). 심각도 1~5 선형 보간."""
+    lo, hi = SYMPTOM_BAND.get(symptom_type, (0.0, 0.0))
+    sev = int(severity) if isinstance(severity, (int, float)) else 1
+    return lo + (hi - lo) * (max(sev, 1) - 1) / 4
+
+
+def power_excess_decomp(age_years: int, symptom_type: str, severity, filter_clean_months: int) -> dict:
+    """전력 과소비 분해 → 영구/가역 효율 (docs/04g §2-2).
+
+    과소비% = 영구열화(연식 1.5%/년) + 가역열화(증상 MDPI + 필터)
+    옵션별 시작효율: 계속/셀프(가역 일부 회복)/수리(영구만) — 증상별 가역율 적용.
+    """
+    perm = min(R_AGE_YR * age_years, R_AGE_MAX)
+    sym  = symptom_power_pct(symptom_type, severity)
+    fil  = min(filter_clean_months / 12, 1.0) * FILTER_MAX_PCT
+    rev  = REV_FRAC.get(symptom_type, 0.0)
+    block = perm + sym + fil
+    ce      = 1.0 / (1 + block / 100)                       # 계속(현 상태)
+    ce_self = 1.0 / (1 + (perm + sym * (1 - rev)) / 100)    # 셀프(가역증상+필터 제거)
+    ce_rep  = 1.0 / (1 + perm / 100)                        # 수리(증상·필터 전량 해소)
+    sc_eff = (sym * rev + fil) / block if block > 0 else 0.0
+    rp_eff = (sym + fil) / block if block > 0 else 0.0
+    return {
+        "perm": perm, "sym": sym, "fil": fil, "rev": rev,
+        "ce": max(ce, EFF_FLOOR), "ce_self": max(ce_self, EFF_FLOOR),
+        "ce_rep": max(ce_rep, EFF_FLOOR),
+        "sc_eff": round(sc_eff, 3), "rp_eff": round(rp_eff, 3),
+    }
+
 SYMPTOM_INCONVENIENCE_MAP = {
     "이상없음":  0.00,
     "냄새":      0.45,
@@ -80,31 +133,24 @@ def calculate_inspection_score(
     repair_history_count: int,
     voc_risk_score: float = 0.50,
 ) -> float:
-    """점검 필요도 (0~1).
+    """점검 필요도 (0~1) — v4.1 전력 통일 (docs/04g §2-1).
 
-    고장 확률이 아니라 입력 조건 기준의 점검 필요도를 점수화한다.
-    가중치: 연식 0.30 / 증상 0.30 / 수리이력 0.15 / 관리미이행 0.15 / VOC 0.10
+    고장 확률이 아니라 입력 조건이 시사하는 전력 열화 수준 기반 점검 필요도.
+    연식 1.5%(영구) + 증상 MDPI + 필터를 전력(%)로 통일 후 합산.
+    복합보정 0.8(증상·필터 동시), 수리·VOC는 증상블록 배율(연식 미증폭).
     """
-    # 연식 점수 (이미 0~1)
-    w_age = age_score * 0.30
-
-    # 증상 심각도 점수 (0~1)
-    symptom_base = SYMPTOM_RISK_MAP.get(symptom_type, 0.0)
-    severity_mult = SEVERITY_MULTIPLIER.get(symptom_severity, 1.0)
-    w_symptom = symptom_base * severity_mult * 0.30
-
-    # 수리 이력 점수 (회당 0.33, max 1.0) — 가중치 0.20→0.15
-    repair_score = min(repair_history_count * 0.33, 1.0)
-    w_repair = repair_score * 0.15
-
-    # 관리 미이행 점수 (필터 미청소 월수: 월당 0.10, max 1.0) — 가중치 0.10→0.15
-    filter_score = min(filter_clean_months * FILTER_SCORE_PER_MONTH, 1.0)
-    w_filter = filter_score * 0.15
-
-    # VOC 위험도 (소셜 데이터 기반 동일 증상 빈도, 0~1)
-    w_voc = voc_risk_score * 0.10
-
-    score = w_age + w_symptom + w_repair + w_filter + w_voc
+    sym = symptom_power_pct(symptom_type, symptom_severity)          # 증상 전력증가 %
+    age = min(age_score * 25.05, R_AGE_MAX)                          # = 1.5%/년 × 연식(상한 25%)
+    fil = min(filter_clean_months / 12, 1.0) * FILTER_MAX_PCT
+    # 복합보정: 증상·필터 동시 발생은 부분가산(MDPI 복합/단독 평균 0.76)
+    sf = (sym + fil) * 0.8 if (sym > 0 and fil > 0) else (sym + fil)
+    # 배율(전력 환산 불가 요인) — 증상·필터 블록에만 적용(연식은 증폭 안 함)
+    m_repair = 1.0 + 0.1 * min(repair_history_count, 3)              # 1.0 ~ 1.3
+    m_voc    = 1.0 + 0.3 * voc_risk_score                            # 1.0 ~ 1.3
+    power_block = min((sf * m_repair * m_voc + age) / P_TOTAL_MAX, 1.0)
+    score = power_block
+    if symptom_type == "누수":                                       # 안전 이슈 하한
+        score = max(score, 0.55)
     return round(min(score, 1.0), 3)
 
 
@@ -172,7 +218,11 @@ def run_diagnosis(
         filter_clean_months, repair_history_count, voc_risk_score,
     )
     inconvenience = calculate_inconvenience(symptom_type, symptom_severity, age_score)
-    waste_ratio, waste_kwh = calculate_energy_waste_ratio(old_annual_kwh, new_annual_kwh)
+    # 낭비비율 ②안 (docs/04g): 신품 자기대비 추가 낭비 = 1/η − 1 (현재효율 기반).
+    #   "건강" = 내 기기가 신품 대비 얼마나 새는가. 신형 대비 격차는 비용층(교체 편익)에서만.
+    decomp = power_excess_decomp(age, symptom_type, symptom_severity, filter_clean_months)
+    waste_ratio = round(1.0 / decomp["ce"] - 1.0, 3)
+    waste_kwh = round(old_annual_kwh * (1.0 - decomp["ce"]), 1)
     grade, health_score, grade_desc = assign_health_grade(inspection, waste_ratio, inconvenience)
 
     return DiagnosisResultV2(

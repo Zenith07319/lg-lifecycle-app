@@ -7,7 +7,10 @@ from functools import lru_cache
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.calculations_v2 import run_diagnosis, SYMPTOM_RISK_MAP, SEVERITY_MULTIPLIER
+from src.calculations_v2 import (
+    run_diagnosis, SYMPTOM_RISK_MAP, SEVERITY_MULTIPLIER,
+    power_excess_decomp, EFF_FLOOR, R_AGE_YR,
+)
 from src.tariff_calculator import calc_ac_monthly_kwh, calculate_ac_delta_cost, calculate_monthly_bill
 from src.scoring_v2 import build_options, score_options, apply_hard_rules, calculate_carbon_summary
 from src.report_generator_v2 import generate_report
@@ -142,7 +145,9 @@ def run_full_pipeline(inputs: dict) -> dict:
     contract    = inputs["contract_type"]
 
     age_years   = date.today().year - yr
-    current_eff = max(1.0 - EFFICIENCY_DECAY * age_years, EFFICIENCY_FLOOR)
+    # ── 효율 과소비 분해 (docs/04g): 영구(연식 1.5%) + 가역(증상 MDPI + 필터) ──
+    decomp      = power_excess_decomp(age_years, rep_symptom, rep_severity, inputs["filter_clean_months"])
+    current_eff = decomp["ce"]
 
     # 현재 실제 소비 kWh (카탈로그 월간 / 잔존효율)
     k_old = calc_ac_monthly_kwh(old_monthly_kwh / current_eff, daily_hours)
@@ -161,12 +166,15 @@ def run_full_pipeline(inputs: dict) -> dict:
     d_new     = calculate_ac_delta_cost(k_base, k_new, contract, season)
     bill_base = calculate_monthly_bill(k_base, contract, season)
 
-    # ── 5년 효율감퇴 시퀀스 ────────────────────────────────────────────
+    # ── 5년 효율감퇴 시퀀스 (docs/04g) ─────────────────────────────────
+    # 옵션별 시작효율: 계속=현상태 / 셀프=가역 일부 회복 / 수리=영구만 / 신형=1.0
+    # 미래는 전 옵션 영구 1.5%/년만 감퇴(가역 재증식 데이터 없음 = 보수적).
+    PERM = R_AGE_YR / 100.0   # 0.015/년
     effs = {
-        "계속사용":  [max(current_eff - EFFICIENCY_DECAY*(y-1), EFFICIENCY_FLOOR) for y in range(1,6)],
-        "셀프케어":  [max(current_eff+0.03 - EFFICIENCY_DECAY*(y-1), EFFICIENCY_FLOOR) for y in range(1,6)],
-        "수리후사용": [max(0.825 - EFFICIENCY_DECAY*(y-1), EFFICIENCY_FLOOR) for y in range(1,6)],
-        "신형":      [max(1.0 - EFFICIENCY_DECAY*(y-1), EFFICIENCY_FLOOR) for y in range(1,6)],
+        "계속사용":  [max(decomp["ce"]      - PERM*(y-1), EFF_FLOOR) for y in range(1,6)],
+        "셀프케어":  [max(decomp["ce_self"] - PERM*(y-1), EFF_FLOOR) for y in range(1,6)],
+        "수리후사용": [max(decomp["ce_rep"]  - PERM*(y-1), EFF_FLOOR) for y in range(1,6)],
+        "신형":      [max(1.0              - PERM*(y-1), EFF_FLOOR) for y in range(1,6)],
     }
 
     elec_5yr = {
@@ -191,6 +199,7 @@ def run_full_pipeline(inputs: dict) -> dict:
         ac_delta_old_monthly = d_old["ac_delta_cost"],
         ac_delta_new_monthly = d_new["ac_delta_cost"],
         usage_months         = usage_months,
+        energy_ctx           = decomp,
     )
 
     # 효율감퇴 기반 5년 비용으로 덮어쓰기
@@ -233,6 +242,17 @@ def run_full_pipeline(inputs: dict) -> dict:
         ranked = sorted(ranked, key=lambda o: o.final_score, reverse=True)
         for rank, opt in enumerate(ranked, 1):
             opt.rank = rank
+
+    # ── 누수 안전 정책 (docs/04g): 점수 경쟁이 아니라 안전 — 모든 룰 이후 수리 1순위 고정 ──
+    if rep_symptom == "누수":
+        rep_o = next((o for o in ranked if o.key == "수리후사용"), None)
+        if rep_o:
+            top = max(o.final_score for o in ranked if o.key != "수리후사용")
+            rep_o.final_score = round(max(rep_o.final_score, top + 0.01), 2)
+            rep_o.highlights.append("누수는 안전·2차 피해 위험 — 전문 점검·수리 우선 권장")
+            ranked = sorted(ranked, key=lambda o: (-o.final_score, o.initial_cost))
+            for rank, opt in enumerate(ranked, 1):
+                opt.rank = rank
 
     report = generate_report(
         diagnosis      = diagnosis,

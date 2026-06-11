@@ -162,8 +162,14 @@ def build_options(
     ac_delta_old_monthly: int,
     ac_delta_new_monthly: int,
     usage_months: int = 4,
+    energy_ctx: dict | None = None,
 ) -> list[OptionScoreV2]:
-    """5개 선택지별 에어컨 관련 5년 비용·점검필요도·탄소·불편도 추정."""
+    """5개 선택지별 에어컨 관련 5년 비용·점검필요도·탄소·불편도 추정.
+
+    energy_ctx (docs/04g): power_excess_decomp 결과. 옵션별 효율(ce/ce_self/ce_rep)과
+    가역 기반 해소비율(sc_eff/rp_eff)로 낭비비율·점검도·불편 완화를 일관 적용.
+    미전달 시(하위호환) 구 고정배율 사용.
+    """
 
     repair_mid = (cost_ref.get("repair_min", 80000) + cost_ref.get("repair_max", 500000)) / 2
     visit_fee = cost_ref.get("visit_fee", 39600)
@@ -178,36 +184,57 @@ def build_options(
     sub_months  = COMPARISON_YEARS * 12  # 60개월
 
     cs = carbon_summary
+    ip = diagnosis.inspection_score
+    inconv = diagnosis.inconvenience
+
+    if energy_ctx:
+        sc, rp, rev = energy_ctx["sc_eff"], energy_ctx["rp_eff"], energy_ctx["rev"]
+        w_cont = round(1.0 / energy_ctx["ce"] - 1.0, 3)
+        w_self = round(1.0 / energy_ctx["ce_self"] - 1.0, 3)
+        w_rep  = round(1.0 / energy_ctx["ce_rep"] - 1.0, 3)
+        # 셀프/수리 점검도 완화 = 각자 전력블록에서 없애는 비율 × 0.85
+        self_insp = max(ip * (1 - 0.85 * sc), 0.03)
+        rep_insp  = max(ip * (1 - 0.85 * rp), 0.03)
+        self_inconv = max(inconv * (1 - 0.7 * rev), 0.0)   # 가역증상만 완화
+        rep_inconv  = max(inconv * 0.15, 0.03)
+        self_carbon = cs.old_use_carbon_3y * (1 - 0.30 * sc) + cs.repair_proxy_carbon * 0.3
+        rep_carbon  = cs.old_use_carbon_3y * (1 - 0.30 * rp) + cs.repair_proxy_carbon
+    else:  # 하위호환(구 고정배율)
+        w_cont, w_self, w_rep = diagnosis.energy_waste_ratio, diagnosis.energy_waste_ratio * 0.97, diagnosis.energy_waste_ratio * 0.65
+        self_insp, rep_insp = max(ip - 0.12, 0.05), max(ip - 0.25, 0.10)
+        self_inconv, rep_inconv = max(inconv - 0.20, 0.0), max(inconv - 0.35, 0.05)
+        self_carbon = cs.old_use_carbon_3y * 0.95 + cs.repair_proxy_carbon * 0.3
+        rep_carbon  = cs.old_use_carbon_3y * 0.70 + cs.repair_proxy_carbon
 
     options = [
         OptionScoreV2(
             key="계속사용",
             label="계속 사용",
             three_year_cost=int(elec_old_5y),
-            inspection_after=diagnosis.inspection_score,
-            energy_waste_after=diagnosis.energy_waste_ratio,
+            inspection_after=ip,
+            energy_waste_after=w_cont,
             carbon_total=cs.old_use_carbon_3y,
-            inconvenience_after=diagnosis.inconvenience,
+            inconvenience_after=inconv,
             initial_cost=0,
         ),
         OptionScoreV2(
             key="셀프케어",
             label="셀프케어 후 사용",
             three_year_cost=int(elec_old_5y * 0.95 + selfcare_mid * COMPARISON_YEARS),
-            inspection_after=max(diagnosis.inspection_score - 0.12, 0.05),
-            energy_waste_after=diagnosis.energy_waste_ratio * 0.97,
-            carbon_total=cs.old_use_carbon_3y * 0.95 + cs.repair_proxy_carbon * 0.3,
-            inconvenience_after=max(diagnosis.inconvenience - 0.20, 0.0),
+            inspection_after=self_insp,
+            energy_waste_after=w_self,
+            carbon_total=self_carbon,
+            inconvenience_after=self_inconv,
             initial_cost=int(selfcare_mid),
         ),
         OptionScoreV2(
             key="수리후사용",
             label="수리 후 사용",
             three_year_cost=int(elec_old_5y * 0.60 + repair_mid + visit_fee),
-            inspection_after=max(diagnosis.inspection_score - 0.25, 0.10),
-            energy_waste_after=diagnosis.energy_waste_ratio * 0.65,
-            carbon_total=cs.old_use_carbon_3y * 0.70 + cs.repair_proxy_carbon,
-            inconvenience_after=max(diagnosis.inconvenience - 0.35, 0.05),
+            inspection_after=rep_insp,
+            energy_waste_after=w_rep,
+            carbon_total=rep_carbon,
+            inconvenience_after=rep_inconv,
             initial_cost=int(repair_mid + visit_fee),
         ),
         OptionScoreV2(
@@ -234,11 +261,19 @@ def build_options(
     return options
 
 
-def _normalize(values: list[float]) -> list[float]:
+def _normalize(values: list[float], floor_frac: float = 0.20) -> list[float]:
+    """floor 정규화 (docs/04d): 분모 하한 = max(실범위, |최대|×0.20).
+
+    구 min-max는 미세 절대차를 0~1로 증폭해 동순위를 과대 분리(셀프케어 오추천 버그).
+    floor로 '미미한 차이는 미미하게' 유지. 비용·탄소·초기비용 등 자연 0~1 스케일이
+    없는 지표에만 사용(점검·낭비·불편은 절대값 그대로).
+    """
     mn, mx = min(values), max(values)
-    if mx == mn:
-        return [0.5] * len(values)
-    return [(v - mn) / (mx - mn) for v in values]
+    rng = mx - mn
+    if rng == 0:
+        return [0.0] * len(values)
+    den = max(rng, abs(mx) * floor_frac) if mx != 0 else 1.0
+    return [(v - mn) / den for v in values]
 
 
 def score_options(
@@ -255,12 +290,14 @@ def score_options(
     discomforts = [o.inconvenience_after for o in options]
     initials    = [o.initial_cost for o in options]
 
-    # 낮을수록 유리한 지표 → 정규화 후 반전
+    # 낮을수록 유리한 지표 → 반전. (docs/04d)
+    #  · 점검/낭비/불편 = 이미 0~1 절대 지표 → 절대값 그대로 (min-max 증폭 금지)
+    #  · 비용/탄소/초기 = 자연 0~1 스케일 없음 → floor 정규화
     cost_norm     = [1 - v for v in _normalize(costs)]
-    inspect_norm  = [1 - v for v in _normalize(inspections)]
-    waste_norm    = [1 - v for v in _normalize(wastes)]
+    inspect_norm  = [1 - min(v, 1.0) for v in inspections]
+    waste_norm    = [1 - min(v, 1.0) for v in wastes]
     carbon_norm   = [1 - v for v in _normalize(carbons)]
-    comfort_norm  = [1 - v for v in _normalize(discomforts)]
+    comfort_norm  = [1 - min(v, 1.0) for v in discomforts]
     initial_norm  = [1 - v for v in _normalize(initials)]
 
     # 경제성 = 비용 0.80 + 에너지낭비 0.20 (수정: 절대비용 중심, 낭비 보조)
@@ -291,7 +328,11 @@ def score_options(
                 # 신규 추가: 오래쓰기인데 새 가전 추천 억제
                 opt.final_score = round(max(opt.final_score - 0.10, 0.0), 3)
 
-    sorted_opts = sorted(options, key=lambda o: o.final_score, reverse=True)
+    # 표시 해상도 = 1점(정수). 그 미만 차이는 유의미하지 않음 → 동점 처리 후
+    # tie-break: 초기비용 낮은(덜 침습적인) 옵션 우선. (docs/04g)
+    for opt in options:
+        opt.final_score = round(opt.final_score, 2)
+    sorted_opts = sorted(options, key=lambda o: (-o.final_score, o.initial_cost))
     for rank, opt in enumerate(sorted_opts, 1):
         opt.rank = rank
     return sorted_opts
@@ -306,12 +347,14 @@ def apply_hard_rules(
     """하드 룰 적용. priority_mode: 3축 입력 또는 레거시 문자열."""
     _w, _axes, dominant = _resolve_priority(priority_mode)
 
-    # Rule 1: 점검 필요도 낮음 + 에너지 낭비 낮음 → 교체 선택지 하향
-    if diagnosis.inspection_score < 0.25 and diagnosis.energy_waste_ratio < 0.20:
+    # Rule 1: 점검 필요도 낮음(상태 양호) → 교체 선택지 하향. (docs/04g)
+    #  낭비비율 ②안(신품 자기대비)은 노후기기에서 구조적으로 커져 구 'and 낭비<0.20'
+    #  조건이 무력화됨 → 점검필요도 단일 조건으로 보강. '교체 무조건 추천 금지'의 직접 구현.
+    if diagnosis.inspection_score < 0.25:
         for opt in options:
             if opt.key in ("구독전환", "신제품구매"):
                 opt.final_score = round(max(opt.final_score - 0.10, 0.0), 3)
-                opt.highlights.append("점검 필요도·에너지 낭비가 낮아 교체 우선순위 하향")
+                opt.highlights.append("점검 필요도가 낮아 교체 우선순위 하향")
 
     # Rule 2: 수리비 경고
     repair_opt = next((o for o in options if o.key == "수리후사용"), None)

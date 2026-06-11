@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import text
 from app.db.connection import get_db, IS_SQLITE
 
-TTL_HOURS = 24
+TTL_HOURS = 720   # 30일 — 진단 결과 링크 보관 기간 (데모/제출 기간 커버)
 
 # SQLite는 INSERT OR REPLACE, PostgreSQL은 ON CONFLICT 로 upsert (DB별 구문 차이)
 _UPSERT_SQLITE = """

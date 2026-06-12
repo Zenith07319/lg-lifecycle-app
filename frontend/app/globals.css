@@ -1,26 +1,58 @@
 @import "tailwindcss";
-/* 폰트(Pretendard·Bricolage Grotesque)는 layout.tsx의 <link>로 로드 (Tailwind v4 @import 충돌 회피) */
+/* 폰트(Pretendard)는 layout.tsx의 <link>로 로드 */
 
 @theme {
-  --color-ink:        #1a1518;
-  --color-ink-soft:   #4b4248;
-  --color-paper:      #f5efe9;
+  /* ── 뉴트럴(Figma) ── */
+  --color-ink:        #1a1c21;   /* text-strong */
+  --color-ink-soft:   #33363f;   /* ink-700 */
+  --color-ink-500:    #595959;
+  --color-paper:      #eceded;   /* 앱 배경 */
   --color-surface:    #ffffff;
-  --color-crimson:    #a50034;
-  --color-crimson-deep:#7a0026;
-  --color-muted:      #968a8f;
-  --color-line:       #ece2db;
-  --color-grade-a:    #1a7f3c;
-  --color-grade-b:    #4f7a1a;
-  --color-grade-c:    #e07b00;
-  --color-grade-d:    #d44000;
-  --color-grade-e:    #c40000;
+  --color-muted:      #8c949e;
+  --color-ink-300:    #b3b9c2;
+  --color-line:       #ececed;   /* line-100 */
+  --color-line-200:   #e0e3e8;
+  --color-sunken:     #f5f5f7;
+  --color-tint:       #f0f6f2;   /* surface-tint */
 
-  --font-display: "Bricolage Grotesque", "Pretendard", sans-serif;
+  /* ── 브랜드: 틸(주요) ── */
+  --color-accent:      #047d86;
+  --color-accent-soft: #eef8f7;
+  --color-teal-900:    #034349;
+  --color-teal-500:    #42adb5;
+  --color-teal-400:    #79c7cd;
+  --color-teal-200:    #b7eae4;
+  --color-teal-100:    #d7f0ef;
+
+  /* 호환 별칭: 기존 crimson 사용처 → 틸로 자동 retint (전환기) */
+  --color-crimson:     #047d86;
+  --color-crimson-deep:#035c63;
+
+  /* ── 그린(긍정/탄소) ── */
+  --color-success:   #3da866;
+  --color-green-500: #8bd268;
+  --color-green-400: #91df6b;
+  --color-green-200: #bee5ab;
+  --color-green-050: #eef8e9;
+
+  /* ── 경고/위험/LG ── */
+  --color-warning: #f0a100;
+  --color-danger:  #c23630;
+  --color-lg-red:  #a50034;
+
+  /* ── 건강등급(A~E) ── */
+  --color-grade-a: #1a6b3d;
+  --color-grade-b: #3da866;
+  --color-grade-c: #f0a100;
+  --color-grade-d: #d4521a;
+  --color-grade-e: #c23630;
+
+  --font-display: "Pretendard", sans-serif;
   --font-sans:    "Pretendard", system-ui, sans-serif;
 
-  --shadow-card: 0 1px 2px rgba(60,25,40,.04), 0 8px 24px rgba(60,25,40,.05);
-  --shadow-pop:  0 4px 12px rgba(60,25,40,.08), 0 20px 48px rgba(60,25,40,.10);
+  --shadow-card: 0 2px 8px rgba(5,31,31,.06);
+  --shadow-pop:  0 16px 40px rgba(66,173,181,.14), 0 4px 12px rgba(5,31,31,.05);
+  --shadow-glass:0 16px 40px rgba(179,201,166,.12);
 }
 
 :root { color-scheme: light only; }
@@ -40,45 +72,35 @@ body {
   html, body { background: var(--color-paper); color: var(--color-ink); }
 }
 
-/* ── 앱 셸: 모바일 단일 컬럼 ── */
+/* ── 앱 셸: 모바일 단일 컬럼 (Figma 무드) ── */
 .app-shell {
-  max-width: 460px;
+  max-width: 440px;
   margin: 0 auto;
   min-height: 100dvh;
-  background:
-    radial-gradient(120% 60% at 50% -8%, rgba(165,0,52,.10), transparent 60%),
-    var(--color-paper);
+  background: var(--color-paper);
   position: relative;
-  box-shadow: 0 0 1px rgba(0,0,0,.06), 0 0 90px rgba(80,25,45,.10);
+  overflow: hidden;
+  box-shadow: 0 0 1px rgba(0,0,0,.06), 0 0 90px rgba(4,125,134,.08);
 }
-.app-main { padding-bottom: 92px; }
+.app-main { position: relative; z-index: 1; padding-bottom: 96px; }
 
 /* ── 등장 애니메이션 ── */
-@keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-@keyframes ring   { from { stroke-dashoffset: var(--c, 999); } }
-.reveal  { animation: reveal .6s cubic-bezier(.2,.75,.25,1) both; }
-.reveal-1{ animation-delay: .05s; } .reveal-2{ animation-delay: .12s; }
-.reveal-3{ animation-delay: .19s; } .reveal-4{ animation-delay: .26s; }
-.reveal-5{ animation-delay: .33s; } .reveal-6{ animation-delay: .40s; }
+@keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.reveal  { animation: reveal .55s cubic-bezier(.2,.75,.25,1) both; }
+.reveal-1{ animation-delay:.05s } .reveal-2{ animation-delay:.12s } .reveal-3{ animation-delay:.19s }
+.reveal-4{ animation-delay:.26s } .reveal-5{ animation-delay:.33s } .reveal-6{ animation-delay:.40s }
 
-/* ── 질감 ── */
-.grain::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5; mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-}
+::selection { background: rgba(4,125,134,.16); }
+input[type="range"] { accent-color: var(--color-accent); }
+input[type="checkbox"] { accent-color: var(--color-accent); width: 1.05rem; height: 1.05rem; }
 
-::selection { background: rgba(165,0,52,.18); }
-input[type="range"] { accent-color: var(--color-crimson); }
-input[type="checkbox"] { accent-color: var(--color-crimson); width: 1.05rem; height: 1.05rem; }
+/* 유리 카드 유틸 */
+.glass { background: rgba(255,255,255,.62); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,.5); }
 
-/* ── 인쇄(PDF 저장) 전용 ── A/S Fast Pass 등 .printable 문서만 A4로 출력 */
 @media print {
   @page { size: A4; margin: 14mm; }
   body { background: #fff; }
   .no-print { display: none !important; }
-  .app-shell { max-width: none; box-shadow: none; background: #fff; }
+  .app-shell { max-width: none; box-shadow: none; }
   .app-main { padding-bottom: 0; }
-  .grain::before { display: none; }
-  .printable { box-shadow: none !important; border: none !important; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

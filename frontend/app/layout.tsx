@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
+import AmbientBlobs from "@/components/AmbientBlobs";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#a50034",
+  themeColor: "#047d86",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,7 +27,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" />
         <ServiceWorkerRegister />
-        <div className="app-shell grain">
+        <div className="app-shell">
+          <AmbientBlobs />
           <main className="app-main">{children}</main>
           <BottomNav />
         </div>

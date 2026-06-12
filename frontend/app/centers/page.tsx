@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MapPin, Phone, Clock, Loader2, Navigation, LocateFixed } from "lucide-react";
+import { MapPin, Phone, Clock, Loader2, Navigation, LocateFixed } from "lucide-react";
+import { AppHeader } from "@/components/ui";
 import { getCenters, getCentersNearby } from "@/lib/api";
 import type { CentersResponse } from "@/lib/types";
 import KakaoMap from "@/components/KakaoMap";
@@ -48,67 +49,80 @@ export default function CentersPage() {
   const nearby = data?.mode === "nearby";
 
   return (
-    <div>
-      <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
-        <button onClick={() => router.back()} className="text-accent"><ChevronLeft size={22} /></button>
-        <h1 className="text-[16px] font-extrabold text-ink">주변 서비스센터</h1>
-        <span className="ml-auto text-[11px] text-muted">LG 공식</span>
-      </div>
+    <div className="pb-28">
+      <AppHeader
+        title="주변 서비스센터"
+        back
+        right={<span className="text-[11px] font-semibold text-muted">LG 공식</span>}
+      />
 
-      <div className="px-4 py-4">
-        {/* 내 주변 버튼 */}
+      <div className="px-6 pt-3">
+        {/* 내 주변 CTA */}
         <button onClick={loadNearby} disabled={geoLoading}
-          className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-extrabold mb-3 ${nearby ? "text-white" : "border border-accent text-accent"}`}
+          className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-extrabold transition active:scale-[.99] ${nearby ? "text-white" : "border border-accent text-accent"}`}
           style={nearby ? { background: "linear-gradient(135deg,#047d86,#034349)" } : {}}>
           {geoLoading ? <Loader2 className="animate-spin" size={17} /> : <LocateFixed size={17} />}
           {geoLoading ? "내 위치 확인 중…" : "내 주변 센터 찾기"}
         </button>
-        {geoError && <p className="text-[12px] text-amber-700 bg-amber-50 rounded-xl px-3 py-2 mb-3">{geoError}</p>}
+        {geoError && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-700">{geoError}</p>
+        )}
 
-        {/* 지역 선택 */}
+        {/* 지역 선택 칩 */}
         {data && (
-          <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+          <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1" style={{ scrollbarWidth: "none" }}>
             {data.regions.map((rg) => (
               <button key={rg} onClick={() => loadRegion(rg)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-bold ${!nearby && data.selected === rg ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-soft"}`}>{rg}</button>
+                className={`shrink-0 rounded-full border px-3.5 py-2 text-[12.5px] font-bold transition ${!nearby && data.selected === rg ? "border-accent bg-accent-soft text-accent" : "border-line bg-white/70 text-ink-soft"}`}>{rg}</button>
             ))}
           </div>
         )}
 
-        {/* 통합 안내 */}
+        {/* 통합 고객센터 */}
         {data && (
-          <a href={`tel:${data.tel}`} className="mt-2 flex items-center gap-2 rounded-xl bg-accent-soft border border-line px-4 py-2.5 text-[12px] text-ink-soft">
+          <a href={`tel:${data.tel}`}
+            className="mt-3 flex items-center gap-2 rounded-2xl border border-line bg-white/64 px-4 py-3 text-[12px] text-ink-soft shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm">
             <Phone size={14} className="text-accent" /> 통합 고객센터 <b className="text-ink">{data.tel}</b>
             <span className="ml-auto flex items-center gap-1 text-[11px] text-muted"><Clock size={12} />{data.hours}</span>
           </a>
         )}
 
         {loading ? (
-          <p className="text-center text-muted text-[13px] py-12"><Loader2 className="inline animate-spin mr-1" size={14} />불러오는 중…</p>
+          <p className="py-12 text-center text-[13px] text-muted"><Loader2 className="mr-1 inline animate-spin" size={14} />불러오는 중…</p>
         ) : !data || data.items.length === 0 ? (
-          <p className="text-center text-muted text-[13px] py-12">센터 정보가 없어요.</p>
+          <p className="py-12 text-center text-[13px] text-muted">센터 정보가 없어요.</p>
         ) : (
-          <div className="mt-3 space-y-2.5">
-            <KakaoMap centers={data.items} user={userLoc} />
-            <p className="text-[11.5px] text-muted px-1">{nearby ? "📍 내 위치에서 가까운 순" : `${data.selected} · ${data.count}곳`}</p>
+          <div className="mt-4 space-y-3">
+            {/* 지도 */}
+            <div className="overflow-hidden rounded-[18px] shadow-[0_2px_8px_rgba(5,31,31,.06)]">
+              <KakaoMap centers={data.items} user={userLoc} />
+            </div>
+
+            <p className="px-1 text-[11.5px] font-medium text-muted">{nearby ? "📍 내 위치에서 가까운 순" : `${data.selected} · ${data.count}곳`}</p>
+
+            {/* 센터 카드 */}
             {data.items.map((c) => (
-              <div key={c.name + c.address} className="rounded-[18px] bg-surface border border-line p-4 shadow-[var(--shadow-card)]">
+              <div key={c.name + c.address}
+                className="rounded-[18px] border border-line bg-white/64 p-4 shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm">
                 <div className="flex items-start gap-2">
                   <h3 className="flex-1 text-[14px] font-extrabold text-ink">{c.name}</h3>
                   {typeof c.distance_km === "number" && (
-                    <span className="shrink-0 flex items-center gap-1 text-[11px] font-extrabold text-accent bg-accent-soft rounded-full px-2 py-0.5">
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-extrabold text-accent">
                       <Navigation size={11} />{c.distance_km}km
                     </span>
                   )}
                 </div>
-                <p className="flex items-start gap-1 text-[12px] text-muted mt-1"><MapPin size={13} className="shrink-0 mt-0.5" />{c.address}</p>
-                {c.repair && <p className="text-[11.5px] text-ink-soft mt-1">🔧 {c.repair}</p>}
-                {c.note && <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5 mt-1.5">ℹ {c.note}</p>}
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  <a href={`tel:${data.tel}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-line text-ink-soft font-bold py-2.5 text-[13px]">
+                <p className="mt-1 flex items-start gap-1 text-[12px] text-muted"><MapPin size={13} className="mt-0.5 shrink-0" />{c.address}</p>
+                {c.repair && <p className="mt-1 text-[11.5px] text-ink-soft">🔧 {c.repair}</p>}
+                {c.note && <p className="mt-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-700">ℹ {c.note}</p>}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <a href={`tel:${data.tel}`}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-line bg-white/80 py-2.5 text-[13px] font-bold text-ink-soft">
                     <Phone size={14} />전화
                   </a>
-                  <a href={data.reserve_url} target="_blank" rel="noopener" className="flex items-center justify-center gap-1.5 rounded-xl text-white font-extrabold py-2.5 text-[13px]" style={{ background: "linear-gradient(135deg,#047d86,#034349)" }}>
+                  <a href={data.reserve_url} target="_blank" rel="noopener"
+                    className="flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-extrabold text-white"
+                    style={{ background: "linear-gradient(135deg,#047d86,#034349)" }}>
                     방문 예약
                   </a>
                 </div>
@@ -117,7 +131,7 @@ export default function CentersPage() {
           </div>
         )}
 
-        <p className="text-[11px] text-muted mt-3 leading-relaxed">
+        <p className="mt-4 px-1 text-[11px] leading-relaxed text-muted">
           ※ LG전자 전국 서비스센터(2025 기준). 거리는 직선거리 추정이며, 정확한 운영시간·휴무·예약은 LG전자 고객지원(1544-7777) 또는 LG.com에서 확인하세요.
         </p>
       </div>

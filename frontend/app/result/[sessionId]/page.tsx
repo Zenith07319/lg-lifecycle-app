@@ -8,23 +8,27 @@ import { saveDevice } from "@/lib/myDevice";
 import type { SessionData, OptionScore } from "@/lib/types";
 import { GRADE_COLORS, OPTION_ICONS, fmt, fmtCo2 } from "@/lib/utils";
 
-/* ── 건강등급 링 히어로 ── */
+/* 등급별 짧은 권장 라벨 (히어로용) */
+const URGENT_LABEL: Record<string, string> = {
+  A: "계속 사용 적합", B: "셀프케어 권장", C: "점검 권장", D: "교체 검토 권장", E: "즉시 점검 권장",
+};
+
+/* ── 건강점수 + 에너지등급 링 히어로 (Figma 04-2) ── */
 function GradeHero({ data }: { data: SessionData }) {
   const d = data.diagnosis;
+  const inp = data.user_inputs;
   const grade = d.health_grade as string;
   const score = d.health_score as number;
   const color = GRADE_COLORS[grade] ?? "#a50034";
-  const R = 54, CIRC = 2 * Math.PI * R;
-  const [prog, setProg] = useState(0);
+  const age = d.age_years as number;
   const [showCalc, setShowCalc] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setProg(Math.min(score, 100)), 120); return () => clearTimeout(t); }, [score]);
+
+  // 우측 등급 링
+  const R = 30, CIRC = 2 * Math.PI * R;
+  const [prog, setProg] = useState(0);
+  useEffect(() => { const t = setTimeout(() => setProg(Math.min(score, 100)), 150); return () => clearTimeout(t); }, [score]);
   const off = CIRC * (1 - prog / 100);
 
-  // 표시 지표: 생활 불편 제외 (직관성). 둘 다 낮을수록 건강.
-  const metrics: [string, string][] = [
-    ["점검 필요도", `${(d.inspection_score_100 as number).toFixed(0)}`],
-    ["에너지 낭비", `${((d.energy_waste_ratio as number) * 100).toFixed(0)}%`],
-  ];
   // 점수 계산 내역 (종합위험 = 점검0.45 + 에너지낭비0.30 + 생활불편0.25 → 감점)
   const insp = (d.inspection_score_100 as number) / 100;
   const ene = d.energy_waste_ratio as number;
@@ -34,93 +38,128 @@ function GradeHero({ data }: { data: SessionData }) {
     ["에너지 낭비", `${(ene * 100).toFixed(0)}%`, ene * 0.30 * 100],
     ["생활 불편", `${(inc * 100).toFixed(0)}`, inc * 0.25 * 100],
   ];
+
   return (
-    <div className="rounded-[26px] p-6 text-center border border-line shadow-[var(--shadow-pop)]"
-      style={{ background: `linear-gradient(180deg,#ffffff 0%, ${color}10 100%)` }}>
-      <div className="relative w-[150px] h-[150px] mx-auto">
-        <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
-          <circle cx="64" cy="64" r={R} fill="none" stroke="#ece2db" strokeWidth="11" />
-          <circle cx="64" cy="64" r={R} fill="none" stroke={color} strokeWidth="11" strokeLinecap="round"
-            strokeDasharray={CIRC} strokeDashoffset={off}
-            style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)" }} />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[58px] leading-none font-extrabold"
-            style={{ fontFamily: "var(--font-display)", color }}>{grade}</span>
+    <div className="relative overflow-hidden rounded-[26px] border border-line p-5 shadow-[var(--shadow-pop)]"
+      style={{ background: `linear-gradient(180deg,#ffffff 0%, ${color}0d 100%)` }}>
+      {/* 점수 ↔ 등급 링 */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold text-muted">건강 점수</p>
+          <p className="text-[64px] leading-[1.02] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {score.toFixed(0)}
+          </p>
+          <p className="mt-1 text-[12.5px] font-semibold text-muted">{inp.product_type} · 설치 {age}년차</p>
+          <p className="mt-0.5 text-[12.5px] font-bold" style={{ color }}>{URGENT_LABEL[grade] ?? (d.grade_description as string)}</p>
+        </div>
+        <div className="shrink-0 text-center">
+          <div className="relative w-[72px] h-[72px]">
+            <svg viewBox="0 0 72 72" className="w-full h-full -rotate-90">
+              <circle cx="36" cy="36" r={R} fill="none" stroke="#ece2db" strokeWidth="7" />
+              <circle cx="36" cy="36" r={R} fill="none" stroke={color} strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={CIRC} strokeDashoffset={off}
+                style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)" }} />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[30px] leading-none font-extrabold" style={{ fontFamily: "var(--font-display)", color }}>{grade}</span>
+            </div>
+          </div>
+          <p className="mt-1 text-[10.5px] font-bold text-muted">건강 등급</p>
         </div>
       </div>
-      <p className="mt-2 text-[14px] font-bold text-ink">
-        건강점수 <span style={{ fontFamily: "var(--font-display)" }}>{score.toFixed(0)}</span>점
-      </p>
-      <p className="text-[12.5px] text-muted">{d.grade_description as string}</p>
-      <div className="grid grid-cols-2 gap-2 mt-4">
-        {metrics.map(([l, v]) => (
-          <div key={l} className="rounded-2xl bg-[#faf5f2] py-2.5">
-            <div className="text-[18px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{v}</div>
-            <div className="text-[10.5px] text-muted mt-0.5">{l} <span className="text-grade-a">↓좋음</span></div>
-          </div>
-        ))}
-      </div>
 
-      {/* 점수 계산 내역 더보기 */}
+      {/* 에어컨 일러스트 (장식) */}
+      <img src="/ac-illustration.png" alt="" aria-hidden="true"
+        className="pointer-events-none mx-auto -mt-2 mb-1 block h-[118px] w-[118px] select-none object-contain" />
+
+      {/* 점수 계산 내역 */}
       <button onClick={() => setShowCalc(!showCalc)}
-        className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-bold text-crimson">
-        점수 계산 내역 {showCalc ? "접기" : "더보기"}
+        className="mx-auto flex w-fit items-center gap-1 text-[11.5px] font-bold text-crimson">
+        점수 계산이 궁금하다면? {showCalc ? "접기" : "보기"}
         <ChevronDown size={13} className={`transition-transform ${showCalc ? "rotate-180" : ""}`} />
       </button>
       {showCalc && (
-        <div className="mt-2 text-left rounded-2xl bg-[#faf5f2] p-3.5 space-y-1.5">
-          <p className="text-[11px] text-muted leading-relaxed">건강점수 = <b>100 − 종합위험</b>. 종합위험은 아래 3가지를 가중합해요 (감점 클수록 등급 ↓).</p>
+        <div className="mt-2 rounded-2xl bg-[#faf5f2] p-3.5 space-y-1.5">
+          <p className="text-[11px] leading-relaxed text-muted">건강점수 = <b>100 − 종합위험</b> (감점 클수록 등급 ↓).</p>
           {calc.map(([l, v, contrib]) => (
             <div key={l} className="flex items-center gap-2 text-[11.5px]">
-              <span className="w-[66px] text-ink-soft font-semibold">{l}</span>
+              <span className="w-[66px] font-semibold text-ink-soft">{l}</span>
               <span className="text-muted">{v}</span>
               <span className="ml-auto font-extrabold text-grade-d" style={{ fontFamily: "var(--font-display)" }}>−{contrib.toFixed(0)}</span>
             </div>
           ))}
-          <p className="text-[10px] text-muted pt-1.5 border-t border-line/60">반영 비율 · 점검 45% / 에너지 30% / 생활불편 25%</p>
+          <p className="border-t border-line/60 pt-1.5 text-[10px] text-muted">반영 비율 · 점검 45% / 에너지 30% / 생활불편 25%</p>
         </div>
       )}
     </div>
   );
 }
 
-/* ── 전기요금 카드 ── */
+/* ── 전기요금 + 핵심 지표 (Figma 04-2) ── */
 function ElecCard({ data }: { data: SessionData }) {
+  const d = data.diagnosis;
   const oldC = data.delta_old.ac_delta_cost as number;
   const newC = data.delta_new.ac_delta_cost as number;
   const months = (data.user_inputs.usage_months as number) || 4;
   const save5 = Math.max(0, (oldC - newC) * months * 5);
+  const extra = Math.max(0, oldC - newC);
   const changed = data.delta_old.tier_changed as boolean;
   const byInput = ((data.user_inputs.ac_monthly_kwh_input as number) || 0) > 0;
+  const insp = d.inspection_score_100 as number;
+  const waste = (d.energy_waste_ratio as number) * 100;
   return (
-    <div className="rounded-[22px] bg-surface border border-line p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-[14px] font-extrabold text-ink">⚡ 전기요금 (에어컨 기여 · 월)</h3>
-        <span className={`ml-auto text-[10px] font-extrabold rounded-full px-2 py-0.5 ${byInput ? "text-crimson bg-[#fdeef4]" : "text-muted bg-[#f1efed]"}`}>
-          {byInput ? "📋 입력값 기준" : "📊 추정 기준"}
-        </span>
-      </div>
-      <div className="flex items-end gap-3">
-        <div className="flex-1 rounded-2xl bg-[#fff6f0] p-3 text-center">
-          <p className="text-[11px] text-muted">지금 구형</p>
-          <p className="text-[19px] font-extrabold text-grade-d" style={{ fontFamily: "var(--font-display)" }}>{fmt(oldC)}</p>
-        </div>
-        <div className="pb-3 text-muted text-[13px] font-bold">→</div>
-        <div className="flex-1 rounded-2xl bg-[#eef8f0] p-3 text-center">
-          <p className="text-[11px] text-muted">1등급 신형</p>
-          <p className="text-[19px] font-extrabold text-grade-a" style={{ fontFamily: "var(--font-display)" }}>{fmt(newC)}</p>
-        </div>
-      </div>
-      <div className="mt-3 flex items-center justify-between rounded-xl bg-[#faf5f2] px-4 py-2.5">
-        <span className="text-[12.5px] text-ink-soft font-semibold">여름철 5년 절감 (교체 시)</span>
-        <span className="text-[15px] font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{fmt(save5)}</span>
-      </div>
-      {changed && (
-        <p className="mt-2 text-[11px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-          ⚡ 누진 구간 이동: {data.delta_old.tier_with_ac as string} → {data.delta_new.tier_with_ac as string} (절감폭 ↑)
+    <div className="space-y-3">
+      {extra > 0 && (
+        <p className="px-1 text-[14.5px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+          지금 매달 <span className="text-crimson">전기요금 {fmt(extra)}</span>을 더 내고 있어요
         </p>
       )}
+
+      <div className="rounded-[20px] bg-surface border border-line p-4 shadow-[var(--shadow-card)]">
+        <div className="mb-3 flex items-center gap-2">
+          <h3 className="text-[12.5px] font-extrabold text-ink">전기요금 <span className="text-muted font-bold">(에어컨 기여 · 월)</span></h3>
+          <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-extrabold ${byInput ? "bg-[#fdeef4] text-crimson" : "bg-[#f1efed] text-muted"}`}>
+            {byInput ? "입력값 기준" : "추정 기준"}
+          </span>
+        </div>
+        <div className="flex items-stretch gap-2.5">
+          <div className="flex-1 rounded-2xl bg-[#fff6f0] p-3">
+            <p className="text-[11px] font-semibold text-muted">내 에어컨</p>
+            <p className="text-[19px] font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{fmt(oldC)}</p>
+          </div>
+          <div className="flex items-center text-[13px] font-bold text-muted">→</div>
+          <div className="flex-1 rounded-2xl bg-[#eef8f0] p-3">
+            <p className="text-[11px] font-semibold text-muted">1등급 신형</p>
+            <p className="text-[19px] font-extrabold text-grade-a" style={{ fontFamily: "var(--font-display)" }}>{fmt(newC)}</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between rounded-xl bg-[#faf5f2] px-4 py-2.5">
+          <span className="text-[12px] font-semibold text-ink-soft">5년 절감 금액 (교체 시)</span>
+          <span className="text-[15px] font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{fmt(save5)}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-2xl bg-surface border border-line p-3 text-center shadow-[var(--shadow-card)]">
+          <p className="mb-1 text-[10px] font-semibold text-muted">누진 구간</p>
+          {changed ? (
+            <p className="text-[11px] font-extrabold leading-tight text-ink">
+              {data.delta_old.tier_with_ac as string}<br />
+              <span className="text-crimson">→ {data.delta_new.tier_with_ac as string}</span>
+            </p>
+          ) : (
+            <p className="mt-1.5 text-[15px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>유지</p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-surface border border-line p-3 text-center shadow-[var(--shadow-card)]">
+          <p className="mb-1 text-[10px] font-semibold text-muted">점검 필요도</p>
+          <p className="text-[20px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{insp.toFixed(0)}</p>
+        </div>
+        <div className="rounded-2xl bg-surface border border-line p-3 text-center shadow-[var(--shadow-card)]">
+          <p className="mb-1 text-[10px] font-semibold text-muted">에너지 낭비</p>
+          <p className="text-[20px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>{waste.toFixed(0)}%</p>
+        </div>
+      </div>
     </div>
   );
 }

@@ -94,8 +94,7 @@ export default function DiagnosePage() {
   const lab = "text-[11.5px] font-bold text-ink-soft";
   const nextBtn = (label: string, onClick: () => void, disabled = false) => (
     <button onClick={onClick} disabled={disabled}
-      className="w-full mt-3 rounded-2xl text-white font-extrabold py-3 text-[14px] shadow-[0_6px_16px_rgba(165,0,52,.25)] disabled:opacity-50 active:scale-[.99] transition-transform"
-      style={{ background: "linear-gradient(135deg,#a50034,#82002a)" }}>
+      className="w-full mt-3 rounded-full bg-accent text-white font-extrabold py-3 text-[14px] shadow-[0_6px_16px_rgba(4,125,134,.28)] disabled:opacity-50 active:scale-[.99] transition-transform">
       {label}
     </button>
   );
@@ -118,7 +117,7 @@ export default function DiagnosePage() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2.5">
               {(["고압", "저압"] as const).map((v) => (
-                <button key={v} onClick={() => set("contract_type", v)} className={`rounded-xl border py-2 text-[12.5px] font-bold ${form.contract_type === v ? "border-crimson bg-[#fdeef4] text-crimson" : "border-line text-ink-soft"}`}>{v === "고압" ? "고압(아파트)" : "저압(빌라)"}</button>
+                <button key={v} onClick={() => set("contract_type", v)} className={`rounded-xl border py-2 text-[12.5px] font-bold ${form.contract_type === v ? "border-crimson bg-accent-soft text-crimson" : "border-line text-ink-soft"}`}>{v === "고압" ? "고압(아파트)" : "저압(빌라)"}</button>
               ))}
             </div>
             <div className="mt-2.5">
@@ -136,7 +135,7 @@ export default function DiagnosePage() {
             <div className="flex flex-wrap gap-2">
               {SYMPTOMS.map((label) => {
                 const on = form.symptoms.some((s) => s.type === label);
-                return <button key={label} onClick={() => toggleSymptom(label)} className={`rounded-full border px-3.5 py-2 text-[13px] font-semibold ${on ? "border-crimson bg-[#fdeef4] text-crimson" : "border-line text-ink-soft"}`}>{label}</button>;
+                return <button key={label} onClick={() => toggleSymptom(label)} className={`rounded-full border px-3.5 py-2 text-[13px] font-semibold ${on ? "border-crimson bg-accent-soft text-crimson" : "border-line text-ink-soft"}`}>{label}</button>;
               })}
             </div>
             {nextBtn(form.symptoms.length ? "다음" : "증상 없음 · 다음", next)}
@@ -208,14 +207,14 @@ export default function DiagnosePage() {
     </div>
   );
   const me = (text: string, k: string) => (
-    <div key={k} className="max-w-[82%] ml-auto rounded-2xl rounded-tr-md px-3.5 py-2.5 text-[13.5px] text-white reveal" style={{ background: "linear-gradient(135deg,#a50034,#82002a)" }}>{text}</div>
+    <div key={k} className="max-w-[82%] ml-auto rounded-2xl rounded-tr-md bg-accent px-3.5 py-2.5 text-[13.5px] text-white reveal">{text}</div>
   );
 
   return (
     <div>
       <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
         <Link href="/" className="text-crimson"><ChevronLeft size={22} /></Link>
-        <h1 className="text-[16px] font-extrabold text-ink">챗봇 진단</h1>
+        <h1 className="text-[16px] font-extrabold text-ink">가전 진단</h1>
         <span className="ml-auto text-[11px] text-muted">{Math.min(step + 1, Q.length)}/{Q.length}</span>
         <button onClick={sampleFast} className="text-[11px] font-bold text-crimson border border-crimson/40 rounded-full px-2.5 py-1">샘플</button>
       </div>

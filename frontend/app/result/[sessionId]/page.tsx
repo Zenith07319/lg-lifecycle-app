@@ -111,31 +111,31 @@ function ElecCard({ data }: { data: SessionData }) {
     <div className="space-y-3">
       {extra > 0 && (
         <p className="px-1 text-[14.5px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>
-          지금 매달 <span className="text-crimson">전기요금 {fmt(extra)}</span>을 더 내고 있어요
+          지금 매달 <span className="text-[#c23630]">전기요금 {fmt(extra)}</span>을 더 내고 있어요
         </p>
       )}
 
       <div className="rounded-[20px] bg-surface border border-line p-4 shadow-[var(--shadow-card)]">
         <div className="mb-3 flex items-center gap-2">
           <h3 className="text-[12.5px] font-extrabold text-ink">전기요금 <span className="text-muted font-bold">(에어컨 기여 · 월)</span></h3>
-          <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-extrabold ${byInput ? "bg-[#fdeef4] text-crimson" : "bg-[#f1efed] text-muted"}`}>
+          <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-extrabold ${byInput ? "bg-[#eef8f7] text-[#047D86]" : "bg-[#f1efed] text-muted"}`}>
             {byInput ? "입력값 기준" : "추정 기준"}
           </span>
         </div>
         <div className="flex items-stretch gap-2.5">
-          <div className="flex-1 rounded-2xl bg-[#fff6f0] p-3">
+          <div className="flex-1 rounded-2xl bg-[#fff3f0] p-3">
             <p className="text-[11px] font-semibold text-muted">내 에어컨</p>
-            <p className="text-[19px] font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{fmt(oldC)}</p>
+            <p className="text-[19px] font-extrabold text-[#c23630]" style={{ fontFamily: "var(--font-display)" }}>{fmt(oldC)}</p>
           </div>
           <div className="flex items-center text-[13px] font-bold text-muted">→</div>
-          <div className="flex-1 rounded-2xl bg-[#eef8f0] p-3">
+          <div className="flex-1 rounded-2xl bg-[#eef8f7] p-3">
             <p className="text-[11px] font-semibold text-muted">1등급 신형</p>
-            <p className="text-[19px] font-extrabold text-grade-a" style={{ fontFamily: "var(--font-display)" }}>{fmt(newC)}</p>
+            <p className="text-[19px] font-extrabold text-[#047D86]" style={{ fontFamily: "var(--font-display)" }}>{fmt(newC)}</p>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between rounded-xl bg-[#faf5f2] px-4 py-2.5">
+        <div className="mt-3 flex items-center justify-between rounded-xl bg-[#f1faf9] px-4 py-2.5">
           <span className="text-[12px] font-semibold text-ink-soft">5년 절감 금액 (교체 시)</span>
-          <span className="text-[15px] font-extrabold text-crimson" style={{ fontFamily: "var(--font-display)" }}>{fmt(save5)}</span>
+          <span className="text-[15px] font-extrabold text-[#047D86]" style={{ fontFamily: "var(--font-display)" }}>{fmt(save5)}</span>
         </div>
       </div>
 
@@ -180,7 +180,7 @@ function OptionCard({ opt, rank, max }: { opt: OptionScore; rank: number; max: n
   const first = rank === 1;
   const score100 = Math.round(opt.final_score * 100);   // final_score 0~1 → 점수
   return (
-    <div className={`rounded-[20px] overflow-hidden border shadow-[var(--shadow-card)] ${first ? "border-crimson bg-[#fff7fa]" : "border-line bg-surface"}`}>
+    <div className={`rounded-[20px] overflow-hidden border shadow-[var(--shadow-card)] ${first ? "border-[#047D86] bg-[#eef8f7]" : "border-line bg-surface"}`}>
       <button onClick={() => setOpen(!open)} className="w-full px-4 py-3.5 text-left">
         <div className="flex items-center gap-2.5">
           <span className="text-[18px]">{OPTION_ICONS[opt.key] ?? "•"}</span>
@@ -188,14 +188,14 @@ function OptionCard({ opt, rank, max }: { opt: OptionScore; rank: number; max: n
             <div className="flex items-center gap-2">
               <span className="text-[15px] font-extrabold text-ink">{opt.label}</span>
               {first
-                ? <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-white bg-crimson rounded-full px-2 py-0.5"><Trophy size={11} /> 1순위</span>
+                ? <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-white rounded-full px-2 py-0.5" style={{ background: "#047D86" }}><Trophy size={11} /> 1순위</span>
                 : <span className="text-[11px] font-bold text-muted">{rank}순위</span>}
-              <span className="ml-auto text-[17px] font-extrabold leading-none" style={{ fontFamily: "var(--font-display)", color: first ? "#a50034" : "#7a6c64" }}>
+              <span className="ml-auto text-[17px] font-extrabold leading-none" style={{ fontFamily: "var(--font-display)", color: first ? "#047D86" : "#7a6c64" }}>
                 {score100}<span className="text-[11px] font-bold">점</span>
               </span>
             </div>
-            <div className="mt-1.5 h-1.5 rounded-full bg-[#efe7e1] overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${Math.max(6, (opt.final_score / max) * 100)}%`, background: first ? "linear-gradient(90deg,#a50034,#c2185b)" : "#c9bdb4" }} />
+            <div className="mt-1.5 h-1.5 rounded-full bg-[#e3efed] overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${Math.max(6, (opt.final_score / max) * 100)}%`, background: first ? "linear-gradient(90deg,#047D86,#1aa6ad)" : "#b6cfca" }} />
             </div>
           </div>
           <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
@@ -210,7 +210,7 @@ function OptionCard({ opt, rank, max }: { opt: OptionScore; rank: number; max: n
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             {[["초기비용", fmt(opt.initial_cost)], ["점검 필요도", `${(opt.inspection_after * 100).toFixed(0)}`], ["탄소", fmtCo2(opt.carbon_total)]].map(([l, v]) => (
-              <div key={l} className="rounded-xl bg-[#faf5f2] py-2">
+              <div key={l} className="rounded-xl bg-[#f1faf9] py-2">
                 <div className="text-[13px] font-extrabold text-ink">{v}</div>
                 <div className="text-[10px] text-muted">{l}</div>
               </div>
@@ -223,7 +223,7 @@ function OptionCard({ opt, rank, max }: { opt: OptionScore; rank: number; max: n
               {([["경제", opt.economy_score], ["신뢰", opt.reliability_score], ["탄소", opt.carbon_score], ["편의", opt.comfort_score], ["초기", opt.initial_score]] as [string, number][]).map(([l, v]) => {
                 const [rt, rc] = rate5(v);
                 return (
-                  <div key={l} className="rounded-lg bg-[#f3ece7] py-1.5">
+                  <div key={l} className="rounded-lg bg-[#eef5f3] py-1.5">
                     <div className="text-[10px] font-extrabold leading-tight" style={{ color: rc }}>{rt}</div>
                     <div className="text-[9.5px] text-muted mt-0.5">{l}</div>
                   </div>
@@ -245,10 +245,10 @@ function ActionRow({ icon: Icon, label, hint, open, onClick }: {
   icon: React.ElementType; label: string; hint?: string; open?: boolean; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#faf5f2]">
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#eef8f7]">
       <Icon size={18} className="text-crimson" strokeWidth={2} />
       <span className="flex-1 text-[14px] font-bold text-ink">{label}</span>
-      {hint && <span className="text-[10px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5">{hint}</span>}
+      {hint && <span className="text-[10px] font-extrabold text-crimson bg-[#eef8f7] rounded-full px-2 py-0.5">{hint}</span>}
       {open === undefined
         ? <ChevronRight size={16} className="text-muted" />
         : <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />}
@@ -312,9 +312,16 @@ export default function ResultPage() {
   const top2 = ordered.slice(0, 2).map((o) => o.key);
 
   return (
-    <div>
+    <div
+      style={{
+        // 결과 페이지 한정 틸/민트 테마 (Figma 컨셉). 크림슨 토큰을 틸로 런타임 오버라이드.
+        ["--color-crimson" as string]: "#047D86",
+        ["--color-crimson-deep" as string]: "#035c63",
+        background: "linear-gradient(180deg,#e9f6f4 0%, #f1faf9 220px, var(--color-paper) 520px)",
+      } as React.CSSProperties}
+    >
       {/* App bar */}
-      <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
+      <div className="sticky top-0 z-20 bg-[#e9f6f4]/85 backdrop-blur-md border-b border-[#cfe7e3] px-4 py-3 flex items-center gap-2">
         <Link href="/diagnose" className="text-crimson"><ChevronLeft size={22} /></Link>
         <div className="leading-tight">
           <h1 className="text-[16px] font-extrabold text-ink">진단 결과</h1>
@@ -328,7 +335,7 @@ export default function ResultPage() {
 
         {/* 1순위 추천 */}
         <div className="reveal reveal-3 rounded-[22px] p-5 text-white shadow-[var(--shadow-pop)]"
-          style={{ background: "linear-gradient(140deg,#a50034,#76002a)" }}>
+          style={{ background: "linear-gradient(140deg,#0a9aa3,#035c63)" }}>
           <p className="text-[11px] font-semibold text-white/80">1순위 추천 (현재 입력 기준 추정)</p>
           <p className="text-[28px] font-extrabold mt-0.5" style={{ fontFamily: "var(--font-display)" }}>{r.recommendation_1st}</p>
           <p className="text-[12.5px] text-white/85 mt-1">2순위 대안 · {r.recommendation_2nd}</p>
@@ -383,11 +390,11 @@ export default function ResultPage() {
             <ActionRow icon={FileText} label="A/S Fast Pass 초안" open={showAS}
               onClick={() => setShowAS(!showAS)} />
             {showAS && (
-              <div className="px-4 pb-4 pt-1 bg-[#faf5f2]">
+              <div className="px-4 pb-4 pt-1 bg-[#f1faf9]">
                 <pre className="text-[11.5px] text-ink-soft whitespace-pre-wrap leading-relaxed">{r.as_fast_pass_text}</pre>
                 <button onClick={() => router.push(`/fastpass/${sessionId}`)}
                   className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-xl text-white font-extrabold py-2.5 text-[13px]"
-                  style={{ background: "linear-gradient(135deg,#a50034,#82002a)" }}>
+                  style={{ background: "linear-gradient(135deg,#0a9aa3,#035c63)" }}>
                   <FileText size={15} /> 접수증 만들기 · PDF 저장
                 </button>
                 <p className="text-[10.5px] text-muted mt-2">※ 수리 권장 시 A/S 접수용 초안입니다.</p>

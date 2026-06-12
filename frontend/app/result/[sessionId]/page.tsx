@@ -80,8 +80,24 @@ export default function ResultPage() {
               </p>
             </div>
             <div className="shrink-0 text-center">
-              <div className="flex size-[108px] items-center justify-center rounded-full shadow-[0_8px_24px_rgba(0,0,0,.12)]" style={{ background: gColor }}>
-                <span className="text-[46px] font-extrabold text-white" style={{ fontFamily: D }}>{grade}</span>
+              <div className="relative size-[112px]" style={{ filter: `drop-shadow(0 8px 18px ${gColor}40)` }}>
+                <svg viewBox="0 0 112 112" className="size-full -rotate-90">
+                  <defs>
+                    <linearGradient id="gradeRing" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stopColor={gColor} stopOpacity="0.55" />
+                      <stop offset="1" stopColor={gColor} />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="56" cy="56" r="48" fill="#fff" />
+                  <circle cx="56" cy="56" r="48" fill="none" stroke="#ece9e6" strokeWidth="9" />
+                  <circle cx="56" cy="56" r="48" fill="none" stroke="url(#gradeRing)" strokeWidth="9" strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 48}
+                    strokeDashoffset={2 * Math.PI * 48 * (1 - Math.min(score, 100) / 100)} />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+                  <span className="text-[42px] font-extrabold" style={{ fontFamily: D, color: gColor }}>{grade}</span>
+                  <span className="mt-0.5 text-[10px] font-bold text-muted">{score}점</span>
+                </div>
               </div>
               <p className="mt-1.5 text-[11px] font-bold text-muted">건강 등급</p>
             </div>

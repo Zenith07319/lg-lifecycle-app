@@ -170,7 +170,7 @@ export default function ResultPage() {
 
         {/* CTA */}
         <div className="reveal reveal-4 pt-1">
-          <PrimaryButton icon={<ChevronRight size={17} />}>판단 근거 확인하기</PrimaryButton>
+          <PrimaryButton href={`/result/${sessionId}/basis`} icon={<ChevronRight size={17} />}>판단 근거 확인하기</PrimaryButton>
         </div>
       </div>
     </div>

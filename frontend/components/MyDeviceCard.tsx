@@ -20,8 +20,8 @@ export default function MyDeviceCard() {
   if (!ready || !dev) {
     return (
       <Link href={ready ? "/diagnose" : "#"} className="block rounded-[22px] bg-surface border border-line p-4 shadow-[var(--shadow-pop)] flex items-center gap-4 active:scale-[.99] transition-transform">
-        <div className="w-14 h-14 rounded-2xl bg-[#fdeef4] flex items-center justify-center shrink-0">
-          <Snowflake size={26} className="text-crimson" strokeWidth={2.2} />
+        <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center shrink-0">
+          <Snowflake size={26} className="text-accent" strokeWidth={2.2} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-bold text-muted">내 에어컨</p>

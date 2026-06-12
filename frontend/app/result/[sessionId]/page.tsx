@@ -5,7 +5,7 @@ import { getSession } from "@/lib/api";
 import { saveDevice } from "@/lib/myDevice";
 import { GRADE_COLORS } from "@/lib/utils";
 import { GlassCard, AppHeader, PrimaryButton } from "@/components/ui";
-import { Megaphone, ChevronRight } from "lucide-react";
+import { Megaphone, ChevronRight, ChevronDown } from "lucide-react";
 import type { SessionData } from "@/lib/types";
 
 const URGENT: Record<string, string> = {
@@ -47,8 +47,9 @@ export default function ResultPage() {
   const save5 = Math.max(0, (oldC - newC) * months * 5);
   const byInput = ((inp.ac_monthly_kwh_input as number) || 0) > 0;
   const changed = data.delta_old.tier_changed as boolean;
-  const tierOld = String(data.delta_old.tier_with_ac ?? "").replace(/\s*구간/g, "");
-  const tierNew = String(data.delta_new.tier_with_ac ?? "").replace(/\s*구간/g, "");
+  const fmtTier = (s: unknown) => String(s ?? "").replace(/\s*구간/g, "").replace("~초과kWh", "kWh 초과").trim();
+  const tierOld = fmtTier(data.delta_old.tier_with_ac);
+  const tierNew = fmtTier(data.delta_new.tier_with_ac);
   const insp = Math.round(dg.inspection_score_100 as number);
   const waste = Math.round((dg.energy_waste_ratio as number) * 100);
   const extra = Math.max(0, oldC - newC);
@@ -123,23 +124,31 @@ export default function ResultPage() {
           </div>
         </GlassCard>
 
-        {/* 타일: 누진 / 점검 / 낭비 */}
-        <div className="reveal reveal-3 grid grid-cols-3 gap-2">
-          <div className="rounded-2xl bg-white p-3 text-center shadow-[var(--shadow-card)]">
-            <p className="mb-1 text-[10px] font-semibold text-muted">누진 구간 {changed ? "이동" : "유지"}</p>
+        {/* 타일: 누진(왼쪽 큰) / 점검·낭비(오른쪽 스택) */}
+        <div className="reveal reveal-3 grid grid-cols-2 items-stretch gap-2">
+          <div className="flex flex-col rounded-2xl bg-white p-3.5 shadow-[var(--shadow-card)]">
+            <p className="text-[10px] font-semibold text-muted">누진 구간 {changed ? "이동" : "유지"}</p>
             {changed ? (
-              <p className="text-[11.5px] font-extrabold leading-tight text-ink">{tierOld}<br /><span className="text-accent">↓ {tierNew}</span></p>
+              <div className="flex flex-1 flex-col items-center justify-center gap-1 py-1.5">
+                <span className="text-[14px] font-bold text-ink">{tierOld}</span>
+                <ChevronDown size={16} className="text-accent" />
+                <span className="text-[14px] font-bold text-ink">{tierNew}</span>
+              </div>
             ) : (
-              <p className="mt-1.5 text-[15px] font-extrabold text-ink" style={{ fontFamily: D }}>유지</p>
+              <div className="flex flex-1 items-center justify-center">
+                <span className="text-[16px] font-extrabold text-ink" style={{ fontFamily: D }}>유지</span>
+              </div>
             )}
           </div>
-          <div className="rounded-2xl bg-white p-3 text-center shadow-[var(--shadow-card)]">
-            <p className="mb-1 text-[10px] font-semibold text-muted">점검 필요도</p>
-            <p className="text-[20px] font-extrabold text-ink" style={{ fontFamily: D }}>{insp}</p>
-          </div>
-          <div className="rounded-2xl bg-white p-3 text-center shadow-[var(--shadow-card)]">
-            <p className="mb-1 text-[10px] font-semibold text-muted">에너지 낭비</p>
-            <p className="text-[20px] font-extrabold text-ink" style={{ fontFamily: D }}>{waste}%</p>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-1 flex-col justify-center rounded-2xl bg-white px-3.5 py-3 shadow-[var(--shadow-card)]">
+              <p className="text-[10px] font-semibold text-muted">점검 필요도</p>
+              <p className="text-[22px] font-extrabold leading-tight text-ink" style={{ fontFamily: D }}>{insp}</p>
+            </div>
+            <div className="flex flex-1 flex-col justify-center rounded-2xl bg-white px-3.5 py-3 shadow-[var(--shadow-card)]">
+              <p className="text-[10px] font-semibold text-muted">에너지 낭비</p>
+              <p className="text-[22px] font-extrabold leading-tight text-ink" style={{ fontFamily: D }}>{waste}%</p>
+            </div>
           </div>
         </div>
 

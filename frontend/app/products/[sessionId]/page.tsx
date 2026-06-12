@@ -38,7 +38,7 @@ export default function ProductsPage() {
   return (
     <div>
       <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
-        <Link href={`/result/${sessionId}`} className="text-crimson"><ChevronLeft size={22} /></Link>
+        <Link href={`/result/${sessionId}`} className="text-accent"><ChevronLeft size={22} /></Link>
         <h1 className="text-[16px] font-extrabold text-ink">추천 제품</h1>
         <span className="ml-auto text-[11px] text-muted">LG 연계</span>
       </div>
@@ -47,13 +47,13 @@ export default function ProductsPage() {
         <div className="flex gap-2 mb-3">
           {([["buy", "🛒 신제품 구매"], ["sub", "🔁 구독"]] as const).map(([t, l]) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 rounded-xl border py-2.5 text-[13px] font-bold ${tab === t ? "border-crimson bg-[#fdeef4] text-crimson" : "border-line text-muted"}`}>{l}</button>
+              className={`flex-1 rounded-xl border py-2.5 text-[13px] font-bold ${tab === t ? "border-accent bg-accent-soft text-accent" : "border-line text-muted"}`}>{l}</button>
           ))}
         </div>
 
-        <div className="rounded-xl bg-[#faf5f2] border border-line px-4 py-3 mb-3 text-[12px] text-ink-soft">
+        <div className="rounded-xl bg-accent-soft border border-line px-4 py-3 mb-3 text-[12px] text-ink-soft">
           💡 내 에어컨(<b>{capRaw}kW</b>)에 맞는 1등급 제품 · 교체 시 여름철 5년 전기료 절감 약{" "}
-          <b className="text-crimson">{fmt(save5)}</b>
+          <b className="text-accent">{fmt(save5)}</b>
         </div>
 
         {loading ? (
@@ -64,12 +64,12 @@ export default function ProductsPage() {
           <div className="space-y-3">
             {items.map((p) => (
               <div key={p.model_code} className="rounded-[20px] bg-surface border border-line p-4 shadow-[var(--shadow-card)]">
-                <div className={`h-20 rounded-xl flex items-center justify-center mb-3 ${tab === "buy" ? "bg-gradient-to-br from-[#eef1f6] to-[#e1e7f0]" : "bg-gradient-to-br from-[#fdeef4] to-[#f7d4e2]"}`}>
-                  {tab === "buy" ? <Snowflake size={32} className="text-crimson/70" /> : <Repeat size={30} className="text-crimson" />}
+                <div className={`h-20 rounded-xl flex items-center justify-center mb-3 ${tab === "buy" ? "bg-gradient-to-br from-[#eef1f6] to-[#e1e7f0]" : "bg-gradient-to-br from-accent-soft to-[#d3edee]"}`}>
+                  {tab === "buy" ? <Snowflake size={32} className="text-accent/70" /> : <Repeat size={30} className="text-accent" />}
                 </div>
                 <div className="flex items-start gap-2">
                   <h3 className="flex-1 text-[14px] font-extrabold text-ink leading-snug">{p.model_name}</h3>
-                  {p.form && <span className="text-[10px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5 shrink-0">{p.form}</span>}
+                  {p.form && <span className="text-[10px] font-extrabold text-accent bg-accent-soft rounded-full px-2 py-0.5 shrink-0">{p.form}</span>}
                 </div>
                 <p className="text-[11px] text-muted mt-1">냉방 {p.capacity_kw}kW · {p.model_code}</p>
                 <div className="flex items-center justify-between mt-2">
@@ -91,7 +91,7 @@ export default function ProductsPage() {
                     : "💰 초기비용 0원 · 신형 효율로 전기료 ↓ · 설치·관리 포함"}
                 </div>
                 <a href={withUtm(p.product_url)} target="_blank" rel="noopener"
-                  className="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-crimson text-crimson font-extrabold py-2.5 text-[13px]">
+                  className="mt-3 flex items-center justify-center gap-1.5 rounded-xl border border-accent text-accent font-extrabold py-2.5 text-[13px]">
                   {tab === "buy" ? "LG에서 보기" : "LG 구독 상담"} <ExternalLink size={15} />
                 </a>
               </div>

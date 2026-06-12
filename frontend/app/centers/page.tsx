@@ -50,7 +50,7 @@ export default function CentersPage() {
   return (
     <div>
       <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
-        <button onClick={() => router.back()} className="text-crimson"><ChevronLeft size={22} /></button>
+        <button onClick={() => router.back()} className="text-accent"><ChevronLeft size={22} /></button>
         <h1 className="text-[16px] font-extrabold text-ink">주변 서비스센터</h1>
         <span className="ml-auto text-[11px] text-muted">LG 공식</span>
       </div>
@@ -58,8 +58,8 @@ export default function CentersPage() {
       <div className="px-4 py-4">
         {/* 내 주변 버튼 */}
         <button onClick={loadNearby} disabled={geoLoading}
-          className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-extrabold mb-3 ${nearby ? "text-white" : "border border-crimson text-crimson"}`}
-          style={nearby ? { background: "linear-gradient(135deg,#a50034,#82002a)" } : {}}>
+          className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3 text-[14px] font-extrabold mb-3 ${nearby ? "text-white" : "border border-accent text-accent"}`}
+          style={nearby ? { background: "linear-gradient(135deg,#047d86,#034349)" } : {}}>
           {geoLoading ? <Loader2 className="animate-spin" size={17} /> : <LocateFixed size={17} />}
           {geoLoading ? "내 위치 확인 중…" : "내 주변 센터 찾기"}
         </button>
@@ -70,15 +70,15 @@ export default function CentersPage() {
           <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
             {data.regions.map((rg) => (
               <button key={rg} onClick={() => loadRegion(rg)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-bold ${!nearby && data.selected === rg ? "border-crimson bg-[#fdeef4] text-crimson" : "border-line text-ink-soft"}`}>{rg}</button>
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-[12.5px] font-bold ${!nearby && data.selected === rg ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-soft"}`}>{rg}</button>
             ))}
           </div>
         )}
 
         {/* 통합 안내 */}
         {data && (
-          <a href={`tel:${data.tel}`} className="mt-2 flex items-center gap-2 rounded-xl bg-[#faf5f2] border border-line px-4 py-2.5 text-[12px] text-ink-soft">
-            <Phone size={14} className="text-crimson" /> 통합 고객센터 <b className="text-ink">{data.tel}</b>
+          <a href={`tel:${data.tel}`} className="mt-2 flex items-center gap-2 rounded-xl bg-accent-soft border border-line px-4 py-2.5 text-[12px] text-ink-soft">
+            <Phone size={14} className="text-accent" /> 통합 고객센터 <b className="text-ink">{data.tel}</b>
             <span className="ml-auto flex items-center gap-1 text-[11px] text-muted"><Clock size={12} />{data.hours}</span>
           </a>
         )}
@@ -96,7 +96,7 @@ export default function CentersPage() {
                 <div className="flex items-start gap-2">
                   <h3 className="flex-1 text-[14px] font-extrabold text-ink">{c.name}</h3>
                   {typeof c.distance_km === "number" && (
-                    <span className="shrink-0 flex items-center gap-1 text-[11px] font-extrabold text-crimson bg-[#fdeef4] rounded-full px-2 py-0.5">
+                    <span className="shrink-0 flex items-center gap-1 text-[11px] font-extrabold text-accent bg-accent-soft rounded-full px-2 py-0.5">
                       <Navigation size={11} />{c.distance_km}km
                     </span>
                   )}
@@ -108,7 +108,7 @@ export default function CentersPage() {
                   <a href={`tel:${data.tel}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-line text-ink-soft font-bold py-2.5 text-[13px]">
                     <Phone size={14} />전화
                   </a>
-                  <a href={data.reserve_url} target="_blank" rel="noopener" className="flex items-center justify-center gap-1.5 rounded-xl text-white font-extrabold py-2.5 text-[13px]" style={{ background: "linear-gradient(135deg,#a50034,#82002a)" }}>
+                  <a href={data.reserve_url} target="_blank" rel="noopener" className="flex items-center justify-center gap-1.5 rounded-xl text-white font-extrabold py-2.5 text-[13px]" style={{ background: "linear-gradient(135deg,#047d86,#034349)" }}>
                     방문 예약
                   </a>
                 </div>

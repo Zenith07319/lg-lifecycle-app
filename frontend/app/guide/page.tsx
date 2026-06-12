@@ -26,12 +26,12 @@ export default function GuidePage() {
   return (
     <div>
       <div className="sticky top-0 z-20 bg-paper/85 backdrop-blur-md border-b border-line px-4 py-3 flex items-center gap-2">
-        <Link href="/more" className="text-crimson"><ChevronLeft size={22} /></Link>
+        <Link href="/more" className="text-accent"><ChevronLeft size={22} /></Link>
         <h1 className="text-[16px] font-extrabold text-ink">에어컨 관리 가이드</h1>
       </div>
 
       <div className="px-4 py-4 space-y-5">
-        <div className="rounded-[20px] p-5 text-white shadow-[var(--shadow-pop)]" style={{ background: "linear-gradient(140deg,#a50034,#76002a)" }}>
+        <div className="rounded-[20px] p-5 text-white shadow-[var(--shadow-pop)]" style={{ background: "linear-gradient(140deg,#047d86,#034349)" }}>
           <p className="text-[12px] text-white/85">잘 관리하면</p>
           <p className="text-[19px] font-extrabold leading-snug mt-0.5">청소·세팅만으로<br />전기료·냄새·소음이 줄어요</p>
           <p className="text-[11.5px] text-white/85 mt-2">교체·수리 전에 먼저 해볼 수 있는 셀프 관리부터 확인하세요.</p>
@@ -43,11 +43,11 @@ export default function GuidePage() {
               <div className="flex items-center gap-2.5">
                 <span className="text-[20px]">{t.icon}</span>
                 <span className="text-[14.5px] font-extrabold text-ink flex-1">{t.title}</span>
-                <span className="text-[10.5px] font-bold text-crimson bg-[#fdeef4] rounded-full px-2.5 py-1">{t.freq}</span>
+                <span className="text-[10.5px] font-bold text-accent bg-accent-soft rounded-full px-2.5 py-1">{t.freq}</span>
               </div>
               <p className="text-[12.5px] text-ink-soft leading-relaxed mt-2">{t.body}</p>
               <a href={t.url} target="_blank" rel="noopener"
-                className="mt-2.5 inline-flex items-center gap-1 text-[12px] font-bold text-crimson">
+                className="mt-2.5 inline-flex items-center gap-1 text-[12px] font-bold text-accent">
                 LG 공식 가이드 보기 <ExternalLink size={13} />
               </a>
             </div>
@@ -55,14 +55,14 @@ export default function GuidePage() {
         </section>
         <p className="text-[10.5px] text-muted px-1 -mt-2">※ 가이드 링크는 LG전자 고객지원(lge.co.kr) 공식 페이지로 연결됩니다.</p>
 
-        <section className="rounded-[18px] bg-[#faf5f2] border border-line p-4">
+        <section className="rounded-[18px] bg-accent-soft border border-line p-4">
           <h2 className="text-[13px] font-extrabold text-ink mb-2">⏰ 이럴 땐 점검을 받아보세요</h2>
           <ul className="space-y-1.5">
             {CHECK.map((c) => (
-              <li key={c} className="text-[12.5px] text-ink-soft leading-relaxed flex gap-2"><span className="text-crimson">•</span>{c}</li>
+              <li key={c} className="text-[12.5px] text-ink-soft leading-relaxed flex gap-2"><span className="text-accent">•</span>{c}</li>
             ))}
           </ul>
-          <Link href="/centers" className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-crimson text-crimson font-extrabold py-2.5 text-[13px]">
+          <Link href="/centers" className="mt-3 flex items-center justify-center gap-1 rounded-xl border border-accent text-accent font-extrabold py-2.5 text-[13px]">
             주변 서비스센터 찾기
           </Link>
         </section>

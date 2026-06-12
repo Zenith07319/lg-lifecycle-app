@@ -66,30 +66,36 @@ export default function ResultPage() {
       />
 
       <div className="space-y-4 px-5 pt-2">
-        {/* 건강점수 + 등급 링 + 일러스트 */}
-        <section className="reveal reveal-1 relative">
+        {/* 건강점수 + 등급 링 */}
+        <section className="reveal reveal-1">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-bold text-muted">건강 점수</p>
-              <p className="text-[68px] font-extrabold leading-none text-ink" style={{ fontFamily: D }}>{score}</p>
-              <p className="mt-2 text-[13px] font-semibold text-muted">{inp.product_type} · 설치 {age}년차</p>
-              <p className="mt-0.5 text-[12.5px] font-semibold" style={{ color: gColor }}>{URGENT[grade] ?? (dg.grade_description as string)}</p>
+              <p className="text-[72px] font-extrabold leading-[0.95] text-ink" style={{ fontFamily: D }}>{score}</p>
+              <p className="mt-2.5 text-[13px] font-semibold text-muted">{inp.product_type} · 설치 {age}년차</p>
+              <p className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-bold"
+                style={{ color: gColor, background: `${gColor}1a` }}>
+                {URGENT[grade] ?? (dg.grade_description as string)}
+              </p>
             </div>
             <div className="shrink-0 text-center">
-              <div className="flex size-[100px] items-center justify-center rounded-full" style={{ background: gColor }}>
-                <span className="text-[44px] font-extrabold text-white" style={{ fontFamily: D }}>{grade}</span>
+              <div className="flex size-[108px] items-center justify-center rounded-full shadow-[0_8px_24px_rgba(0,0,0,.12)]" style={{ background: gColor }}>
+                <span className="text-[46px] font-extrabold text-white" style={{ fontFamily: D }}>{grade}</span>
               </div>
-              <p className="mt-1 text-[11px] font-bold text-muted">건강 등급</p>
+              <p className="mt-1.5 text-[11px] font-bold text-muted">건강 등급</p>
             </div>
           </div>
-          {/* 에어컨 일러스트 + 인사 */}
-          <div className="mt-2 flex items-center gap-3">
-            <img src="/avatar.png" alt="" className="size-12 shrink-0 rounded-full object-cover" />
-            <p className="text-[14.5px] font-extrabold text-ink" style={{ fontFamily: D }}>
+
+          {/* 에어컨 일러스트 (중앙 밴드) */}
+          <img src="/ac-illustration.png" alt="에어컨" className="mx-auto -mt-1 size-[140px] select-none object-contain" />
+
+          {/* 인사 */}
+          <div className="flex items-center gap-3">
+            <img src="/avatar.png" alt="" className="size-11 shrink-0 rounded-full object-cover" />
+            <p className="text-[15px] font-extrabold text-ink" style={{ fontFamily: D }}>
               매달 <span className="text-danger">전기요금{extra > 0 ? ` ${won(extra)}` : ""}</span>을 더 내고 있어요
             </p>
           </div>
-          <img src="/ac-illustration.png" alt="에어컨" aria-hidden className="pointer-events-none absolute right-2 top-[88px] size-[120px] object-contain opacity-95" />
         </section>
 
         {/* 전기요금 유리카드 */}

@@ -263,8 +263,11 @@ export default function DiagnosePage() {
     <div className="flex min-h-[100dvh] flex-col" style={{ background: "linear-gradient(180deg,#F5F8F7 0%,#E9F3EF 55%,#DBEEE8 100%)" }}>
       <div ref={topRef} />
       {/* 헤더 */}
-      <header className="sticky top-0 z-20 flex items-center gap-2 bg-white/55 px-4 py-3 backdrop-blur-md">
-        <button onClick={goBack} className="text-ink-soft" aria-label="뒤로"><ChevronLeft size={24} /></button>
+      <header className="sticky top-0 z-20 flex items-center gap-2.5 bg-white/55 px-4 py-3 backdrop-blur-md">
+        <button onClick={goBack} aria-label="이전 단계로"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-line bg-white/90 text-ink-soft shadow-[0_2px_8px_rgba(5,31,31,.06)] active:scale-95 transition">
+          <ChevronLeft size={20} />
+        </button>
         <h1 className="text-[16px] font-bold text-ink">가전 진단</h1>
         <span className="ml-auto text-[13px] font-semibold text-muted">{progNum}/10</span>
         <button onClick={sampleFast} className="rounded-full border border-accent/40 px-2.5 py-1 text-[11px] font-bold text-accent">샘플</button>

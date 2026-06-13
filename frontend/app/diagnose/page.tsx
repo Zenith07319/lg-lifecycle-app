@@ -292,8 +292,9 @@ export default function DiagnosePage() {
         )}
 
         {cur.id === "q2" && (
-          <Question n={2} emoji="🏷️" title={"에어컨 냉방능력과\n월 사용 전기량이 필요해요!"}
-            sub="에너지효율 라벨에서 찾을 수 있어요. 어려우면 직접 입력해도 돼요.">
+          <Question n={2} image="/diagnose/guide-label.png" imageAlt="에너지효율 라벨에서 냉방능력과 월간소비전력량을 찾는 위치 안내"
+            title={"에어컨 냉방능력과\n월 사용 전기량이 필요해요!"}
+            sub="진단 전, 아래 에너지효율 라벨을 찾아주세요. 입력이 어려우면 직접 입력도 가능해요.">
             <div className="grid grid-cols-2 gap-2">
               {(["photo", "manual"] as const).map((m) => (
                 <button key={m} onClick={() => patch({ q2mode: m })}
@@ -319,15 +320,14 @@ export default function DiagnosePage() {
                 <Field label="월간소비전력량 (kWh/월)" hint="라벨의 '월간소비전력량' 항목 (선택)" value={ans.acKwh} onChange={(v) => patch({ acKwh: v })} placeholder="예: 110" min="0" max="500" />
               </>
             )}
-            <Tip>단위가 kW로 표시된 효율 라벨에서 냉방능력을, ‘월간소비전력량(kWh)’ 항목에서 전기량을 확인할 수 있어요.</Tip>
           </Question>
         )}
 
         {cur.id === "q3" && (
-          <Question n={3} emoji="🧾" title={"여름에 전기를\n얼마나 쓰는지 알려주세요"}
-            sub="전기요금이 아니라, 고지서에 적힌 ‘kWh 사용량’ 숫자예요.">
+          <Question n={3} image="/diagnose/guide-bill.png" imageAlt="전기 고지서에서 사용량(kWh)을 찾는 위치 안내"
+            title={"여름에 전기를\n얼마나 쓰는지 알려주세요"}
+            sub="전기요금이 아니라, 고지서에 적힌 kWh 옆 숫자를 보면 돼요.">
             <Field label="여름 한 달 사용량 (kWh)" hint="한전 고지서·한전ON앱에서 확인 (선택)" value={ans.summerKwh} onChange={(v) => patch({ summerKwh: v })} placeholder="예: 460" step="10" min="0" max="1000" />
-            <Tip>한전ON 앱 → 전기요금 조회 → ‘사용량(kWh)’ 또는 종이 고지서의 사용량 숫자를 적어주세요. 모르면 비워두셔도 추정해드려요.</Tip>
           </Question>
         )}
 
@@ -421,13 +421,17 @@ export default function DiagnosePage() {
 }
 
 /* ── 소형 프레젠테이션 컴포넌트 ── */
-function Question({ n, emoji, title, sub, children }: { n: number; emoji: string; title: string; sub?: string; children: React.ReactNode }) {
+function Question({ n, emoji, image, imageAlt, title, sub, children }: { n: number; emoji?: string; image?: string; imageAlt?: string; title: string; sub?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
       <p className="text-center text-[13px] font-extrabold text-accent">Q{n}.</p>
       <h2 className="mt-1 whitespace-pre-line text-center text-[20px] font-extrabold leading-snug text-ink">{title}</h2>
       {sub && <p className="mt-2 text-center text-[12.5px] font-medium leading-relaxed text-muted">{sub}</p>}
-      <div aria-hidden className="my-6 text-center text-[58px] leading-none">{emoji}</div>
+      {image ? (
+        <img src={image} alt={imageAlt ?? ""} className="my-5 w-full rounded-2xl border border-line bg-white/70 shadow-[0_2px_10px_rgba(5,31,31,.06)]" />
+      ) : (
+        <div aria-hidden className="my-6 text-center text-[58px] leading-none">{emoji}</div>
+      )}
       <div className="space-y-3">{children}</div>
     </div>
   );

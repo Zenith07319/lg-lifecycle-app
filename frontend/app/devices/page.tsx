@@ -19,18 +19,25 @@ const GRADE_CARD_BG: Record<string, string> = {
   E: "#79C7CD",                   // 진한 틸 (Figma 카드3)
 };
 
-// 카드 캐릭터(에어컨+그린 토끼) 이미지.
-// 처음 등록한 가전(등록 순서 0번)은 char-fixed로 고정, 이후 등록분은 회전용 5장을 순서대로 배정.
-const FIRST_DEVICE_IMG = "/devices/char-fixed.png";
-const ROTATION_IMGS = [
+// 카드 캐릭터(에어컨+그린 토끼) 이미지 — 진단에서 도출한 폼팩터(벽걸이/스탠드)별 세트.
+// 등록 순서(rank)로 세트 안에서 회전 배정해 가전마다 다른 컷이 나오게 한다.
+const WALL_IMGS = [        // 벽걸이(기본): 처음 등록분은 char-fixed
+  "/devices/char-fixed.png",
   "/devices/char-1.png",
   "/devices/char-2.png",
   "/devices/char-3.png",
   "/devices/char-4.png",
   "/devices/char-5.png",
 ];
-const deviceImage = (rank: number) =>
-  rank <= 0 ? FIRST_DEVICE_IMG : ROTATION_IMGS[(rank - 1) % ROTATION_IMGS.length];
+const STAND_IMGS = [       // 스탠드(타워형)
+  "/devices/stand-1.png",
+  "/devices/stand-2.png",
+  "/devices/stand-3.png",
+];
+const deviceImage = (form: string | undefined, rank: number) => {
+  const set = form === "스탠드" ? STAND_IMGS : WALL_IMGS;   // 벽걸이·미상 → 벽걸이 세트
+  return set[((rank % set.length) + set.length) % set.length];
+};
 
 export default function DevicesPage() {
   const [list, setList] = useState<SavedDevice[]>([]);
@@ -82,7 +89,7 @@ export default function DevicesPage() {
           <div className="space-y-1.5">
             {list.map((dev) => {
               const bg = GRADE_CARD_BG[dev.grade] ?? GRADE_CARD_BG.C;
-              const img = deviceImage(rankOf(dev.sessionId));
+              const img = deviceImage(dev.form, rankOf(dev.sessionId));
               return (
                 <div key={dev.sessionId} className="reveal relative">
                   {/* 카드 전체가 결과로 진입 */}

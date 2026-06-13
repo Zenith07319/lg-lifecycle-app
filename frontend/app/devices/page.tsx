@@ -91,8 +91,8 @@ export default function DevicesPage() {
                     className="relative block h-[188px] overflow-hidden rounded-[22px] shadow-[0_10px_24px_-10px_rgba(0,0,0,.16)_inset] active:scale-[.995] transition"
                     style={{ background: bg }}
                   >
-                    {/* 우측 캐릭터(에어컨+그린 토끼) — 흰 패널에 센터링 */}
-                    <div className="absolute right-0 top-0 flex h-full w-[128px] items-center justify-center rounded-[22px] bg-white/65">
+                    {/* 우측 캐릭터(에어컨+그린 토끼) — 흰 패널 없이 배경 위 센터링 */}
+                    <div className="absolute right-0 top-0 flex h-full w-[128px] items-center justify-center">
                       <Image
                         src={img}
                         alt="내 에어컨 캐릭터"

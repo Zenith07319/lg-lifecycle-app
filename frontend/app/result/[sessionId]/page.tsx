@@ -108,7 +108,7 @@ export default function ResultPage() {
 
           {/* 인사 */}
           <div className="flex items-center gap-3">
-            <img src="/character-head.png" alt="" className="size-11 shrink-0 rounded-full bg-accent-soft object-contain p-0.5 ring-1 ring-accent/15" />
+            <img src="/character-head.png" alt="" className="size-10 shrink-0 object-contain drop-shadow-[0_2px_4px_rgba(5,31,31,.12)]" />
             <p className="text-[15px] font-extrabold text-ink" style={{ fontFamily: D }}>
               매달 <span className="text-danger">전기요금{extra > 0 ? ` ${won(extra)}` : ""}</span>을 더 내고 있어요
             </p>

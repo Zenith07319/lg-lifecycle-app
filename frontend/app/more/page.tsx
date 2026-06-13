@@ -46,8 +46,8 @@ export default function MorePage() {
         {/* 인사 카드 (그린 그라데이션) */}
         <div className="reveal reveal-1 flex items-center gap-3.5 rounded-[18px] px-4 pb-3.5 pt-4 shadow-[0_2px_8px_rgba(5,31,31,.06)]"
           style={{ background: "linear-gradient(180deg, rgba(145,223,107,.41) 0%, rgba(255,255,255,.51) 100%)" }}>
-          <div className="flex size-[52px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/75">
-            <img src="/character-head.png" alt="" className="size-11 object-contain" />
+          <div className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-white/75">
+            <img src="/character-head.png" alt="" className="size-[42px] object-contain" />
           </div>
           <div className="min-w-0">
             <p className="text-[15px] font-extrabold leading-tight text-ink">안녕하세요, 오늘도 좋은 하루예요</p>

@@ -203,9 +203,7 @@ export default function DiagnosePage() {
 
   const bot = (text: string, k: string) => (
     <div key={k} className="flex gap-2 items-start reveal">
-      <div className="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center shrink-0 mt-0.5 overflow-hidden ring-1 ring-accent/15">
-        <img src="/character-head.png" alt="진단 도우미" className="w-7 h-7 object-contain" />
-      </div>
+      <img src="/character-head.png" alt="진단 도우미" className="w-9 h-9 shrink-0 mt-0.5 object-contain drop-shadow-[0_2px_4px_rgba(5,31,31,.12)]" />
       <div className="max-w-[82%] rounded-2xl rounded-tl-md bg-white/85 border border-line px-3.5 py-2.5 text-[13.5px] text-ink shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm">{text}</div>
     </div>
   );
@@ -217,7 +215,7 @@ export default function DiagnosePage() {
   if (loading) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center px-10 text-center">
-        <img src="/character.png" alt="" className="h-36 w-auto object-contain animate-bounce drop-shadow-[0_12px_22px_rgba(4,125,134,.18)]" />
+        <img src="/character.png" alt="" className="size-[176px] object-contain animate-bounce drop-shadow-[0_12px_22px_rgba(4,125,134,.18)]" />
         <p className="mt-7 text-[13px] font-medium text-muted">잠시만요,</p>
         <p className="mt-1 text-[19px] font-extrabold text-ink">결과를 분석하고 있어요</p>
         <p className="mt-2 text-[12px] text-muted">입력하신 정보로 5가지 시나리오를 비교 중이에요</p>

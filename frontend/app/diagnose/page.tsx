@@ -9,12 +9,13 @@ import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
    증상 선택 시 조건부 심각도 분기 → 우선순위 슬라이더 → 로딩 → 결과.
    친화적 버킷 선택을 백엔드 DiagnoseInput으로 매핑(데이터 계약 보존). */
 
-// Q1 구매 시기 → 대표 연식
+// Q1 구매 시기 → 대표 연식(2026 기준 각 구간 중앙값)
 const AGE_OPTS = [
-  { key: "<1", label: "1년 미만", year: 2025 },
-  { key: "1-5", label: "1~5년", year: 2022 },
-  { key: "5-10", label: "5~10년", year: 2018 },
-  { key: "10+", label: "10년 이상", year: 2013 },
+  { key: "<3", label: "3년 미만", year: 2024 },
+  { key: "3-5", label: "3~5년", year: 2022 },
+  { key: "5-7", label: "5~7년", year: 2020 },
+  { key: "7-10", label: "7~10년", year: 2017 },
+  { key: "10+", label: "10년 초과", year: 2013 },
 ];
 // Q4 주거형태 → 계약종별
 const HOME_OPTS = [

@@ -91,14 +91,14 @@ export default function DevicesPage() {
                     className="relative block h-[188px] overflow-hidden rounded-[22px] shadow-[0_10px_24px_-10px_rgba(0,0,0,.16)_inset] active:scale-[.995] transition"
                     style={{ background: bg }}
                   >
-                    {/* 우측 캐릭터(에어컨+그린 토끼) — 흰 패널 없이 배경 위 센터링 */}
-                    <div className="absolute right-0 top-0 flex h-full w-[128px] items-center justify-center">
+                    {/* 우측 회색 섹터 — 캐릭터+바람 영역(정보 영역과 구분) */}
+                    <div className="absolute right-0 top-0 flex h-full w-[132px] items-center justify-center bg-[#E4E7EA] shadow-[-2px_0_10px_rgba(0,0,0,.04)]">
                       <Image
                         src={img}
                         alt="내 에어컨 캐릭터"
-                        width={128}
-                        height={128}
-                        className="size-[118px] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,.12)]"
+                        width={132}
+                        height={132}
+                        className="size-[124px] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,.10)]"
                       />
                     </div>
 

@@ -31,8 +31,10 @@ const SYMPTOM_OPTS: { key: string; label: string; sym: SymptomLabel | null; emoj
   { key: "unstable", label: "작동이 불안정해요", sym: "작동불량", emoji: "⚡" },
   { key: "none", label: "특별한 증상은 없어요", sym: null, emoji: "✅" },
 ];
-// 증상별 심각도 3단계 → 1~5점(약함/보통/심함 = 최소/중간/최대)
-const SEVERITY_LEVELS = [1, 3, 5];
+// 증상별 심각도 3단계(약함/보통/심함) → 백엔드 1~5점.
+// 주의: 백엔드 SEVERITY_MULTIPLIER에서 1=없음(0.1×)이므로, '증상을 선택한' 사용자의
+// 최저 단계는 1(없음)이 아니라 2(낮음, 0.6×)로 매핑해야 함. → [2, 3, 5].
+const SEVERITY_LEVELS = [2, 3, 5];
 const SEVERITY_ORDER: SymptomLabel[] = ["성능저하", "소음", "냄새", "누수", "작동불량"];
 const SEVERITY_QS: Record<SymptomLabel, { emoji: string; title: string; opts: string[] }> = {
   성능저하: { emoji: "❄️", title: "냉방 성능이 어느 정도로 불편한가요?", opts: ["조금 미흡해요", "자주 덥게 느껴져요", "거의 시원하지 않아요"] },

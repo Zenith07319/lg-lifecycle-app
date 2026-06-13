@@ -61,24 +61,53 @@ def symptom_power_pct(symptom_type: str, severity) -> float:
     return lo + (hi - lo) * (max(sev, 1) - 1) / 4
 
 
-def power_excess_decomp(age_years: int, symptom_type: str, severity, filter_clean_months: int) -> dict:
-    """전력 과소비 분해 → 영구/가역 효율 (docs/04g §2-2).
+# ── 복수 증상 전력 합산 (docs/04h) ───────────────────────────────────
+# 선택된 모든 증상의 MDPI 전력증가율을 합산하되, 최대 증상은 가중치 1.0,
+# 추가 증상은 0.8(중복보정)로 더한다. 단일 증상이면 기존 결과와 100% 동일.
+MULTI_SYMPTOM_FACTOR = 0.8
 
-    과소비% = 영구열화(연식 1.5%/년) + 가역열화(증상 MDPI + 필터)
-    옵션별 시작효율: 계속/셀프(가역 일부 회복)/수리(영구만) — 증상별 가역율 적용.
+def aggregate_symptom_power(symptoms) -> tuple:
+    """[(증상키, 심각도1~5)] → (전력증가율 합%, 셀프케어 잔여%).
+
+    sym_self = 셀프케어(청소)로도 안 빠지는 잔여 전력증가(Σ w·p·(1-rev)).
+    최대 증상은 w=1.0, 그 외 추가 증상은 w=0.8(중복보정).
+    """
+    items = []
+    for t, s in (symptoms or []):
+        p = symptom_power_pct(t, s)
+        if p <= 0:
+            continue
+        rev = REV_FRAC.get(t, 0.0)
+        items.append((p, p * (1.0 - rev)))
+    # 결정성: 전력% 동점이면 p_self(=가역성 낮은) 큰 쪽을 먼저 → 입력 순서 무관·보수적
+    items.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    sym_total = sym_self = 0.0
+    for i, (p, p_self) in enumerate(items):
+        w = 1.0 if i == 0 else MULTI_SYMPTOM_FACTOR
+        sym_total += w * p
+        sym_self  += w * p_self
+    return sym_total, sym_self
+
+
+def power_excess_decomp(age_years: int, symptoms, filter_clean_months: int) -> dict:
+    """전력 과소비 분해 → 영구/가역 효율 (docs/04g §2-2 · 04h 복수증상 합산).
+
+    symptoms: [(증상키, 심각도1~5)] 선택 증상 전체. 복수면 전력대역 합산(중복보정 0.8).
+    과소비% = 영구열화(연식 1.5%/년) + 가역열화(증상 MDPI 합산 + 필터)
+    옵션별 시작효율: 계속/셀프(가역 일부 회복)/수리(영구만).
     """
     perm = min(R_AGE_YR * age_years, R_AGE_MAX)
-    sym  = symptom_power_pct(symptom_type, severity)
+    sym, sym_self = aggregate_symptom_power(symptoms)
     fil  = min(filter_clean_months / 12, 1.0) * FILTER_MAX_PCT
-    rev  = REV_FRAC.get(symptom_type, 0.0)
+    rev  = (sym - sym_self) / sym if sym > 0 else 0.0        # 전력가중 유효 가역비율
     block = perm + sym + fil
     ce      = 1.0 / (1 + block / 100)                       # 계속(현 상태)
-    ce_self = 1.0 / (1 + (perm + sym * (1 - rev)) / 100)    # 셀프(가역증상+필터 제거)
+    ce_self = 1.0 / (1 + (perm + sym_self) / 100)           # 셀프(가역증상+필터 제거)
     ce_rep  = 1.0 / (1 + perm / 100)                        # 수리(증상·필터 전량 해소)
-    sc_eff = (sym * rev + fil) / block if block > 0 else 0.0
+    sc_eff = (sym - sym_self + fil) / block if block > 0 else 0.0
     rp_eff = (sym + fil) / block if block > 0 else 0.0
     return {
-        "perm": perm, "sym": sym, "fil": fil, "rev": rev,
+        "perm": perm, "sym": sym, "fil": fil, "rev": round(rev, 3),
         "ce": max(ce, EFF_FLOOR), "ce_self": max(ce_self, EFF_FLOOR),
         "ce_rep": max(ce_rep, EFF_FLOOR),
         "sc_eff": round(sc_eff, 3), "rp_eff": round(rp_eff, 3),
@@ -127,19 +156,18 @@ def calculate_age_score(purchase_year: int, product_type: str = "에어컨") -> 
 
 def calculate_inspection_score(
     age_score: float,
-    symptom_type: str,
-    symptom_severity: str,
+    symptoms,
     filter_clean_months: int,
     repair_history_count: int,
     voc_risk_score: float = 0.50,
 ) -> float:
-    """점검 필요도 (0~1) — v4.1 전력 통일 (docs/04g §2-1).
+    """점검 필요도 (0~1) — v4.1 전력 통일 (docs/04g §2-1 · 04h 복수증상 합산).
 
     고장 확률이 아니라 입력 조건이 시사하는 전력 열화 수준 기반 점검 필요도.
-    연식 1.5%(영구) + 증상 MDPI + 필터를 전력(%)로 통일 후 합산.
+    연식 1.5%(영구) + 증상 MDPI 합산 + 필터를 전력(%)로 통일 후 합산.
     복합보정 0.8(증상·필터 동시), 수리·VOC는 증상블록 배율(연식 미증폭).
     """
-    sym = symptom_power_pct(symptom_type, symptom_severity)          # 증상 전력증가 %
+    sym, _ = aggregate_symptom_power(symptoms)                       # 복수 증상 전력증가 합 %
     age = min(age_score * 25.05, R_AGE_MAX)                          # = 1.5%/년 × 연식(상한 25%)
     fil = min(filter_clean_months / 12, 1.0) * FILTER_MAX_PCT
     # 복합보정: 증상·필터 동시 발생은 부분가산(MDPI 복합/단독 평균 0.76)
@@ -149,21 +177,30 @@ def calculate_inspection_score(
     m_voc    = 1.0 + 0.3 * voc_risk_score                            # 1.0 ~ 1.3
     power_block = min((sf * m_repair * m_voc + age) / P_TOTAL_MAX, 1.0)
     score = power_block
-    if symptom_type == "누수":                                       # 안전 이슈 하한
+    if any(t == "누수" for t, _ in (symptoms or [])):                # 누수 안전 이슈 하한
         score = max(score, 0.55)
     return round(min(score, 1.0), 3)
 
 
 def calculate_inconvenience(
-    symptom_type: str,
-    symptom_severity: str,
+    symptoms,
     age_score: float,
 ) -> float:
-    """생활불편도 (0~1)."""
-    base = SYMPTOM_INCONVENIENCE_MAP.get(symptom_type, 0.0)
-    severity_mult = SEVERITY_MULTIPLIER.get(symptom_severity, 1.0)
+    """생활불편도 (0~1). 복수 증상은 불편도 합산(최대 1.0, 추가증상 0.8 가중) — 04h.
+
+    단일 증상이면 기존(base×심각도배율 + 연식보너스)과 동일.
+    """
+    vals = []
+    for t, s in (symptoms or []):
+        v = SYMPTOM_INCONVENIENCE_MAP.get(t, 0.0) * SEVERITY_MULTIPLIER.get(s, 1.0)
+        if v > 0:
+            vals.append(v)
+    vals.sort(reverse=True)
+    agg = 0.0
+    for i, v in enumerate(vals):
+        agg += (1.0 if i == 0 else MULTI_SYMPTOM_FACTOR) * v
     age_bonus = age_score * 0.10
-    return round(min(base * severity_mult + age_bonus, 1.0), 3)
+    return round(min(agg + age_bonus, 1.0), 3)
 
 
 def calculate_energy_waste_ratio(
@@ -204,23 +241,23 @@ def assign_health_grade(
 def run_diagnosis(
     purchase_year: int,
     product_type: str,
-    symptom_type: str,
-    symptom_severity: str,
+    symptoms,
     filter_clean_months: int,
     repair_history_count: int,
     old_annual_kwh: float,
     new_annual_kwh: float,
     voc_risk_score: float = 0.50,
 ) -> DiagnosisResultV2:
+    """symptoms: [(증상키, 심각도1~5)] 선택 증상 전체. 복수면 전력·불편 합산(04h)."""
     age, age_score = calculate_age_score(purchase_year, product_type)
     inspection = calculate_inspection_score(
-        age_score, symptom_type, symptom_severity,
+        age_score, symptoms,
         filter_clean_months, repair_history_count, voc_risk_score,
     )
-    inconvenience = calculate_inconvenience(symptom_type, symptom_severity, age_score)
+    inconvenience = calculate_inconvenience(symptoms, age_score)
     # 낭비비율 ②안 (docs/04g): 신품 자기대비 추가 낭비 = 1/η − 1 (현재효율 기반).
     #   "건강" = 내 기기가 신품 대비 얼마나 새는가. 신형 대비 격차는 비용층(교체 편익)에서만.
-    decomp = power_excess_decomp(age, symptom_type, symptom_severity, filter_clean_months)
+    decomp = power_excess_decomp(age, symptoms, filter_clean_months)
     waste_ratio = round(1.0 / decomp["ce"] - 1.0, 3)
     waste_kwh = round(old_annual_kwh * (1.0 - decomp["ce"]), 1)
     grade, health_score, grade_desc = assign_health_grade(inspection, waste_ratio, inconvenience)

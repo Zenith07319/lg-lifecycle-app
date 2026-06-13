@@ -67,9 +67,10 @@ _LEGACY_SEV_TO_5 = {"없음": 1, "낮음": 2, "중간": 3, "높음": 4}
 
 
 def _resolve_symptom(inputs: dict):
-    """복수 증상/레거시 입력 → (대표 내부키, 대표 심각도 1~5, 라벨목록).
+    """복수 증상/레거시 입력 → (대표 내부키, 대표 심각도 1~5, 증상쌍 목록, 라벨목록).
 
-    엔진(run_diagnosis)은 단일 증상을 받으므로, base×심각도배율이 최대인 증상을 대표로 사용한다.
+    04h: 엔진은 선택 증상 '전체'(sym_pairs)를 받아 전력·불편을 합산한다.
+    대표 증상(rep)은 VOC 위험도 조회·이산 규칙용으로만 별도 사용한다(누수 안전은 sym_pairs로 판정).
     """
     pairs = []  # [(내부키, 심각도 1~5)]
     for s in (inputs.get("symptoms") or []):
@@ -77,10 +78,12 @@ def _resolve_symptom(inputs: dict):
         pairs.append((key, int(s.get("severity", 3))))
     if not pairs and inputs.get("symptom_type"):  # 레거시(단일·4단계)
         pairs.append((inputs["symptom_type"], _LEGACY_SEV_TO_5.get(inputs.get("symptom_severity"), 1)))
-    if not pairs:
-        return "이상없음", 1, []
-    rep = max(pairs, key=lambda p: SYMPTOM_RISK_MAP.get(p[0], 0.0) * SEVERITY_MULTIPLIER.get(p[1], 1.0))
-    return rep[0], rep[1], [f"{k}({v})" for k, v in pairs]
+    # '이상없음'은 전력·불편 기여 0 → 합산 목록에서 제외
+    sym_pairs = [(k, v) for k, v in pairs if k != "이상없음"]
+    if not sym_pairs:
+        return "이상없음", 1, [], []
+    rep = max(sym_pairs, key=lambda p: SYMPTOM_RISK_MAP.get(p[0], 0.0) * SEVERITY_MULTIPLIER.get(p[1], 1.0))
+    return rep[0], rep[1], sym_pairs, [f"{k}({v})" for k, v in sym_pairs]
 
 
 def _resolve_priority(inputs: dict):
@@ -104,8 +107,11 @@ def run_full_pipeline(inputs: dict) -> dict:
     yr  = inputs["purchase_year"]
     cap = inputs["capacity_kw"]
 
-    rep_symptom, rep_severity, symptom_labels = _resolve_symptom(inputs)
+    rep_symptom, rep_severity, sym_pairs, symptom_labels = _resolve_symptom(inputs)
     priority = _resolve_priority(inputs)
+    # report_generator/AS패스가 읽는 레거시 단일 필드 동기화(새 플로우는 symptoms 리스트만 전송)
+    inputs["symptom_type"] = rep_symptom
+    inputs["symptom_severity"] = rep_severity
 
     old_spec   = dict(_cached_device_spec(pt, yr, cap))   # 월간kwh 미입력 시 폴백용
     cost_ref   = dict(_cached_cost_ref(pt, cap))
@@ -129,8 +135,7 @@ def run_full_pipeline(inputs: dict) -> dict:
     diagnosis = run_diagnosis(
         purchase_year        = yr,
         product_type         = pt,
-        symptom_type         = rep_symptom,
-        symptom_severity     = rep_severity,
+        symptoms             = sym_pairs,
         filter_clean_months  = inputs["filter_clean_months"],
         repair_history_count = inputs["repair_history_count"],
         old_annual_kwh       = old_annual_kwh,
@@ -146,7 +151,7 @@ def run_full_pipeline(inputs: dict) -> dict:
 
     age_years   = date.today().year - yr
     # ── 효율 과소비 분해 (docs/04g): 영구(연식 1.5%) + 가역(증상 MDPI + 필터) ──
-    decomp      = power_excess_decomp(age_years, rep_symptom, rep_severity, inputs["filter_clean_months"])
+    decomp      = power_excess_decomp(age_years, sym_pairs, inputs["filter_clean_months"])
     current_eff = decomp["ce"]
 
     # 현재 실제 소비 kWh (카탈로그 월간 / 잔존효율)
@@ -244,7 +249,8 @@ def run_full_pipeline(inputs: dict) -> dict:
             opt.rank = rank
 
     # ── 누수 안전 정책 (docs/04g): 점수 경쟁이 아니라 안전 — 모든 룰 이후 수리 1순위 고정 ──
-    if rep_symptom == "누수":
+    # 04h: 복수 증상 중 하나라도 누수면 안전 규칙 발동(대표가 누수가 아니어도).
+    if any(k == "누수" for k, _ in sym_pairs):
         rep_o = next((o for o in ranked if o.key == "수리후사용"), None)
         if rep_o:
             top = max(o.final_score for o in ranked if o.key != "수리후사용")

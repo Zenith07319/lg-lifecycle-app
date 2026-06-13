@@ -12,8 +12,11 @@ DISCLAIMER = "현재 입력 조건 기준 추정 결과입니다. 정확한 고�
 
 @router.post("/diagnose", response_model=DiagnoseResponse)
 async def diagnose(req: DiagnoseRequest):
+    # 한 번만 dump해서 같은 dict를 파이프라인·로그가 공유.
+    # (run_full_pipeline이 대표 증상을 payload에 주입하므로, 재-dump하면 로그에 NULL로 남음)
+    payload = req.model_dump()
     try:
-        result = run_full_pipeline(req.model_dump())
+        result = run_full_pipeline(payload)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -22,7 +25,7 @@ async def diagnose(req: DiagnoseRequest):
 
     diag = result["diagnosis"]
     top  = result["ranked_options"][0] if result["ranked_options"] else {}
-    log_diagnosis(diag, req.model_dump(), top.get("label", ""))
+    log_diagnosis(diag, payload, top.get("label", ""))
 
     return {
         "session_id":          session_id,

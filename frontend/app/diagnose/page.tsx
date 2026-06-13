@@ -217,12 +217,8 @@ export default function DiagnosePage() {
   if (loading) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center px-10 text-center">
-        <div className="relative flex size-28 items-center justify-center">
-          <span className="absolute inset-0 rounded-full border-4 border-accent-soft" />
-          <span className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-accent" />
-          <img src="/character.png" alt="" className="h-[88px] w-auto object-contain animate-bounce" />
-        </div>
-        <p className="mt-8 text-[13px] font-medium text-muted">잠시만요,</p>
+        <img src="/character.png" alt="" className="h-36 w-auto object-contain animate-bounce drop-shadow-[0_12px_22px_rgba(4,125,134,.18)]" />
+        <p className="mt-7 text-[13px] font-medium text-muted">잠시만요,</p>
         <p className="mt-1 text-[19px] font-extrabold text-ink">결과를 분석하고 있어요</p>
         <p className="mt-2 text-[12px] text-muted">입력하신 정보로 5가지 시나리오를 비교 중이에요</p>
         <div className="mt-6 h-1.5 w-44 overflow-hidden rounded-full bg-accent-soft">

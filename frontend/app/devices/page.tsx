@@ -2,11 +2,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus, Trash2, Snowflake } from "lucide-react";
+import Image from "next/image";
 import { AppHeader } from "@/components/ui";
 import { getDevices, removeDevice, type SavedDevice } from "@/lib/myDevice";
-import { GRADE_COLORS } from "@/lib/utils";
 
-/* 03 내 가전 — Figma: 큰 제목 + N대 등록 / 가전 카드 스택 / 빈 상태 변형 */
+/* 03 내 가전 — Figma 3-3/3-4 충실 재구축:
+   제목 + 부제(N대 등록) / 등급별 틸 그라데이션 대형 카드(우측 일러스트 패널) / 빈 상태 변형 */
+
+// Figma 3-3 카드색을 등급에 매핑(연두→틸, 경고색 미추가 — 시안 충실).
+// A(최상)=연두 → E(최하)=진한틸. 모두 검정 텍스트가 읽히는 명도 유지.
+const GRADE_CARD_BG: Record<string, string> = {
+  A: "rgba(145, 222, 107, 0.51)", // 연두 (Figma 카드1)
+  B: "#C7ECE6",                   // 아주 밝은 틸
+  C: "#B7EAE4",                   // 밝은 틸 (Figma 카드2)
+  D: "#94D6D2",                   // 중간 틸
+  E: "#79C7CD",                   // 진한 틸 (Figma 카드3)
+};
+
 export default function DevicesPage() {
   const [list, setList] = useState<SavedDevice[]>([]);
   const [ready, setReady] = useState(false);
@@ -27,9 +39,7 @@ export default function DevicesPage() {
     <div className="pb-28">
       <AppHeader
         title="내 가전"
-        right={ready && list.length > 0 ? (
-          <span className="pb-1 text-[13px] font-medium text-muted">{list.length}대 등록</span>
-        ) : undefined}
+        subtitle={ready && list.length > 0 ? `${list.length}대 등록` : undefined}
       />
 
       <div className="px-6 pt-3">
@@ -51,63 +61,60 @@ export default function DevicesPage() {
             </Link>
           </div>
         ) : (
-          /* ── 목록 ── */
-          <div className="space-y-3">
+          /* ── 목록 (Figma 3-3: 등급별 틸 카드 스택) ── */
+          <div className="space-y-1.5">
             {list.map((dev) => {
-              const color = GRADE_COLORS[dev.grade] ?? "#a50034";
+              const bg = GRADE_CARD_BG[dev.grade] ?? GRADE_CARD_BG.C;
               return (
-                <div
-                  key={dev.sessionId}
-                  className="reveal rounded-[22px] bg-white/64 p-4 shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div
-                      className="flex size-12 shrink-0 items-center justify-center rounded-2xl"
-                      style={{ background: `${color}1a` }}
-                    >
-                      <span
-                        className="text-[19px] font-extrabold"
-                        style={{ fontFamily: "var(--font-display)", color }}
-                      >
-                        {dev.grade}
-                      </span>
+                <div key={dev.sessionId} className="reveal relative">
+                  {/* 카드 전체가 결과로 진입 */}
+                  <Link
+                    href={`/result/${dev.sessionId}`}
+                    className="relative block h-[188px] overflow-hidden rounded-[22px] shadow-[0_10px_24px_-10px_rgba(0,0,0,.16)_inset] active:scale-[.995] transition"
+                    style={{ background: bg }}
+                  >
+                    {/* 우측 흰 반투명 일러스트 패널 */}
+                    <div className="absolute right-0 top-0 h-full w-[110px] rounded-[22px] bg-white/75">
+                      <Image
+                        src="/ac-illustration.png"
+                        alt=""
+                        width={120}
+                        height={120}
+                        className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-90"
+                      />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-extrabold text-ink">
+
+                    {/* 모델명 + 메타 */}
+                    <div className="absolute left-4 top-4 right-[120px]">
+                      <p className="truncate text-[15px] font-bold text-ink">
                         {dev.product_type} ({dev.purchase_year})
                       </p>
-                      <p className="mt-0.5 text-[12px] text-muted">
+                      <p className="mt-1 text-[11px] font-medium text-ink/70">
                         {dev.capacity_kw}kW · 건강점수 {dev.score.toFixed(0)} · 진단 {ago(dev.savedAt)}
                       </p>
                     </div>
-                  </div>
 
-                  <div className="mt-3 rounded-xl bg-accent-soft px-3 py-2 text-[12px] text-ink-soft">
-                    💡 1순위 추천 · <b className="text-accent">{dev.recommendation}</b>
-                  </div>
+                    {/* 우하단 결과보기 */}
+                    <span className="absolute bottom-4 right-[122px] flex items-center gap-0.5 text-[12px] font-semibold text-ink/80">
+                      결과보기 <ChevronRight size={14} />
+                    </span>
+                  </Link>
 
-                  <div className="mt-3 flex gap-2">
-                    <Link
-                      href={`/result/${dev.sessionId}`}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-accent py-2.5 text-[13px] font-extrabold text-white shadow-[0_4px_14px_rgba(4,125,134,.28)] active:scale-[.99] transition"
-                    >
-                      결과 보기 <ChevronRight size={15} />
-                    </Link>
-                    <button
-                      onClick={() => { if (confirm("이 가전 등록을 삭제할까요?")) removeDevice(dev.sessionId); }}
-                      className="rounded-xl border border-line px-3.5 py-2.5 text-muted active:scale-[.99] transition"
-                      aria-label="가전 등록 삭제"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  {/* 삭제(은은하게) — 카드 좌하단 */}
+                  <button
+                    onClick={() => { if (confirm("이 가전 등록을 삭제할까요?")) removeDevice(dev.sessionId); }}
+                    className="absolute bottom-3 left-3 z-10 rounded-full p-2 text-ink/35 hover:text-ink/60 active:scale-95 transition"
+                    aria-label="가전 등록 삭제"
+                  >
+                    <Trash2 size={17} />
+                  </button>
                 </div>
               );
             })}
 
             <Link
               href="/diagnose"
-              className="mt-1 flex h-[44px] items-center justify-center gap-1.5 rounded-full border border-accent text-[12px] font-bold text-accent shadow-[0_2px_8px_rgba(5,31,31,.06)] active:scale-[.99] transition"
+              className="!mt-3 flex h-[44px] items-center justify-center gap-1.5 rounded-full border border-accent text-[12px] font-bold text-accent shadow-[0_4px_4px_rgba(0,0,0,.10)] active:scale-[.99] transition"
             >
               <Plus size={16} /> 다른 에어컨 진단하기
             </Link>

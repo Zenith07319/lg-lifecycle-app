@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Camera, Loader2, Snowflake } from "lucide-react";
+import { ChevronLeft, Camera, Loader2 } from "lucide-react";
 import { diagnose, ocrEnergyLabel, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
 
@@ -203,8 +203,8 @@ export default function DiagnosePage() {
 
   const bot = (text: string, k: string) => (
     <div key={k} className="flex gap-2 items-start reveal">
-      <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center shrink-0 mt-0.5">
-        <Snowflake size={15} strokeWidth={2.4} />
+      <div className="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center shrink-0 mt-0.5 overflow-hidden ring-1 ring-accent/15">
+        <img src="/character-head.png" alt="진단 도우미" className="w-7 h-7 object-contain" />
       </div>
       <div className="max-w-[82%] rounded-2xl rounded-tl-md bg-white/85 border border-line px-3.5 py-2.5 text-[13.5px] text-ink shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm">{text}</div>
     </div>
@@ -217,10 +217,10 @@ export default function DiagnosePage() {
   if (loading) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center px-10 text-center">
-        <div className="relative flex size-24 items-center justify-center">
+        <div className="relative flex size-28 items-center justify-center">
           <span className="absolute inset-0 rounded-full border-4 border-accent-soft" />
           <span className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-accent" />
-          <Snowflake size={34} className="text-accent" strokeWidth={2.2} />
+          <img src="/character.png" alt="" className="h-[88px] w-auto object-contain animate-bounce" />
         </div>
         <p className="mt-8 text-[13px] font-medium text-muted">잠시만요,</p>
         <p className="mt-1 text-[19px] font-extrabold text-ink">결과를 분석하고 있어요</p>

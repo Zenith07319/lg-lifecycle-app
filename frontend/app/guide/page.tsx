@@ -30,11 +30,14 @@ export default function GuidePage() {
 
       <div className="px-6 pt-3">
         {/* 히어로 카드 (틸 그라데이션) */}
-        <div className="reveal reveal-1 rounded-[20px] px-5 pb-5 pt-4 text-white shadow-[0_2px_8px_rgba(5,31,31,.06)]"
+        <div className="reveal reveal-1 flex items-center gap-3 rounded-[20px] px-5 pb-5 pt-4 text-white shadow-[0_2px_8px_rgba(5,31,31,.06)]"
           style={{ background: "linear-gradient(140deg,#047d86,#034349)" }}>
-          <p className="text-[12px] font-medium text-white/85">잘 관리하면</p>
-          <p className="mt-0.5 text-[19px] font-extrabold leading-snug">청소·세팅만으로<br />전기료·냄새·소음이 줄어요</p>
-          <p className="mt-2 text-[11.5px] text-white/85">교체·수리 전에 먼저 해볼 수 있는 셀프 관리부터 확인하세요.</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-medium text-white/85">잘 관리하면</p>
+            <p className="mt-0.5 text-[19px] font-extrabold leading-snug">청소·세팅만으로<br />전기료·냄새·소음이 줄어요</p>
+            <p className="mt-2 text-[11.5px] text-white/85">교체·수리 전에 먼저 해볼 수 있는 셀프 관리부터 확인하세요.</p>
+          </div>
+          <img src="/character-head.png" alt="" className="size-[58px] shrink-0 object-contain drop-shadow-lg" />
         </div>
 
         {/* 팁 카드 목록 */}

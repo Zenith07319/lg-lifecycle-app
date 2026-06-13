@@ -1,49 +1,130 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft, Camera, Loader2 } from "lucide-react";
+import { ChevronLeft, Camera, Loader2, Check } from "lucide-react";
 import { diagnose, ocrEnergyLabel, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
 
-const SYMPTOMS: SymptomLabel[] = ["성능저하", "소음", "냄새", "누수", "전기요금증가", "작동불량"];
-const AXES: { key: keyof DiagnoseInput; label: string; emoji: string }[] = [
-  { key: "priority_cost_score", label: "비용", emoji: "💰" },
-  { key: "priority_env_score", label: "환경", emoji: "🌱" },
-  { key: "priority_convenience_score", label: "편의", emoji: "🛠" },
+/* 02 진단 — Figma "02 진단" 재구축: 시작 → 한 화면당 질문 1개(Q1~Q10) →
+   증상 선택 시 조건부 심각도 분기 → 우선순위 슬라이더 → 로딩 → 결과.
+   친화적 버킷 선택을 백엔드 DiagnoseInput으로 매핑(데이터 계약 보존). */
+
+// Q1 구매 시기 → 대표 연식
+const AGE_OPTS = [
+  { key: "<1", label: "1년 미만", year: 2025 },
+  { key: "1-5", label: "1~5년", year: 2022 },
+  { key: "5-10", label: "5~10년", year: 2018 },
+  { key: "10+", label: "10년 이상", year: 2013 },
 ];
-const Q = [
-  "안녕하세요! 진단할 에어컨의 기본 정보를 알려주세요. 🐧",
-  "요즘 어떤 증상이 있나요? (여러 개 선택 가능)",
-  "각 증상이 얼마나 심한가요? (1~5점)",
-  "평소 사용 환경을 알려주세요.",
-  "여름 전기요금과 관리 상태는요?",
-  "마지막! 무엇을 가장 중요하게 보세요?",
+// Q4 주거형태 → 계약종별
+const HOME_OPTS = [
+  { key: "apt", label: "아파트 · 오피스텔", contract: "고압" as const },
+  { key: "villa", label: "빌라 · 단독주택 · 다세대주택", contract: "저압" as const },
 ];
+// Q5 증상(다중)
+const SYMPTOM_OPTS: { key: string; label: string; sym: SymptomLabel | null; emoji: string }[] = [
+  { key: "cool", label: "시원하지 않아요", sym: "성능저하", emoji: "❄️" },
+  { key: "noise", label: "소리가 시끄러워요", sym: "소음", emoji: "🔊" },
+  { key: "smell", label: "냄새가 나요", sym: "냄새", emoji: "👃" },
+  { key: "leak", label: "물이 흘러나와요", sym: "누수", emoji: "💧" },
+  { key: "unstable", label: "작동이 불안정해요", sym: "작동불량", emoji: "⚡" },
+  { key: "none", label: "특별한 증상은 없어요", sym: null, emoji: "✅" },
+];
+// 증상별 심각도 3단계 → 1~5점(약함/보통/심함 = 최소/중간/최대)
+const SEVERITY_LEVELS = [1, 3, 5];
+const SEVERITY_ORDER: SymptomLabel[] = ["성능저하", "소음", "냄새", "누수", "작동불량"];
+const SEVERITY_QS: Record<SymptomLabel, { emoji: string; title: string; opts: string[] }> = {
+  성능저하: { emoji: "❄️", title: "냉방 성능이 어느 정도로 불편한가요?", opts: ["조금 미흡해요", "자주 덥게 느껴져요", "거의 시원하지 않아요"] },
+  소음: { emoji: "🔊", title: "소리가 어느 정도로 신경 쓰이나요?", opts: ["작게 들리는 정도예요", "거슬릴 때가 있어요", "생활에 방해돼요"] },
+  냄새: { emoji: "👃", title: "냄새가 어느 정도로 느껴지나요?", opts: ["가끔 약하게 나요", "사용 중 자주 나요", "켤 때부터 심해요"] },
+  누수: { emoji: "💧", title: "물이 얼마나 자주 떨어지나요?", opts: ["가끔 한두 방울", "사용 중 가끔 흘러요", "바닥에 고일 정도"] },
+  작동불량: { emoji: "⚡", title: "작동 불편이 얼마나 자주 생기나요?", opts: ["가끔 멈칫한 정도예요", "꺼져도 다시 잘 돼요", "자주 멈추거나 재가동돼요"] },
+  // 아래 두 라벨은 이 화면에서 쓰이지 않지만 타입 완전성을 위해 포함
+  증상없음: { emoji: "✅", title: "", opts: [] },
+  전기요금증가: { emoji: "💸", title: "", opts: [] },
+};
+// Q6 하루 사용시간
+const HOURS_OPTS = [
+  { label: "2시간 이하", v: 2 }, { label: "2~4시간", v: 3 }, { label: "4~8시간", v: 6 }, { label: "8시간 이상", v: 10 },
+];
+// Q7 연간 사용 개월
+const MONTHS_OPTS = [
+  { label: "1개월 이하", v: 1 }, { label: "2~3개월", v: 3 }, { label: "4~5개월", v: 5 }, { label: "6개월 이상", v: 6 },
+];
+// Q8 필터 청소 시기
+const FILTER_OPTS = [
+  { label: "1개월 이내", v: 1 }, { label: "1~3개월", v: 2 }, { label: "3~6개월", v: 5 }, { label: "한 번도 안 했어요", v: 24 },
+];
+// Q9 최근 2년 수리 이력
+const REPAIR_OPTS = [
+  { label: "아니요, 없어요", v: 0 }, { label: "점검만 받았어요", v: 0 }, { label: "수리 1회 이상 받았어요", v: 1 }, { label: "수리 2회 이상 받았어요", v: 2 },
+];
+
+type Answers = {
+  ageKey: string | null;
+  q2mode: "photo" | "manual";
+  capacity: string; acKwh: string; summerKwh: string;
+  homeKey: string | null;
+  symptoms: SymptomLabel[]; none: boolean;
+  severity: Partial<Record<SymptomLabel, number>>;   // 심각도 레벨 0~2
+  hoursV: number | null; monthsV: number | null; filterV: number | null; repairIdx: number | null;
+  cost: number; env: number; conv: number;
+};
+const INIT: Answers = {
+  ageKey: null, q2mode: "manual", capacity: "", acKwh: "", summerKwh: "",
+  homeKey: null, symptoms: [], none: false, severity: {},
+  hoursV: null, monthsV: null, filterV: null, repairIdx: null,
+  cost: 40, env: 30, conv: 30,
+};
+
+const PROG: Record<string, number> = { q1: 1, q2: 2, q3: 3, q4: 4, q5: 5, q6: 6, q7: 7, q8: 8, q9: 9, q10: 10 };
 
 export default function DiagnosePage() {
   const router = useRouter();
-  const [form, setForm] = useState<DiagnoseInput>(SAMPLE_INPUT);
-  const [step, setStep] = useState(0);
+  const [ans, setAns] = useState<Answers>(INIT);
+  const [started, setStarted] = useState(false);
+  const [cursor, setCursor] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrMsg, setOcrMsg] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
 
+  const patch = (p: Partial<Answers>) => setAns((s) => ({ ...s, ...p }));
+
+  // 동적 화면 목록: 증상 선택 시 해당 심각도 화면을 q5 뒤에 삽입
+  const sevSyms = ans.none ? [] : SEVERITY_ORDER.filter((s) => ans.symptoms.includes(s));
+  const SCREENS: { id: string; sym?: SymptomLabel }[] = [
+    { id: "q1" }, { id: "q2" }, { id: "q3" }, { id: "q4" }, { id: "q5" },
+    ...sevSyms.map((s) => ({ id: "sev", sym: s })),
+    { id: "q6" }, { id: "q7" }, { id: "q8" }, { id: "q9" }, { id: "q10" },
+  ];
+  const safeCursor = Math.min(cursor, SCREENS.length - 1);
+  const cur = SCREENS[safeCursor];
+  const progNum = cur.id === "sev" ? 5 : PROG[cur.id];
+  const isLast = cur.id === "q10";
+
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // 단계 전환 시 새 질문으로 포커스 이동(키보드·스크린리더 사용자 안내)
+    if (started) screenRef.current?.focus({ preventScroll: true });
+  }, [safeCursor, started]);
+
+  // ── OCR(에너지 라벨 자동입력) ──
   const onOcrFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    e.target.value = "";              // 같은 파일 재선택 허용
+    e.target.value = "";
     if (!f) return;
     setOcrLoading(true); setOcrMsg("");
     try {
       const r = await ocrEnergyLabel(f);
       const parts: string[] = [];
-      const patch: Partial<DiagnoseInput> = {};
-      if (r.monthly_kwh) { patch.ac_monthly_kwh_input = r.monthly_kwh; parts.push(`월간소비전력량 ${r.monthly_kwh}kWh`); }
-      if (r.capacity_kw) { patch.capacity_kw = r.capacity_kw; parts.push(`냉방용량 ${r.capacity_kw}kW`); }
-      if (parts.length) setForm((p) => ({ ...p, ...patch }));
+      const p: Partial<Answers> = {};
+      if (r.monthly_kwh) { p.acKwh = String(r.monthly_kwh); parts.push(`월간소비전력량 ${r.monthly_kwh}kWh`); }
+      if (r.capacity_kw) { p.capacity = String(r.capacity_kw); parts.push(`냉방용량 ${r.capacity_kw}kW`); }
+      if (parts.length) patch(p);
       setOcrMsg(parts.length
         ? `📷 인식됨: ${parts.join(" · ")}${r.source === "mock" ? " (샘플)" : ""} — 값을 확인하고 진행하세요`
         : "사진에서 값을 못 읽었어요. 또렷하게 다시 찍거나 직접 입력해 주세요.");
@@ -52,170 +133,101 @@ export default function DiagnosePage() {
     } finally { setOcrLoading(false); }
   };
 
-  useEffect(() => {
-    const t = setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 80);
-    return () => clearTimeout(t);
-  }, [step]);
+  // ── 답변 → 백엔드 입력 ──
+  const buildInput = (): DiagnoseInput => {
+    const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
+    const age = AGE_OPTS.find((o) => o.key === ans.ageKey);
+    const home = HOME_OPTS.find((o) => o.key === ans.homeKey);
+    // 자유 입력값은 백엔드 Pydantic 범위로 클램프(범위 밖 입력 시 422 방지)
+    const summer = clamp(Number(ans.summerKwh) || 0, 0, 1000);
+    const symptoms = ans.none ? [] : ans.symptoms.map((s) => ({ type: s, severity: SEVERITY_LEVELS[ans.severity[s] ?? 1] }));
+    // 우선순위 3축이 모두 0이면 백엔드 정규화가 0/0 분모가 되므로 균등값으로 방어
+    const pTot = ans.cost + ans.env + ans.conv;
+    const pri = pTot > 0 ? { c: ans.cost, e: ans.env, v: ans.conv } : { c: 34, e: 33, v: 33 };
+    return {
+      product_type: "에어컨",
+      purchase_year: age?.year ?? 2018,
+      capacity_kw: clamp(Number(ans.capacity) || 3.6, 0.1, 20),
+      daily_usage_hours: ans.hoursV ?? 6,
+      usage_months: ans.monthsV ?? 4,
+      contract_type: home?.contract ?? "고압",
+      summer_monthly_kwh: summer,
+      base_monthly_kwh: summer ? clamp(Math.round(summer * 0.6), 150, 1000) : 350,
+      ac_monthly_kwh_input: clamp(Number(ans.acKwh) || 0, 0, 500),
+      season: "하계",
+      symptoms,
+      filter_clean_months: ans.filterV ?? 6,
+      repair_history_count: REPAIR_OPTS[ans.repairIdx ?? 0].v,
+      priority_cost_score: pri.c,
+      priority_env_score: pri.e,
+      priority_convenience_score: pri.v,
+    };
+  };
 
-  const set = (k: keyof DiagnoseInput, v: string | number) => setForm((p) => ({ ...p, [k]: v }));
-  const toggleSymptom = (label: SymptomLabel) =>
-    setForm((p) => {
-      const has = p.symptoms.some((s) => s.type === label);
-      return { ...p, symptoms: has ? p.symptoms.filter((s) => s.type !== label) : [...p.symptoms, { type: label, severity: 3 }] };
-    });
-  const setSeverity = (label: SymptomLabel, severity: number) =>
-    setForm((p) => ({ ...p, symptoms: p.symptoms.map((s) => (s.type === label ? { ...s, severity } : s)) }));
-
-  const next = () => setStep((s) => s + 1);
-  const submit = async () => {
+  const runDiagnose = async (payload: DiagnoseInput) => {
     setLoading(true); setError("");
-    try { const res = await diagnose(form); router.push(`/result/${res.session_id}`); }
+    try { const res = await diagnose(payload); router.push(`/result/${res.session_id}`); }
     catch (e) { setError(e instanceof Error ? e.message : "오류가 발생했습니다."); setLoading(false); }
   };
-  const sampleFast = () => { setForm(SAMPLE_INPUT); setTimeout(submit, 60); };
 
-  const summary = (i: number): string => {
-    const f = form;
-    switch (i) {
-      case 0: return `${f.purchase_year}년식 · ${f.capacity_kw}kW · ${f.contract_type}` + (f.ac_monthly_kwh_input ? ` · ${f.ac_monthly_kwh_input}kWh/월` : "");
-      case 1: return f.symptoms.length ? f.symptoms.map((s) => s.type).join(", ") : "증상 없음";
-      case 2: return f.symptoms.length ? f.symptoms.map((s) => `${s.type} ${s.severity}점`).join(", ") : "해당 없음";
-      case 3: return `하루 ${f.daily_usage_hours}시간 · 연 ${f.usage_months}개월`;
-      case 4: return `여름 ${f.summer_monthly_kwh}kWh · 필터 ${f.filter_clean_months}개월 · 수리 ${f.repair_history_count}회`;
-      case 5: {
-        const a = [f.priority_cost_score, f.priority_env_score, f.priority_convenience_score];
-        return ["비용", "환경", "편의"][a.reduce((mi, v, j, ar) => (v > ar[mi] ? j : mi), 0)] + " 우선";
-      }
-      default: return "";
+  // ── 네비게이션 ──
+  const canNext = (): boolean => {
+    switch (cur.id) {
+      case "q1": return !!ans.ageKey;
+      case "q2": return Number(ans.capacity) > 0;
+      case "q3": return true;                         // 사용량 미입력 허용(0 → 백엔드 추정)
+      case "q4": return !!ans.homeKey;
+      case "q5": return ans.none || ans.symptoms.length > 0;
+      case "sev": return cur.sym ? ans.severity[cur.sym] !== undefined : true;
+      case "q6": return ans.hoursV !== null;
+      case "q7": return ans.monthsV !== null;
+      case "q8": return ans.filterV !== null;
+      case "q9": return ans.repairIdx !== null;
+      case "q10": return true;
+      default: return true;
     }
   };
+  const goNext = () => {
+    if (!canNext()) return;
+    if (isLast) { runDiagnose(buildInput()); return; }
+    setCursor((c) => Math.min(c + 1, SCREENS.length - 1));
+  };
+  const goBack = () => {
+    if (safeCursor <= 0) { setStarted(false); return; }
+    setCursor((c) => Math.max(0, c - 1));
+  };
+  const sampleFast = () => runDiagnose(SAMPLE_INPUT);
 
-  const inputCls = "w-full rounded-xl border border-line bg-white/70 px-3 py-2.5 text-[14px] text-ink outline-none placeholder:text-ink-300 focus:border-accent focus:bg-white transition-colors";
-  const lab = "text-[11.5px] font-bold text-ink-soft";
-  const nextBtn = (label: string, onClick: () => void, disabled = false) => (
-    <button onClick={onClick} disabled={disabled}
-      className="w-full mt-3 rounded-full bg-accent text-white font-extrabold py-3 text-[14px] shadow-[0_6px_16px_rgba(4,125,134,.28)] disabled:opacity-50 active:scale-[.99] transition-transform">
-      {label}
-    </button>
-  );
-
-  const renderDock = () => {
-    switch (step) {
-      case 0:
-        return (
-          <div>
-            <button type="button" onClick={() => fileRef.current?.click()} disabled={ocrLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-accent bg-accent-soft text-accent font-extrabold py-2.5 text-[13px] mb-2.5 disabled:opacity-50">
-              {ocrLoading ? <Loader2 className="animate-spin" size={16} /> : <Camera size={16} />}
-              {ocrLoading ? "라벨 인식 중…" : "에너지효율 라벨로 자동 입력"}
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onOcrFile} />
-            {ocrMsg && <p className="text-[11.5px] text-ink-soft bg-accent-soft border border-accent/25 rounded-lg px-3 py-2 mb-2.5">{ocrMsg}</p>}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div><label className={lab}>구매 연도</label><input type="number" min={1992} max={2026} placeholder="직접입력" value={form.purchase_year} onChange={(e) => set("purchase_year", Number(e.target.value))} className={inputCls} /></div>
-              <div><label className={lab}>냉방 용량(kW)</label><input type="number" min={1.5} max={20} step={0.1} placeholder="직접입력" value={form.capacity_kw} onChange={(e) => set("capacity_kw", Number(e.target.value))} className={inputCls} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mt-2.5">
-              {(["고압", "저압"] as const).map((v) => (
-                <button key={v} onClick={() => set("contract_type", v)} className={`rounded-xl border py-2 text-[12.5px] font-bold transition-colors ${form.contract_type === v ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-soft"}`}>{v === "고압" ? "고압(아파트)" : "저압(빌라)"}</button>
-              ))}
-            </div>
-            <div className="mt-2.5">
-              <label className={lab}>월간소비전력량 (kWh/월)</label>
-              <input type="number" min={0} max={500} step={1} value={form.ac_monthly_kwh_input || ""} placeholder="예: 110"
-                onChange={(e) => set("ac_monthly_kwh_input", Number(e.target.value))} className={inputCls} />
-              <p className="text-[10.5px] text-muted mt-1">에어컨 에너지효율 스티커 표기값</p>
-            </div>
-            {nextBtn("다음", next)}
-          </div>
-        );
-      case 1:
-        return (
-          <div>
-            <p className="text-[11px] font-semibold text-muted mb-2">증상 선택 · 중복 선택 가능</p>
-            <div className="flex flex-wrap gap-2">
-              {SYMPTOMS.map((label) => {
-                const on = form.symptoms.some((s) => s.type === label);
-                return <button key={label} onClick={() => toggleSymptom(label)} className={`rounded-full border px-3.5 py-2 text-[13px] font-semibold transition-colors ${on ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-soft"}`}>{label}</button>;
-              })}
-            </div>
-            {nextBtn(form.symptoms.length ? "다음" : "증상 없음 · 다음", next)}
-          </div>
-        );
-      case 2:
-        if (!form.symptoms.length) return <div className="text-[13px] text-muted">선택한 증상이 없어요.{nextBtn("다음", next)}</div>;
-        return (
-          <div className="space-y-3">
-            {form.symptoms.map((s) => (
-              <div key={s.type}>
-                <p className="text-[12.5px] font-bold text-ink-soft mb-1.5">{s.type}</p>
-                <div className="flex gap-1.5">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} onClick={() => setSeverity(s.type, n)} className={`flex-1 rounded-lg border py-2 text-[13px] font-bold transition-colors ${s.severity === n ? "border-accent bg-accent text-white" : "border-line text-ink-soft"}`}>{n}</button>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {nextBtn("다음", next)}
-          </div>
-        );
-      case 3:
-        return (
-          <div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <div><label className={lab}>하루 사용시간(h)</label><input type="number" min={1} max={24} placeholder="직접입력" value={form.daily_usage_hours} onChange={(e) => set("daily_usage_hours", Number(e.target.value))} className={inputCls} /></div>
-              <div><label className={lab}>연간 사용 개월</label><input type="number" min={1} max={12} placeholder="직접입력" value={form.usage_months} onChange={(e) => set("usage_months", Number(e.target.value))} className={inputCls} /></div>
-            </div>
-            {nextBtn("다음", next)}
-          </div>
-        );
-      case 4:
-        return (
-          <div>
-            <label className={lab}>여름 한 달 전기요금(kWh)</label>
-            <input type="number" min={0} max={1000} step={10} placeholder="직접입력" value={form.summer_monthly_kwh} onChange={(e) => set("summer_monthly_kwh", Number(e.target.value))} className={inputCls} />
-            <div className="grid grid-cols-2 gap-2.5 mt-2.5">
-              <div><label className={lab}>필터 미청소(개월)</label><input type="number" min={0} max={60} placeholder="직접입력" value={form.filter_clean_months} onChange={(e) => set("filter_clean_months", Number(e.target.value))} className={inputCls} /></div>
-              <div><label className={lab}>최근 수리(회)</label><input type="number" min={0} max={10} placeholder="직접입력" value={form.repair_history_count} onChange={(e) => set("repair_history_count", Number(e.target.value))} className={inputCls} /></div>
-            </div>
-            {nextBtn("다음", next)}
-          </div>
-        );
-      case 5:
-        return (
-          <div>
-            {AXES.map(({ key, label, emoji }) => (
-              <div key={key as string} className="mb-3 last:mb-0">
-                <div className="flex justify-between text-[12.5px] mb-1">
-                  <span className="font-semibold text-ink-soft">{emoji} {label} 중시</span>
-                  <span className="font-extrabold text-accent" style={{ fontFamily: "var(--font-display)" }}>{form[key] as number}</span>
-                </div>
-                <input type="range" min={0} max={100} value={form[key] as number} onChange={(e) => set(key, Number(e.target.value))} className="w-full accent-[var(--color-accent)]" />
-              </div>
-            ))}
-            {nextBtn(loading ? "분석 중…" : "진단 시작 →", submit, loading)}
-          </div>
-        );
-      default:
-        return null;
-    }
+  // Q10 우선순위: 세 축 합을 항상 100으로 유지(드래그 시 나머지 두 축을 비율대로 재분배)
+  const setPriority = (axis: "cost" | "env" | "conv", val: number) => {
+    setAns((s) => {
+      const v = Math.round(Math.min(100, Math.max(0, val)));
+      const others = (["cost", "env", "conv"] as const).filter((a) => a !== axis);
+      const rest = 100 - v;
+      const o0 = s[others[0]], o1 = s[others[1]];
+      const osum = o0 + o1;
+      const n0 = osum <= 0 ? Math.round(rest / 2) : Math.round((rest * o0) / osum);
+      const n1 = rest - n0;
+      return { ...s, [axis]: v, [others[0]]: n0, [others[1]]: n1 };
+    });
   };
 
-  const bot = (text: string, k: string) => (
-    <div key={k} className="flex gap-2 items-start reveal">
-      <img src="/character-head.png" alt="진단 도우미" className="w-9 h-9 shrink-0 mt-0.5 object-contain drop-shadow-[0_2px_4px_rgba(5,31,31,.12)]" />
-      <div className="max-w-[82%] rounded-2xl rounded-tl-md bg-white/85 border border-line px-3.5 py-2.5 text-[13.5px] text-ink shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm">{text}</div>
-    </div>
-  );
-  const me = (text: string, k: string) => (
-    <div key={k} className="max-w-[82%] ml-auto rounded-2xl rounded-tr-md bg-accent px-3.5 py-2.5 text-[13.5px] text-white shadow-[0_4px_12px_rgba(4,125,134,.22)] reveal">{text}</div>
-  );
+  // Q5 증상 토글
+  const toggleSymptom = (o: typeof SYMPTOM_OPTS[number]) => {
+    if (o.sym === null) { patch({ none: true, symptoms: [], severity: {} }); return; }
+    setAns((s) => {
+      const has = s.symptoms.includes(o.sym!);
+      const symptoms = has ? s.symptoms.filter((x) => x !== o.sym) : [...s.symptoms, o.sym!];
+      const severity = { ...s.severity }; if (has) delete severity[o.sym!];
+      return { ...s, none: false, symptoms, severity };
+    });
+  };
 
-  /* 02-6 분석 중 전용 화면 */
+  /* ── 로딩 화면(02-6) ── */
   if (loading) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center px-10 text-center">
-        <img src="/character.png" alt="" className="size-[176px] object-contain animate-bounce drop-shadow-[0_12px_22px_rgba(4,125,134,.18)]" />
+      <div role="status" aria-live="polite" className="flex min-h-[100dvh] flex-col items-center justify-center px-10 text-center">
+        <img src="/character.png" alt="" aria-hidden className="size-[176px] object-contain animate-bounce drop-shadow-[0_12px_22px_rgba(4,125,134,.18)]" />
         <p className="mt-7 text-[13px] font-medium text-muted">잠시만요,</p>
         <p className="mt-1 text-[19px] font-extrabold text-ink">결과를 분석하고 있어요</p>
         <p className="mt-2 text-[12px] text-muted">입력하신 정보로 5가지 시나리오를 비교 중이에요</p>
@@ -227,29 +239,240 @@ export default function DiagnosePage() {
     );
   }
 
+  /* ── 시작 화면(02-1) ── */
+  if (!started) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col items-center px-8 text-center"
+        style={{ background: "linear-gradient(180deg,#F5F8F7 0%,#E7F3EF 60%,#DBEEE8 100%)" }}>
+        <div className="mt-[14vh] reveal">
+          <p className="text-[20px] font-extrabold leading-snug text-ink">반가워요! 지금부터<br />우리 집 에어컨 상태를<br />진단해볼까요?</p>
+          <p className="mt-3 text-[13px] font-medium leading-relaxed text-muted">어렵지 않아요! 제가 하나씩 물어볼 테니<br />편히 답해주세요.</p>
+        </div>
+        <img src="/character.png" alt="" className="reveal reveal-2 my-auto size-[200px] object-contain drop-shadow-[0_14px_26px_rgba(4,125,134,.18)]" />
+        <button onClick={() => { setStarted(true); setCursor(0); }}
+          className="reveal reveal-3 mb-10 w-full rounded-full bg-accent py-4 text-[16px] font-extrabold text-white shadow-[0_8px_22px_rgba(4,125,134,.30)] active:scale-[.99] transition">
+          Start
+        </button>
+        <button onClick={sampleFast} className="mb-6 -mt-6 text-[11px] font-bold text-accent/70">샘플로 빠르게 보기</button>
+      </div>
+    );
+  }
+
   return (
-    <div className="pb-6">
-      <div className="sticky top-0 z-20 bg-paper/80 backdrop-blur-md border-b border-line/70 px-4 py-3 flex items-center gap-2">
-        <Link href="/" className="text-ink-soft" aria-label="홈"><ChevronLeft size={22} /></Link>
+    <div className="flex min-h-[100dvh] flex-col" style={{ background: "linear-gradient(180deg,#F5F8F7 0%,#E9F3EF 55%,#DBEEE8 100%)" }}>
+      <div ref={topRef} />
+      {/* 헤더 */}
+      <header className="sticky top-0 z-20 flex items-center gap-2 bg-white/55 px-4 py-3 backdrop-blur-md">
+        <button onClick={goBack} className="text-ink-soft" aria-label="뒤로"><ChevronLeft size={24} /></button>
         <h1 className="text-[16px] font-bold text-ink">가전 진단</h1>
-        <span className="ml-auto rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-bold text-accent">{Math.min(step + 1, Q.length)}/{Q.length}</span>
-        <button onClick={sampleFast} className="text-[11px] font-bold text-accent border border-accent/40 rounded-full px-2.5 py-1">샘플</button>
+        <span className="ml-auto text-[13px] font-semibold text-muted">{progNum}/10</span>
+        <button onClick={sampleFast} className="rounded-full border border-accent/40 px-2.5 py-1 text-[11px] font-bold text-accent">샘플</button>
+      </header>
+
+      {/* 진행 바 */}
+      <div className="h-1 w-full bg-line/60">
+        <div className="h-full rounded-r-full bg-accent transition-all duration-300" style={{ width: `${(progNum / 10) * 100}%` }} />
       </div>
 
-      <div className="px-4 py-4 space-y-2.5">
-        {Array.from({ length: step }).map((_, i) => (
-          <div key={i} className="space-y-2.5">
-            {bot(Q[i], `b${i}`)}
-            {me(summary(i), `m${i}`)}
-          </div>
-        ))}
-        {step < Q.length && bot(Q[step], "cur")}
-        {error && <div className="rounded-xl bg-[#FBECEC] border border-[#F1C9C7] p-3 text-[13px] text-danger">{error}</div>}
-        {step < Q.length && (
-          <div className="rounded-[20px] bg-white/85 border border-line p-4 shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm mt-1 reveal">{renderDock()}</div>
+      <div key={`${cur.id}:${cur.sym ?? ""}`} ref={screenRef} tabIndex={-1} role="group" aria-label={`질문 ${progNum} / 10`}
+        className="reveal flex flex-1 flex-col px-6 pb-5 pt-7 outline-none">
+        {/* ── 질문별 본문 ── */}
+        {cur.id === "q1" && (
+          <Question n={1} emoji="🗓️" title={"에어컨을 구매한 지\n얼마나 됐나요?"}>
+            <Options>
+              {AGE_OPTS.map((o) => (
+                <Opt key={o.key} sel={ans.ageKey === o.key} onClick={() => patch({ ageKey: o.key })}>{o.label}</Opt>
+              ))}
+            </Options>
+          </Question>
         )}
-        <div ref={endRef} />
+
+        {cur.id === "q2" && (
+          <Question n={2} emoji="🏷️" title={"에어컨 냉방능력과\n월 사용 전기량이 필요해요!"}
+            sub="에너지효율 라벨에서 찾을 수 있어요. 어려우면 직접 입력해도 돼요.">
+            <div className="grid grid-cols-2 gap-2">
+              {(["photo", "manual"] as const).map((m) => (
+                <button key={m} onClick={() => patch({ q2mode: m })}
+                  className={`rounded-2xl py-2.5 text-[13px] font-bold transition ${ans.q2mode === m ? "border-2 border-accent bg-accent-soft text-accent" : "border border-line bg-white/70 text-ink-soft"}`}>
+                  {m === "photo" ? "📷 사진으로 자동 입력" : "✏️ 직접 입력"}
+                </button>
+              ))}
+            </div>
+            {ans.q2mode === "photo" && (
+              <>
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={ocrLoading}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-accent bg-accent-soft py-3 text-[13px] font-extrabold text-accent disabled:opacity-50">
+                  {ocrLoading ? <Loader2 className="animate-spin" size={16} /> : <Camera size={16} />}
+                  {ocrLoading ? "라벨 인식 중…" : "에너지효율 라벨 촬영하기"}
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onOcrFile} />
+                {ocrMsg && <p className="mt-2 rounded-xl border border-accent/25 bg-accent-soft px-3 py-2 text-[11.5px] text-ink-soft">{ocrMsg}</p>}
+              </>
+            )}
+            {(ans.q2mode === "manual" || ans.capacity !== "" || ans.acKwh !== "") && (
+              <>
+                <Field label="냉방능력 (kW)" hint="라벨에 kW로 표시된 값" value={ans.capacity} onChange={(v) => patch({ capacity: v })} placeholder="예: 3.6" step="0.1" min="0.1" max="20" />
+                <Field label="월간소비전력량 (kWh/월)" hint="라벨의 '월간소비전력량' 항목 (선택)" value={ans.acKwh} onChange={(v) => patch({ acKwh: v })} placeholder="예: 110" min="0" max="500" />
+              </>
+            )}
+            <Tip>단위가 kW로 표시된 효율 라벨에서 냉방능력을, ‘월간소비전력량(kWh)’ 항목에서 전기량을 확인할 수 있어요.</Tip>
+          </Question>
+        )}
+
+        {cur.id === "q3" && (
+          <Question n={3} emoji="🧾" title={"여름에 전기를\n얼마나 쓰는지 알려주세요"}
+            sub="전기요금이 아니라, 고지서에 적힌 ‘kWh 사용량’ 숫자예요.">
+            <Field label="여름 한 달 사용량 (kWh)" hint="한전 고지서·한전ON앱에서 확인 (선택)" value={ans.summerKwh} onChange={(v) => patch({ summerKwh: v })} placeholder="예: 460" step="10" min="0" max="1000" />
+            <Tip>한전ON 앱 → 전기요금 조회 → ‘사용량(kWh)’ 또는 종이 고지서의 사용량 숫자를 적어주세요. 모르면 비워두셔도 추정해드려요.</Tip>
+          </Question>
+        )}
+
+        {cur.id === "q4" && (
+          <Question n={4} emoji="📍" title="주거형태를 알려주세요!">
+            <Options>
+              {HOME_OPTS.map((o) => (
+                <Opt key={o.key} sel={ans.homeKey === o.key} onClick={() => patch({ homeKey: o.key })}>{o.label}</Opt>
+              ))}
+            </Options>
+            <Tip>정확한 계산을 원하면 청구서의 ‘계약종별’을 확인하세요. 한전ON앱 → 전기요금 조회, 또는 종이 고지서 상단에서 볼 수 있어요.</Tip>
+          </Question>
+        )}
+
+        {cur.id === "q5" && (
+          <Question n={5} emoji="📋" title="에어컨에 어떤 증상이 있나요?" sub="해당하는 증상을 모두 선택해주세요.">
+            <Options>
+              {SYMPTOM_OPTS.map((o) => {
+                const sel = o.sym === null ? ans.none : ans.symptoms.includes(o.sym);
+                return <Opt key={o.key} sel={sel} onClick={() => toggleSymptom(o)}><span aria-hidden className="mr-1">{o.emoji}</span>{o.label}</Opt>;
+              })}
+            </Options>
+          </Question>
+        )}
+
+        {cur.id === "sev" && cur.sym && (
+          <Question n={5} emoji={SEVERITY_QS[cur.sym].emoji} title={SEVERITY_QS[cur.sym].title} sub={`‘${cur.sym}’ 증상은 어느 정도인가요?`}>
+            <Options>
+              {SEVERITY_QS[cur.sym].opts.map((label, i) => {
+                const sym = cur.sym!;
+                return <Opt key={i} sel={ans.severity[sym] === i} onClick={() => setAns((s) => ({ ...s, severity: { ...s.severity, [sym]: i } }))}>{label}</Opt>;
+              })}
+            </Options>
+          </Question>
+        )}
+
+        {cur.id === "q6" && (
+          <Question n={6} emoji="⏰" title={"하루에 에어컨을\n얼마나 틀어두나요?"}>
+            <Options>{HOURS_OPTS.map((o) => <Opt key={o.v} sel={ans.hoursV === o.v} onClick={() => patch({ hoursV: o.v })}>{o.label}</Opt>)}</Options>
+          </Question>
+        )}
+
+        {cur.id === "q7" && (
+          <Question n={7} emoji="📅" title={"1년에 몇 달 정도\n에어컨을 사용하나요?"} sub="여름철 기준으로, 평소 패턴에 가장 가까운 걸 골라주세요.">
+            <Options>{MONTHS_OPTS.map((o) => <Opt key={o.v} sel={ans.monthsV === o.v} onClick={() => patch({ monthsV: o.v })}>{o.label}</Opt>)}</Options>
+          </Question>
+        )}
+
+        {cur.id === "q8" && (
+          <Question n={8} emoji="🧹" title={"필터 청소는\n마지막으로 언제 했나요?"} sub="기억나는 기준으로 선택해주세요!">
+            <Options>{FILTER_OPTS.map((o) => <Opt key={o.label} sel={ans.filterV === o.v} onClick={() => patch({ filterV: o.v })}>{o.label}</Opt>)}</Options>
+          </Question>
+        )}
+
+        {cur.id === "q9" && (
+          <Question n={9} emoji="🛡️" title={"최근 2년 안에 에어컨\n수리를 받은 적이 있나요?"} sub="기사님 점검이나 수리를 받은 적이 있는지 알려주세요.">
+            <Options>{REPAIR_OPTS.map((o, i) => <Opt key={i} sel={ans.repairIdx === i} onClick={() => patch({ repairIdx: i })}>{o.label}</Opt>)}</Options>
+          </Question>
+        )}
+
+        {cur.id === "q10" && (
+          <Question n={10} emoji="⭐" title="무엇을 가장 중요하게 볼까요?" sub="마지막 질문이에요! 내 상황에 맞게 조절해봐요.">
+            <div className="space-y-3">
+              <Slider label="비용 절약" desc="전기요금·수리비·교체비 최소화가 중요해요." color="#EA6D2E" value={ans.cost} onChange={(v) => setPriority("cost", v)} />
+              <Slider label="환경 영향" desc="탄소 배출 절감·에너지 효율이 중요해요." color="#2FA060" value={ans.env} onChange={(v) => setPriority("env", v)} />
+              <Slider label="사용 편의" desc="고장 걱정·관리 번거로움을 줄이고 싶어요." color="#2F7DD1" value={ans.conv} onChange={(v) => setPriority("conv", v)} />
+            </div>
+            <p className="mt-2 text-center text-[11px] text-muted">세 항목 합이 100%가 되도록 자동 조절돼요.</p>
+          </Question>
+        )}
+
+        {/* 에러 */}
+        {error && <div className="mt-3 rounded-xl border border-[#F1C9C7] bg-[#FBECEC] p-3 text-[13px] text-danger">{error}</div>}
+
+        {/* 다음 / 결과 보기 */}
+        <div className="mt-auto pt-6">
+          <button onClick={goNext} disabled={!canNext()}
+            className={`w-full rounded-full py-4 text-[15px] font-extrabold transition active:scale-[.99] ${
+              !canNext()
+                ? "border border-line bg-white/40 text-ink-300"
+                : isLast
+                  ? "bg-accent text-white shadow-[0_8px_22px_rgba(4,125,134,.30)]"
+                  : "border-[1.5px] border-accent bg-white/50 text-accent"
+            }`}>
+            {isLast ? "결과 보기" : "다음"}
+          </button>
+        </div>
       </div>
+    </div>
+  );
+}
+
+/* ── 소형 프레젠테이션 컴포넌트 ── */
+function Question({ n, emoji, title, sub, children }: { n: number; emoji: string; title: string; sub?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <p className="text-center text-[13px] font-extrabold text-accent">Q{n}.</p>
+      <h2 className="mt-1 whitespace-pre-line text-center text-[20px] font-extrabold leading-snug text-ink">{title}</h2>
+      {sub && <p className="mt-2 text-center text-[12.5px] font-medium leading-relaxed text-muted">{sub}</p>}
+      <div aria-hidden className="my-6 text-center text-[58px] leading-none">{emoji}</div>
+      <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
+function Options({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-2.5">{children}</div>;
+}
+function Opt({ sel, onClick, children }: { sel: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick}
+      className={`relative flex w-full items-center justify-center gap-1.5 rounded-2xl px-4 py-4 text-[15px] font-bold transition-all active:scale-[.99] ${
+        sel
+          ? "border-2 border-accent bg-accent-soft text-accent shadow-[0_4px_14px_rgba(4,125,134,.16)]"
+          : "border border-line bg-white/80 text-ink-soft shadow-[0_2px_8px_rgba(5,31,31,.05)]"
+      }`}>
+      {children}
+      {sel && <Check size={17} className="absolute right-4 text-accent" />}
+    </button>
+  );
+}
+function Field({ label, hint, value, onChange, placeholder, step, min, max }: { label: string; hint?: string; value: string; onChange: (v: string) => void; placeholder?: string; step?: string; min?: string; max?: string }) {
+  return (
+    <div className="mt-3">
+      <label className="text-[12px] font-bold text-ink-soft">{label}</label>
+      <input type="number" inputMode="decimal" step={step} min={min} max={max} value={value} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-2xl border border-line bg-white/80 px-4 py-3 text-[15px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-300 focus:border-accent focus:bg-white" />
+      {hint && <p className="mt-1 text-[10.5px] text-muted">{hint}</p>}
+    </div>
+  );
+}
+function Tip({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-4 flex gap-2 rounded-2xl border border-[#CDE9C2] bg-green-050 px-3.5 py-3 text-[11.5px] leading-relaxed text-[#2f7d46]">
+      <span aria-hidden className="mt-0.5 shrink-0">🌱</span><div>{children}</div>
+    </div>
+  );
+}
+function Slider({ label, desc, color, value, onChange }: { label: string; desc: string; color: string; value: number; onChange: (v: number) => void }) {
+  // value 자체가 %(세 축 합=100). 썸 위치 = 표시 % = 전송값으로 일치.
+  return (
+    <div className="rounded-2xl border border-line bg-white/80 px-4 py-3.5 shadow-[0_2px_8px_rgba(5,31,31,.05)]">
+      <div className="flex items-center justify-between">
+        <span className="text-[14px] font-extrabold text-ink">{label}</span>
+        <span className="text-[15px] font-extrabold" style={{ color }}>{value}%</span>
+      </div>
+      <p className="mt-0.5 text-[11px] text-muted">{desc}</p>
+      <input type="range" min={0} max={100} value={value} onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={`${label} ${value}퍼센트`} className="mt-2.5 w-full" style={{ accentColor: color }} />
     </div>
   );
 }

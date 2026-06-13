@@ -44,6 +44,8 @@ async def diagnose(req: DiagnoseRequest):
         "tier_changed":        result["delta_old"]["tier_changed"],
         "k_ac_old":            result["k_ac_old"],
         "k_ac_new":            result["k_ac_new"],
+        "form_estimated":      result["form_estimated"],
+        "form_confidence":     result["form_confidence"],
         "disclaimer":          DISCLAIMER,
     }
 

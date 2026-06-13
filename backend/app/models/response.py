@@ -25,6 +25,8 @@ class DiagnoseResponse(BaseModel):
     tier_changed: bool            # 누진 구간 이동 여부
     k_ac_old: float               # 에어컨 월 소비전력량(kWh)
     k_ac_new: float
+    form_estimated: str = "벽걸이"  # 벽걸이/스탠드 추정 (냉방용량+월간소비전력량, docs/04i)
+    form_confidence: str = "low"    # high/medium/low
     disclaimer: str
 
 

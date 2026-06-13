@@ -8,6 +8,7 @@ export interface SavedDevice {
   grade:         string;   // A~E
   score:         number;   // 건강점수
   recommendation:string;   // 1순위 추천 라벨
+  form?:         string;   // 벽걸이 / 스탠드 추정(백엔드 도출)
   savedAt:       number;   // ms epoch
   // 알림 도출용(구버전 저장값엔 없을 수 있어 옵셔널)
   age_years?:    number;

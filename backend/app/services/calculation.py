@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.calculations_v2 import (
     run_diagnosis, SYMPTOM_RISK_MAP, SEVERITY_MULTIPLIER,
-    power_excess_decomp, EFF_FLOOR, R_AGE_YR,
+    power_excess_decomp, EFF_FLOOR, R_AGE_YR, classify_form,
 )
 from src.tariff_calculator import calc_ac_monthly_kwh, calculate_ac_delta_cost, calculate_monthly_bill
 from src.scoring_v2 import build_options, score_options, apply_hard_rules, calculate_carbon_summary
@@ -112,6 +112,9 @@ def run_full_pipeline(inputs: dict) -> dict:
     # report_generator/AS패스가 읽는 레거시 단일 필드 동기화(새 플로우는 symptoms 리스트만 전송)
     inputs["symptom_type"] = rep_symptom
     inputs["symptom_severity"] = rep_severity
+    # 벽걸이/스탠드 추정 (냉방용량 + 월간소비전력량 라벨 — docs/04i)
+    form_est, form_conf = classify_form(cap, inputs.get("ac_monthly_kwh_input") or 0)
+    inputs["form_estimated"] = form_est
 
     old_spec   = dict(_cached_device_spec(pt, yr, cap))   # 월간kwh 미입력 시 폴백용
     cost_ref   = dict(_cached_cost_ref(pt, cap))
@@ -284,4 +287,6 @@ def run_full_pipeline(inputs: dict) -> dict:
         "rerep_prob":      rerep_prob,
         "parts_exceeded":  exceeded,
         "parts_expiry_year": expiry_year,
+        "form_estimated":  form_est,    # 벽걸이/스탠드 추정 (docs/04i)
+        "form_confidence": form_conf,   # high/medium/low
     }

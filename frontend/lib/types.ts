@@ -28,6 +28,8 @@ export interface DiagnoseInput {
   priority_cost_score:        number;
   priority_env_score:         number;
   priority_convenience_score: number;
+  // 진단 시 백엔드가 도출해 주입하는 추정 정보(저장 세션에 포함)
+  form_estimated?:            string;   // 벽걸이 / 스탠드 추정
 }
 
 export interface DiagnoseResponse {
@@ -47,6 +49,8 @@ export interface DiagnoseResponse {
   tier_changed:         boolean;
   k_ac_old:             number;
   k_ac_new:             number;
+  form_estimated:       string;   // 벽걸이 / 스탠드 추정
+  form_confidence:      string;   // high / medium / low
   disclaimer:           string;
 }
 

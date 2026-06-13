@@ -128,6 +128,41 @@ SEVERITY_MULTIPLIER = {
     1: 0.1, 2: 0.6, 3: 1.0, 4: 1.4, 5: 1.8,               # 1~5점 척도 (5점=1.8 잠정, PROJECT.md §8 미확정)
 }
 
+
+# ── 벽걸이 / 스탠드 추정 (docs/04i) ───────────────────────────────────
+# 근거: LG 에어컨 카탈로그 132개(벽걸이 26·스탠드 106) 냉방용량 분포 분석.
+#   벽걸이 2.3~6.5kW(중앙 3.6) / 스탠드 6.5~9.0kW(중앙 7.2) — 임계 5.5kW로 97.7% 분리.
+# 월간소비전력량(라벨)은 용량과 상관 0.71 → 용량 미입력·애매구간(4.5~6.5kW)의 보조 신호로만 사용.
+FORM_CAP_THRESHOLD = 5.5      # kW. 이상=스탠드, 미만=벽걸이 (1차 기준)
+FORM_CAP_AMBIG = (4.5, 6.5)   # 이 구간은 애매 → 월간소비전력량으로 보조 판정
+FORM_KWH_STAND_MIN = 180      # 라벨 월간소비전력량 이 이상이면 스탠드 가중
+FORM_KWH_WALL_MAX = 110       # 이 이하면 벽걸이 가중
+FORM_KWH_ONLY_THRESHOLD = 150 # 용량 미입력 시 월간소비전력량 단독 임계
+
+
+def classify_form(capacity_kw: float, monthly_kwh: float = 0) -> tuple[str, str]:
+    """냉방용량(+월간소비전력량 라벨)으로 벽걸이/스탠드 추정.
+
+    1차: 냉방용량 임계 5.5kW (카탈로그 97.7% 분리).
+    2차(보조): 용량 4.5~6.5kW 애매구간에서 월간소비전력량이 명확하면 보정.
+    용량 미입력 시: 월간소비전력량 단독 추정.
+    반환: (form, confidence) — confidence ∈ {"high","medium","low"}.
+    """
+    cap = capacity_kw or 0
+    kwh = monthly_kwh or 0
+    if cap > 0:
+        form = "스탠드" if cap >= FORM_CAP_THRESHOLD else "벽걸이"
+        if FORM_CAP_AMBIG[0] <= cap <= FORM_CAP_AMBIG[1]:   # 애매구간
+            if kwh >= FORM_KWH_STAND_MIN:
+                return "스탠드", "medium"
+            if 0 < kwh <= FORM_KWH_WALL_MAX:
+                return "벽걸이", "medium"
+            return form, "medium"
+        return form, "high"
+    if kwh > 0:                                              # 용량 없음 → kWh 단독
+        return ("스탠드" if kwh >= FORM_KWH_ONLY_THRESHOLD else "벽걸이"), "low"
+    return "벽걸이", "low"                                   # 정보 없음 → 최빈값(벽걸이)
+
 FILTER_SCORE_PER_MONTH = 0.10   # 월당 0.10, max 1.0 (10개월이면 상한)
 
 

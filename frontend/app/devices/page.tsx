@@ -105,7 +105,7 @@ export default function DevicesPage() {
                     {/* 모델명 + 메타 */}
                     <div className="absolute left-4 top-4 right-[136px]">
                       <p className="truncate text-[15px] font-bold text-ink">
-                        {dev.product_type} ({dev.purchase_year})
+                        {dev.form ? `${dev.form} ` : ""}{dev.product_type} ({dev.purchase_year})
                       </p>
                       <p className="mt-1 text-[11px] font-medium text-ink/70">
                         {dev.capacity_kw}kW · 건강점수 {dev.score.toFixed(0)} · 진단 {ago(dev.savedAt)}

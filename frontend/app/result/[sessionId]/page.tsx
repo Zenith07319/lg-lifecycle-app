@@ -27,7 +27,8 @@ export default function ResultPage() {
         sessionId, product_type: s.user_inputs.product_type, purchase_year: s.user_inputs.purchase_year,
         capacity_kw: s.user_inputs.capacity_kw, grade: s.diagnosis.health_grade as string,
         score: s.diagnosis.health_score as number, recommendation: s.report.recommendation_1st,
-        savedAt: Date.now(), age_years: s.diagnosis.age_years as number, filter_months: s.user_inputs.filter_clean_months,
+        form: s.user_inputs.form_estimated, savedAt: Date.now(),
+        age_years: s.diagnosis.age_years as number, filter_months: s.user_inputs.filter_clean_months,
       });
     }).catch((e) => setErr(e.message));
   }, [sessionId]);
@@ -37,6 +38,8 @@ export default function ResultPage() {
 
   const dg = data.diagnosis;
   const inp = data.user_inputs;
+  const form = (inp.form_estimated as string) || "";   // 벽걸이/스탠드 추정
+  const deviceName = `${form ? form + " " : ""}${inp.product_type}`;
   const grade = dg.health_grade as string;
   const score = Math.round(dg.health_score as number);
   const gColor = GRADE_COLORS[grade] ?? "#C23630";
@@ -58,7 +61,7 @@ export default function ResultPage() {
     <div className="pb-6">
       <AppHeader
         title="진단 결과"
-        subtitle={`${inp.product_type} · 설치 ${age}년차 · 비용 우선`}
+        subtitle={`${deviceName} · 설치 ${age}년차 · 비용 우선`}
         right={
           <button className="flex items-center gap-1 pb-1 text-[11px] font-bold text-muted">
             <Megaphone size={13} /> 점수 계산이 궁금하다면?
@@ -73,7 +76,7 @@ export default function ResultPage() {
             <div>
               <p className="text-[11px] font-bold text-muted">건강 점수</p>
               <p className="text-[72px] font-extrabold leading-[0.95] text-ink" style={{ fontFamily: D }}>{score}</p>
-              <p className="mt-2.5 text-[13px] font-semibold text-muted">{inp.product_type} · 설치 {age}년차</p>
+              <p className="mt-2.5 text-[13px] font-semibold text-muted">{deviceName} · 설치 {age}년차</p>
               <p className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-bold"
                 style={{ color: gColor, background: `${gColor}1a` }}>
                 {URGENT[grade] ?? (dg.grade_description as string)}

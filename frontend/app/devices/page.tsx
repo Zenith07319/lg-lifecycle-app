@@ -19,6 +19,19 @@ const GRADE_CARD_BG: Record<string, string> = {
   E: "#79C7CD",                   // 진한 틸 (Figma 카드3)
 };
 
+// 카드 캐릭터(에어컨+그린 토끼) 이미지.
+// 처음 등록한 가전(등록 순서 0번)은 char-fixed로 고정, 이후 등록분은 회전용 5장을 순서대로 배정.
+const FIRST_DEVICE_IMG = "/devices/char-fixed.png";
+const ROTATION_IMGS = [
+  "/devices/char-1.png",
+  "/devices/char-2.png",
+  "/devices/char-3.png",
+  "/devices/char-4.png",
+  "/devices/char-5.png",
+];
+const deviceImage = (rank: number) =>
+  rank <= 0 ? FIRST_DEVICE_IMG : ROTATION_IMGS[(rank - 1) % ROTATION_IMGS.length];
+
 export default function DevicesPage() {
   const [list, setList] = useState<SavedDevice[]>([]);
   const [ready, setReady] = useState(false);
@@ -34,6 +47,10 @@ export default function DevicesPage() {
     const days = Math.floor((Date.now() - ms) / 86400000);
     return days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
   };
+
+  // 등록 순서(오래된 순) 기준 rank — 처음 등록한 가전 = 0(고정 이미지)
+  const orderAsc = [...list].sort((a, b) => a.savedAt - b.savedAt);
+  const rankOf = (id: string) => orderAsc.findIndex((d) => d.sessionId === id);
 
   return (
     <div className="pb-28">
@@ -65,6 +82,7 @@ export default function DevicesPage() {
           <div className="space-y-1.5">
             {list.map((dev) => {
               const bg = GRADE_CARD_BG[dev.grade] ?? GRADE_CARD_BG.C;
+              const img = deviceImage(rankOf(dev.sessionId));
               return (
                 <div key={dev.sessionId} className="reveal relative">
                   {/* 카드 전체가 결과로 진입 */}
@@ -73,19 +91,19 @@ export default function DevicesPage() {
                     className="relative block h-[188px] overflow-hidden rounded-[22px] shadow-[0_10px_24px_-10px_rgba(0,0,0,.16)_inset] active:scale-[.995] transition"
                     style={{ background: bg }}
                   >
-                    {/* 우측 흰 반투명 일러스트 패널 */}
-                    <div className="absolute right-0 top-0 h-full w-[110px] rounded-[22px] bg-white/75">
+                    {/* 우측 캐릭터(에어컨+그린 토끼) — 흰 패널에 센터링 */}
+                    <div className="absolute right-0 top-0 flex h-full w-[128px] items-center justify-center rounded-[22px] bg-white/65">
                       <Image
-                        src="/ac-illustration.png"
-                        alt=""
-                        width={120}
-                        height={120}
-                        className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-90"
+                        src={img}
+                        alt="내 에어컨 캐릭터"
+                        width={128}
+                        height={128}
+                        className="size-[118px] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,.12)]"
                       />
                     </div>
 
                     {/* 모델명 + 메타 */}
-                    <div className="absolute left-4 top-4 right-[120px]">
+                    <div className="absolute left-4 top-4 right-[136px]">
                       <p className="truncate text-[15px] font-bold text-ink">
                         {dev.product_type} ({dev.purchase_year})
                       </p>
@@ -95,7 +113,7 @@ export default function DevicesPage() {
                     </div>
 
                     {/* 우하단 결과보기 */}
-                    <span className="absolute bottom-4 right-[122px] flex items-center gap-0.5 text-[12px] font-semibold text-ink/80">
+                    <span className="absolute bottom-4 right-[140px] flex items-center gap-0.5 text-[12px] font-semibold text-ink/80">
                       결과보기 <ChevronRight size={14} />
                     </span>
                   </Link>

@@ -128,7 +128,13 @@ def run_full_pipeline(inputs: dict) -> dict:
         old_monthly_kwh = float(user_ackwh)
         ac_kwh_source = "input"
     else:
-        old_monthly_kwh = old_spec.get("monthly_kwh", old_spec["annual_kwh"] / 12)
+        base_kwh = old_spec.get("monthly_kwh", old_spec["annual_kwh"] / 12)
+        # 스펙 표(에어컨 2.5~5.0kW)에 없는 용량(스탠드 6.5~9.0kW 등)은 가장 가까운
+        # 레코드가 5.0kW에서 멈춰 과소평가된다. 동일 효율급에서 월간소비전력량 ∝ 냉방용량이므로
+        # 입력 용량/스펙 용량 비로 보정(0.5~4.0배 클램프). (docs/04j)
+        spec_cap = float(old_spec.get("capacity_kw", cap) or cap)
+        ratio = max(0.5, min(cap / spec_cap, 4.0)) if spec_cap > 0 else 1.0
+        old_monthly_kwh = base_kwh * ratio
         ac_kwh_source = "estimate"
     old_annual_kwh = old_monthly_kwh * 12
     # 신형(1등급 고효율) 비교값 = 구형 라벨 × 효율비. 용량표 대신 효율비로 도출 → 전력 계산 용량 무관·연속.

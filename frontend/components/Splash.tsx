@@ -13,28 +13,6 @@ const BLOBS = [
   { w: 290, h: 287, l: 182, t: 188, bg: "rgba(139,210,104,0.30)", blur: 43.85 },
   { w: 200, h: 210, l: 10, t: 604, bg: "#BEE5AB", blur: 90 },
 ];
-// 캐릭터 머리(볼·귀) 주변 번개 스파크 위치(캐릭터 래퍼 220px 기준)
-const SPARKS = [
-  { l: 30, t: 64, s: 24, d: 0.0 },   // 왼쪽 볼
-  { l: 168, t: 60, s: 26, d: 0.5 },  // 오른쪽 볼
-  { l: 58, t: 2, s: 19, d: 0.9 },    // 왼쪽 귀끝
-  { l: 138, t: -2, s: 19, d: 1.3 },  // 오른쪽 귀끝
-  { l: 104, t: 44, s: 16, d: 0.7 },  // 중앙
-];
-
-function Spark({ l, t, s, d }: { l: number; t: number; s: number; d: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={s} height={s} aria-hidden
-      style={{
-        position: "absolute", left: l, top: t,
-        filter: "drop-shadow(0 0 6px rgba(255,210,63,.9))",
-        animation: `splashSpark 1.4s ease-in-out ${d}s infinite`,
-      }}>
-      <path d="M13 2 L4 14 H11 L9 22 L20 9 H13 Z" fill="#FFD23F" stroke="#FFB800" strokeWidth="1" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function Splash() {
   const [closing, setClosing] = useState(false);
   const [gone, setGone] = useState(false);
@@ -85,16 +63,20 @@ export default function Splash() {
             </p>
           </div>
 
-          {/* 캐릭터 + 번개 스파크 (하단 중앙) */}
+          {/* 캐릭터 — 방방 뛰기 (하단 중앙) */}
           <div className="flex flex-1 items-center justify-center">
-            <div className="relative" style={{ width: 220, height: 220 }}>
-              <img src="/character.png" alt="" className="absolute inset-0 m-auto w-[200px] object-contain drop-shadow-[0_16px_28px_rgba(4,125,134,.22)]"
+            <div className="relative flex h-[270px] w-[240px] items-end justify-center">
+              {!reduce && (
+                <div aria-hidden className="absolute bottom-[16px]"
+                  style={{ width: 118, height: 16, background: "rgba(4,125,134,.45)", borderRadius: 9999, filter: "blur(7px)", animation: "splashShadow .85s ease-in-out .6s infinite" }} />
+              )}
+              <img src="/character.png" alt="" className="relative mb-[26px] w-[210px] object-contain drop-shadow-[0_12px_22px_rgba(4,125,134,.20)]"
                 style={{
+                  transformOrigin: "50% 100%",
                   animation: reduce
                     ? "splashRise .6s ease-out .2s both"
-                    : "splashFloatIn .7s cubic-bezier(.2,.8,.2,1) both, splashBob 3.2s ease-in-out .8s infinite",
+                    : "splashFloatIn .6s cubic-bezier(.2,.8,.2,1) both, splashHop .85s ease-in-out .6s infinite",
                 }} />
-              {!reduce && SPARKS.map((s, i) => <Spark key={i} {...s} />)}
             </div>
           </div>
 

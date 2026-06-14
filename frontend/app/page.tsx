@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, Zap, Leaf, ShieldCheck, Scale, ArrowRight, SlidersHorizontal } from "lucide-react";
+import { Bell, Zap, Leaf, ShieldCheck, Scale, SlidersHorizontal } from "lucide-react";
 import MyDeviceCard from "@/components/MyDeviceCard";
 
 const STEPS = [
@@ -44,7 +44,6 @@ export default function HomePage() {
               <p className="text-[14px] font-extrabold text-ink">지금 진단하기</p>
               <p className="text-[10px] leading-snug text-ink-soft">증상 입력 → 건강등급 · 5가지 비교</p>
             </div>
-            <ArrowRight size={16} className="absolute bottom-3.5 right-3.5 text-ink-soft" />
           </Link>
         </div>
 

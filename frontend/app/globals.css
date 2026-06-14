@@ -92,9 +92,21 @@ body {
 
 /* ── 시작 화면(Splash) 애니메이션 ── */
 @keyframes splashFloatIn { from { opacity: 0; transform: translateY(46px) scale(.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes splashBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-11px); } }
 @keyframes splashRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-@keyframes splashSpark { 0% { opacity: 0; transform: scale(.3) rotate(-8deg); } 25% { opacity: 1; transform: scale(1.15) rotate(6deg); } 55% { opacity: .55; transform: scale(.85) rotate(-4deg); } 100% { opacity: 0; transform: scale(.4) rotate(4deg); } }
+/* 방방 뛰기 — 웅크림→점프(스트레치)→착지(스쿼시)→리바운드 (transform-origin: bottom) */
+@keyframes splashHop {
+  0%   { transform: translateY(0)     scaleX(1)    scaleY(1);    }
+  14%  { transform: translateY(0)     scaleX(1.08) scaleY(.9);   }
+  44%  { transform: translateY(-46px) scaleX(.94)  scaleY(1.07); }
+  70%  { transform: translateY(0)     scaleX(1.09) scaleY(.88);  }
+  84%  { transform: translateY(-7px)  scaleX(1)    scaleY(1);    }
+  100% { transform: translateY(0)     scaleX(1)    scaleY(1);    }
+}
+@keyframes splashShadow {
+  0%,100% { transform: scaleX(1);   opacity: .20; }
+  44%     { transform: scaleX(.55); opacity: .07; }
+  70%     { transform: scaleX(1.06);opacity: .22; }
+}
 @keyframes splashDrift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(14px,-16px); } }
 
 ::selection { background: rgba(4,125,134,.16); }

@@ -54,11 +54,16 @@ export function alertsFor(dev: SavedDevice): DeviceAlert[] {
       body: `필터를 청소한 지 ${dev.filter_months}개월 됐어요. 청소만으로 전기요금·냄새가 개선될 수 있어요.` });
   }
 
-  // 등급 기반 교체 권장
+  // 등급 기반 점검 권장 — 1순위 추천 액션을 그대로 안내(결과·가이드와 동일 결론).
+  // 부품 보유기간이 지난 상태에서 '수리'가 추천이면, 모순으로 읽히지 않게 caveat로 연결한다.
   if (dev.grade === "E" || dev.grade === "D") {
+    const recIsRepair = (dev.recommendation || "").includes("수리");
+    const partsCaveat = age >= PART_HOLD_YEARS && recIsRepair
+      ? " 다만 부품 보유기간이 지나, 수리 전 부품 수급을 먼저 확인하세요."
+      : "";
     out.push({ id: `${dev.sessionId}-grade`, level: "warn", icon: "⚠️",
       title: `건강등급 ${dev.grade} — 점검 권장`, device: dev,
-      body: `진단 결과 ${dev.grade}등급입니다. 1순위 추천은 “${dev.recommendation}”이에요.` });
+      body: `진단 결과 ${dev.grade}등급입니다. 1순위 추천은 “${dev.recommendation}”이에요.${partsCaveat}` });
   }
   return out;
 }

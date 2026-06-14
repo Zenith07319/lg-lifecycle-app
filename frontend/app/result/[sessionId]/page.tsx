@@ -8,9 +8,9 @@ import { GlassCard, AppHeader, PrimaryButton } from "@/components/ui";
 import { Megaphone, ChevronRight, ChevronDown } from "lucide-react";
 import type { SessionData } from "@/lib/types";
 
-const URGENT: Record<string, string> = {
-  A: "계속 사용 적합", B: "셀프케어 권장", C: "점검 권장", D: "교체 검토 권장", E: "즉시 점검 권장",
-};
+// 건강 등급(상태)과 추천 액션(결정)은 다른 층위다.
+// 결과 화면의 '권장' 배지는 등급 문구가 아니라 실제 1순위 추천 액션을 보여줘야
+// 판단근거·결정가이드·홈·내 가전·A/S패스와 결론이 일치한다(화면 간 모순 제거).
 const won = (n: number) => "₩" + Math.round(n).toLocaleString("ko-KR");
 const D = "Pretendard, sans-serif";
 
@@ -56,6 +56,9 @@ export default function ResultPage() {
   const insp = Math.round(dg.inspection_score_100 as number);
   const waste = Math.round((dg.energy_waste_ratio as number) * 100);
   const extra = Math.max(0, oldC - newC);
+  // 1순위 추천 액션 = 판단근거/결정가이드/홈/내 가전과 동일 소스(report.recommendation_1st)
+  const ranked = [...(data.ranked_options ?? [])].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+  const rec1 = (data.report?.recommendation_1st as string) || ranked[0]?.label || "";
 
   return (
     <div className="pb-6">
@@ -77,10 +80,11 @@ export default function ResultPage() {
               <p className="text-[11px] font-bold text-muted">건강 점수</p>
               <p className="text-[72px] font-extrabold leading-[0.95] text-ink" style={{ fontFamily: D }}>{score}</p>
               <p className="mt-2.5 text-[13px] font-semibold text-muted">{deviceName} · 설치 {age}년차</p>
-              <p className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[12px] font-bold"
-                style={{ color: gColor, background: `${gColor}1a` }}>
-                {URGENT[grade] ?? (dg.grade_description as string)}
-              </p>
+              {rec1 && (
+                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-[12px] font-extrabold text-accent">
+                  💡 추천 · {rec1}
+                </p>
+              )}
             </div>
             <div className="shrink-0 text-center">
               <div className="relative size-[112px]" style={{ filter: `drop-shadow(0 8px 18px ${gColor}40)` }}>

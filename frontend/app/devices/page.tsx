@@ -5,6 +5,7 @@ import { ChevronRight, Plus, Trash2, Snowflake } from "lucide-react";
 import Image from "next/image";
 import { AppHeader } from "@/components/ui";
 import { getDevices, removeDevice, type SavedDevice } from "@/lib/myDevice";
+import { deviceImage, registrationRank } from "@/lib/deviceImage";
 
 /* 03 내 가전 — Figma 3-3/3-4 충실 재구축:
    제목 + 부제(N대 등록) / 등급별 틸 그라데이션 대형 카드(우측 일러스트 패널) / 빈 상태 변형 */
@@ -17,26 +18,6 @@ const GRADE_CARD_BG: Record<string, string> = {
   C: "#B7EAE4",                   // 밝은 틸 (Figma 카드2)
   D: "#94D6D2",                   // 중간 틸
   E: "#79C7CD",                   // 진한 틸 (Figma 카드3)
-};
-
-// 카드 캐릭터(에어컨+그린 토끼) 이미지 — 진단에서 도출한 폼팩터(벽걸이/스탠드)별 세트.
-// 등록 순서(rank)로 세트 안에서 회전 배정해 가전마다 다른 컷이 나오게 한다.
-const WALL_IMGS = [        // 벽걸이(기본): 처음 등록분은 char-fixed
-  "/devices/char-fixed.png",
-  "/devices/char-1.png",
-  "/devices/char-2.png",
-  "/devices/char-3.png",
-  "/devices/char-4.png",
-  "/devices/char-5.png",
-];
-const STAND_IMGS = [       // 스탠드(타워형)
-  "/devices/stand-1.png",
-  "/devices/stand-2.png",
-  "/devices/stand-3.png",
-];
-const deviceImage = (form: string | undefined, rank: number) => {
-  const set = form === "스탠드" ? STAND_IMGS : WALL_IMGS;   // 벽걸이·미상 → 벽걸이 세트
-  return set[((rank % set.length) + set.length) % set.length];
 };
 
 export default function DevicesPage() {
@@ -54,10 +35,6 @@ export default function DevicesPage() {
     const days = Math.floor((Date.now() - ms) / 86400000);
     return days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
   };
-
-  // 등록 순서(오래된 순) 기준 rank — 처음 등록한 가전 = 0(고정 이미지)
-  const orderAsc = [...list].sort((a, b) => a.savedAt - b.savedAt);
-  const rankOf = (id: string) => orderAsc.findIndex((d) => d.sessionId === id);
 
   return (
     <div className="pb-28">
@@ -89,7 +66,7 @@ export default function DevicesPage() {
           <div className="space-y-1.5">
             {list.map((dev) => {
               const bg = GRADE_CARD_BG[dev.grade] ?? GRADE_CARD_BG.C;
-              const img = deviceImage(dev.form, rankOf(dev.sessionId));
+              const img = deviceImage(dev.form, registrationRank(list, dev.sessionId));
               return (
                 <div key={dev.sessionId} className="reveal relative">
                   {/* 카드 전체가 결과로 진입 */}

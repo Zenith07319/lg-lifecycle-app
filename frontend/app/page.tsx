@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, Zap, Leaf, ShieldCheck, Scale, SlidersHorizontal } from "lucide-react";
 import MyDeviceCard from "@/components/MyDeviceCard";
+import NotificationBadge from "@/components/NotificationBadge";
 
 const STEPS = [
   { icon: Zap, title: "전기요금", desc: "월간 소비전력량 기반 · 누진 구간 영향 포함", tone: "teal" },
@@ -27,7 +28,7 @@ export default function HomePage() {
           <Link href="/notifications" className="glass relative flex flex-col justify-between rounded-[18px] p-4 shadow-[var(--shadow-card)] active:scale-[.99] transition">
             <div className="flex size-9 items-center justify-center rounded-xl bg-accent-soft">
               <Bell size={18} className="text-accent" strokeWidth={2} />
-              <span className="absolute left-[42px] top-3 flex min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white ring-2 ring-white">3</span>
+              <NotificationBadge />
             </div>
             <div className="mt-3">
               <p className="text-[13.5px] font-bold text-ink">알림</p>

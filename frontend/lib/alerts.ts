@@ -68,9 +68,34 @@ export function alertsFor(dev: SavedDevice): DeviceAlert[] {
   return out;
 }
 
+// ── 알림 삭제(확인 후 숨김) — 별도 서버 없이 dismissed id를 localStorage에 저장 ──
+const DISMISS_KEY = "ror_dismissed_alerts";
+
+function dismissedSet(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try { return new Set(JSON.parse(window.localStorage.getItem(DISMISS_KEY) || "[]") as string[]); }
+  catch { return new Set(); }
+}
+function saveDismissed(s: Set<string>) {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(DISMISS_KEY, JSON.stringify([...s])); } catch {}
+  window.dispatchEvent(new Event("ror:devices"));   // 알림 화면·홈 배지 즉시 갱신
+}
+
+export function dismissAlert(id: string) {
+  const s = dismissedSet(); s.add(id); saveDismissed(s);
+}
+export function dismissAllAlerts() {
+  const s = dismissedSet();
+  getDevices().flatMap(alertsFor).forEach((a) => s.add(a.id));
+  saveDismissed(s);
+}
+
 export function allAlerts(): DeviceAlert[] {
   const order: Record<AlertLevel, number> = { warn: 0, info: 1 };
+  const dismissed = dismissedSet();
   return getDevices()
     .flatMap(alertsFor)
+    .filter((a) => !dismissed.has(a.id))
     .sort((a, b) => order[a.level] - order[b.level]);
 }

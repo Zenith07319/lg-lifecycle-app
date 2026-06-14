@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, BellOff, ChevronRight } from "lucide-react";
+import { Bell, BellOff, X } from "lucide-react";
 import { AppHeader } from "@/components/ui";
-import { allAlerts, type DeviceAlert } from "@/lib/alerts";
+import { allAlerts, dismissAlert, dismissAllAlerts, type DeviceAlert } from "@/lib/alerts";
 
 /* 07-1 알림 — Figma: 큰 제목 + 알림 카드(아이콘·제목·본문·메타) · warn 강조 · 빈 상태 */
 export default function NotificationsPage() {
@@ -47,14 +47,22 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <>
+            <div className="reveal reveal-1 mb-2 flex justify-end">
+              <button onClick={() => dismissAllAlerts()}
+                className="rounded-full px-3 py-1.5 text-[12px] font-bold text-muted active:scale-95 transition">
+                모두 지우기
+              </button>
+            </div>
             <div className="reveal reveal-1 space-y-2.5">
               {list.map((a) => {
                 const warn = a.level === "warn";
                 return (
-                  <button
+                  <div
                     key={a.id}
+                    role="button" tabIndex={0}
                     onClick={() => router.push(`/result/${a.device.sessionId}`)}
-                    className={`flex w-full gap-3.5 rounded-[16px] px-4 py-4 text-left shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm transition active:scale-[.99] ${
+                    onKeyDown={(e) => { if (e.key === "Enter") router.push(`/result/${a.device.sessionId}`); }}
+                    className={`relative flex w-full cursor-pointer gap-3.5 rounded-[16px] px-4 py-4 pr-11 text-left shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm transition active:scale-[.99] ${
                       warn ? "border border-[#F1E3BC] bg-[#FDF3DF]" : "bg-white/64"
                     }`}
                   >
@@ -75,8 +83,11 @@ export default function NotificationsPage() {
                         {a.device.product_type}({a.device.purchase_year}) · 결과 보기 →
                       </p>
                     </div>
-                    <ChevronRight size={16} className="shrink-0 self-center text-ink-300" />
-                  </button>
+                    <button onClick={(e) => { e.stopPropagation(); dismissAlert(a.id); }} aria-label="알림 삭제"
+                      className="absolute right-2 top-2 rounded-full p-1.5 text-ink-300 transition hover:text-ink-soft active:scale-90">
+                      <X size={16} />
+                    </button>
+                  </div>
                 );
               })}
             </div>

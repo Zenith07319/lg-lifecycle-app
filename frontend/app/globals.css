@@ -90,6 +90,13 @@ body {
 .reveal-1{ animation-delay:.05s } .reveal-2{ animation-delay:.12s } .reveal-3{ animation-delay:.19s }
 .reveal-4{ animation-delay:.26s } .reveal-5{ animation-delay:.33s } .reveal-6{ animation-delay:.40s }
 
+/* ── 시작 화면(Splash) 애니메이션 ── */
+@keyframes splashFloatIn { from { opacity: 0; transform: translateY(46px) scale(.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes splashBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-11px); } }
+@keyframes splashRise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes splashSpark { 0% { opacity: 0; transform: scale(.3) rotate(-8deg); } 25% { opacity: 1; transform: scale(1.15) rotate(6deg); } 55% { opacity: .55; transform: scale(.85) rotate(-4deg); } 100% { opacity: 0; transform: scale(.4) rotate(4deg); } }
+@keyframes splashDrift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(14px,-16px); } }
+
 ::selection { background: rgba(4,125,134,.16); }
 input[type="range"] { accent-color: var(--color-accent); }
 input[type="checkbox"] { accent-color: var(--color-accent); width: 1.05rem; height: 1.05rem; }

@@ -3,6 +3,7 @@ import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import AmbientBlobs from "@/components/AmbientBlobs";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import Splash from "@/components/Splash";
 
 export const metadata: Metadata = {
   title: "ROR — Replace or Repair Check",
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="app-main">{children}</main>
           <BottomNav />
         </div>
+        <Splash />
       </body>
     </html>
   );

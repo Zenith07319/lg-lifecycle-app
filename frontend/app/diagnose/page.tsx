@@ -480,8 +480,10 @@ function Question({ n, emoji, image, imageAlt, title, sub, children }: { n: numb
       {sub && <p className="mt-2 text-center text-[12.5px] font-medium leading-relaxed text-muted">{sub}</p>}
       {image ? (
         <img src={image} alt={imageAlt ?? ""} className="my-5 w-full rounded-2xl border border-line bg-white/70 shadow-[0_2px_10px_rgba(5,31,31,.06)]" />
-      ) : (
+      ) : emoji ? (
         <div aria-hidden className="my-6 text-center text-[58px] leading-none">{emoji}</div>
+      ) : (
+        <div className="mt-4" />
       )}
       <div className="space-y-3">{children}</div>
     </div>
@@ -552,17 +554,22 @@ function ProductStep({ capacity, userKwh, userForm, tab, onTab, models, recommen
   expanded: string | null; onExpand: (code: string) => void;
 }) {
   const sel = models.find((m) => m.model_code === selected);
-  const list = models.filter((m) => m.form === tab).sort((a, b) => a.capacity_kw - b.capacity_kw);
+  // 내 방에 맞는 추천 모델을 최상단에, 나머지는 용량 오름차순
+  const list = models.filter((m) => m.form === tab).sort((a, b) => {
+    if (a.model_code === recommended) return -1;
+    if (b.model_code === recommended) return 1;
+    return a.capacity_kw - b.capacity_kw;
+  });
   const counts = { 벽걸이: models.filter((m) => m.form === "벽걸이").length, 스탠드: models.filter((m) => m.form === "스탠드").length };
   return (
-    <Question n={11} emoji="🆕" title={"바꾼다면 어떤 신형과\n비교해볼까요?"}
+    <Question n={11} title={"바꾼다면 어떤 신형과\n비교해볼까요?"}
       sub="형태를 고르고 라인업 하나를 선택하면, 그 제품의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
       {/* 벽걸이 / 스탠드 탭 */}
       <div className="flex gap-1.5 rounded-2xl border border-line bg-white/70 p-1.5">
         {(["벽걸이", "스탠드"] as const).map((f) => (
           <button key={f} onClick={() => onTab(f)}
             className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold transition ${tab === f ? "bg-accent text-white shadow-[0_4px_12px_rgba(4,125,134,.28)]" : "text-ink-soft"}`}>
-            {f === "벽걸이" ? "🧱 벽걸이" : "🗼 스탠드"} <span className={tab === f ? "text-white/75" : "text-ink-300"}>{counts[f]}</span>
+            {f} <span className={tab === f ? "text-white/75" : "text-ink-300"}>{counts[f]}</span>
           </button>
         ))}
       </div>
@@ -606,7 +613,6 @@ function ProductCard({ m, capacity, on, rec, open, onSelect, onExpand }: {
             {m.grade
               ? <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${gradeCls(m.grade)}`}>효율 {m.grade}</span>
               : <span className="rounded-full bg-[#f1f1f3] px-1.5 py-0.5 text-[10px] font-extrabold text-[#6b7178]">등급 미표기</span>}
-            {m.grade.startsWith("1") && <span className="rounded-full border border-[#bfe6e4] bg-accent-soft px-1.5 py-0.5 text-[10px] font-extrabold text-accent">1등급</span>}
             {rec && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[10px] font-extrabold text-success">내 방에 맞음</span>}
           </div>
           <p className="mt-1 text-[13.5px] font-extrabold leading-tight text-ink">{m.line}</p>

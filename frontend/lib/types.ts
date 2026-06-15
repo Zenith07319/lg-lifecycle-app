@@ -28,9 +28,32 @@ export interface DiagnoseInput {
   priority_cost_score:        number;
   priority_env_score:         number;
   priority_convenience_score: number;
+  // 신형 비교 기준(설문 마지막 화면에서 선택한 1등급 신형 모델코드)
+  new_model_code?:            string;
   // 진단 시 백엔드가 도출해 주입하는 추정 정보(저장 세션에 포함)
   form_estimated?:            string;   // 벽걸이 / 스탠드 추정
+  selected_new_model?:        NewModel | null;   // 선택 신형 전체 정보(세션 영속화용으로 user_inputs에 stash)
 }
+
+export interface NewModelFeature { name: string; desc: string; }
+export interface NewModel {
+  model_code:  string;
+  form:        string;   // 벽걸이 / 스탠드
+  line:        string;   // 라인업명
+  pyeong:      number;   // 냉방 평수
+  capacity_kw: number;
+  monthly_kwh: number;   // 표준 월간소비전력량
+  grade:       string;   // 효율등급(예: "1등급")
+  list_price:  number;
+  sale_price:  number;
+  sub_fee:     number;   // 월 구독료(0=구독 미제공)
+  tagline:     string;
+  desc:        string;
+  features:    NewModelFeature[];
+  image:       string | null;
+  product_url?: string;
+}
+export interface NewModelsResponse { items: NewModel[]; }
 
 export interface DiagnoseResponse {
   session_id:           string;
@@ -148,5 +171,7 @@ export interface SessionData {
   report:         Report;
   delta_old:      Record<string, number|string|boolean>;
   delta_new:      Record<string, number|string|boolean>;
+  selected_new_model?: NewModel | null;   // 선택한 신형 비교 기준(없으면 null)
+  new_kwh_source?:     string;            // "selected_model" / "eff_ratio"
   disclaimer?:    string;
 }

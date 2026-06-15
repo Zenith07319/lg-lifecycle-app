@@ -2,8 +2,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Camera, Loader2, Check } from "lucide-react";
-import { diagnose, ocrEnergyLabel, SAMPLE_INPUT } from "@/lib/api";
-import type { DiagnoseInput, SymptomLabel } from "@/lib/types";
+import { diagnose, ocrEnergyLabel, getNewModels, SAMPLE_INPUT } from "@/lib/api";
+import type { DiagnoseInput, SymptomLabel, NewModel } from "@/lib/types";
 
 /* 02 진단 — Figma "02 진단" 재구축: 시작 → 한 화면당 질문 1개(Q1~Q10) →
    증상 선택 시 조건부 심각도 분기 → 우선순위 슬라이더 → 로딩 → 결과.
@@ -72,15 +72,18 @@ type Answers = {
   severity: Partial<Record<SymptomLabel, number>>;   // 심각도 레벨 0~2
   hoursV: number | null; monthsV: number | null; filterV: number | null; repairIdx: number | null;
   cost: number; env: number; conv: number;
+  newModelCode: string | null;   // Q11 신형 비교 기준
 };
 const INIT: Answers = {
   ageKey: null, q2mode: "manual", capacity: "", acKwh: "", summerKwh: "",
   homeKey: null, symptoms: [], none: false, severity: {},
   hoursV: null, monthsV: null, filterV: null, repairIdx: null,
   cost: 40, env: 30, conv: 30,
+  newModelCode: null,
 };
 
-const PROG: Record<string, number> = { q1: 1, q2: 2, q3: 3, q4: 4, q5: 5, q6: 6, q7: 7, q8: 8, q9: 9, q10: 10 };
+const TOTAL_Q = 11;
+const PROG: Record<string, number> = { q1: 1, q2: 2, q3: 3, q4: 4, q5: 5, q6: 6, q7: 7, q8: 8, q9: 9, q10: 10, q11: 11 };
 
 export default function DiagnosePage() {
   const router = useRouter();
@@ -94,6 +97,9 @@ export default function DiagnosePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
+  const [newModels, setNewModels] = useState<NewModel[]>([]);
+  const [newForm, setNewForm] = useState<"벽걸이" | "스탠드" | null>(null);
+  const [expandedModel, setExpandedModel] = useState<string | null>(null);
 
   const patch = (p: Partial<Answers>) => setAns((s) => ({ ...s, ...p }));
 
@@ -102,18 +108,44 @@ export default function DiagnosePage() {
   const SCREENS: { id: string; sym?: SymptomLabel }[] = [
     { id: "q1" }, { id: "q2" }, { id: "q3" }, { id: "q4" }, { id: "q5" },
     ...sevSyms.map((s) => ({ id: "sev", sym: s })),
-    { id: "q6" }, { id: "q7" }, { id: "q8" }, { id: "q9" }, { id: "q10" },
+    { id: "q6" }, { id: "q7" }, { id: "q8" }, { id: "q9" }, { id: "q10" }, { id: "q11" },
   ];
   const safeCursor = Math.min(cursor, SCREENS.length - 1);
   const cur = SCREENS[safeCursor];
   const progNum = cur.id === "sev" ? 5 : PROG[cur.id];
-  const isLast = cur.id === "q10";
+  const isLast = cur.id === "q11";
 
   useEffect(() => {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     // 단계 전환 시 새 질문으로 포커스 이동(키보드·스크린리더 사용자 안내)
     if (started) screenRef.current?.focus({ preventScroll: true });
   }, [safeCursor, started]);
+
+  // 신형 비교 후보(벽걸이 4·스탠드 4) 1회 로드
+  useEffect(() => { getNewModels().then((r) => setNewModels(r.items)).catch(() => {}); }, []);
+
+  // 용량 근접 모델 선택 헬퍼
+  const nearestModel = (form: "벽걸이" | "스탠드") => {
+    const cap = Number(ans.capacity) || 3.6;
+    return [...newModels].filter((m) => m.form === form)
+      .sort((a, b) => Math.abs(a.capacity_kw - cap) - Math.abs(b.capacity_kw - cap))[0];
+  };
+  // Q11 진입 시: 폼 기본값(용량 기반) + 용량 근접 모델 자동 선택(미선택일 때만)
+  useEffect(() => {
+    if (cur.id !== "q11" || newModels.length === 0) return;
+    const form = newForm ?? ((Number(ans.capacity) || 3.6) >= 5.5 ? "스탠드" : "벽걸이");
+    if (newForm === null) setNewForm(form);
+    if (!ans.newModelCode) {
+      const n = nearestModel(form);
+      if (n) patch({ newModelCode: n.model_code });
+    }
+  }, [cur.id, newModels, newForm]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 형태 전환 시: 폼 변경 + 새 폼의 용량 근접 모델로 재선택
+  const changeNewForm = (f: "벽걸이" | "스탠드") => {
+    setNewForm(f); setExpandedModel(null);
+    const n = nearestModel(f);
+    patch({ newModelCode: n ? n.model_code : null });
+  };
 
   // ── OCR(에너지 라벨 자동입력) ──
   const onOcrFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +196,7 @@ export default function DiagnosePage() {
       priority_cost_score: pri.c,
       priority_env_score: pri.e,
       priority_convenience_score: pri.v,
+      new_model_code: ans.newModelCode ?? undefined,
     };
   };
 
@@ -187,6 +220,7 @@ export default function DiagnosePage() {
       case "q8": return ans.filterV !== null;
       case "q9": return ans.repairIdx !== null;
       case "q10": return true;
+      case "q11": return true;   // 신형 선택은 권장(기본 추천 자동 선택), 건너뛰어도 진행
       default: return true;
     }
   };
@@ -271,16 +305,16 @@ export default function DiagnosePage() {
           <ChevronLeft size={20} />
         </button>
         <h1 className="text-[16px] font-bold text-ink">가전 진단</h1>
-        <span className="ml-auto text-[13px] font-semibold text-muted">{progNum}/10</span>
+        <span className="ml-auto text-[13px] font-semibold text-muted">{progNum}/{TOTAL_Q}</span>
         <button onClick={sampleFast} className="rounded-full border border-accent/40 px-2.5 py-1 text-[11px] font-bold text-accent">샘플</button>
       </header>
 
       {/* 진행 바 */}
       <div className="h-1 w-full bg-line/60">
-        <div className="h-full rounded-r-full bg-accent transition-all duration-300" style={{ width: `${(progNum / 10) * 100}%` }} />
+        <div className="h-full rounded-r-full bg-accent transition-all duration-300" style={{ width: `${(progNum / TOTAL_Q) * 100}%` }} />
       </div>
 
-      <div key={`${cur.id}:${cur.sym ?? ""}`} ref={screenRef} tabIndex={-1} role="group" aria-label={`질문 ${progNum} / 10`}
+      <div key={`${cur.id}:${cur.sym ?? ""}`} ref={screenRef} tabIndex={-1} role="group" aria-label={`질문 ${progNum} / ${TOTAL_Q}`}
         className="reveal flex flex-1 flex-col px-6 pb-5 pt-7 outline-none">
         {/* ── 질문별 본문 ── */}
         {cur.id === "q1" && (
@@ -391,7 +425,7 @@ export default function DiagnosePage() {
         )}
 
         {cur.id === "q10" && (
-          <Question n={10} emoji="⭐" title="무엇을 가장 중요하게 볼까요?" sub="마지막 질문이에요! 내 상황에 맞게 조절해봐요.">
+          <Question n={10} emoji="⭐" title="무엇을 가장 중요하게 볼까요?" sub="거의 다 왔어요! 내 상황에 맞게 조절해봐요.">
             <div className="space-y-3">
               <Slider label="비용 절약" desc="전기요금·수리비·교체비 최소화가 중요해요." color="#EA6D2E" value={ans.cost} onChange={(v) => setPriority("cost", v)} />
               <Slider label="환경 영향" desc="탄소 배출 절감·에너지 효율이 중요해요." color="#2FA060" value={ans.env} onChange={(v) => setPriority("env", v)} />
@@ -399,6 +433,20 @@ export default function DiagnosePage() {
             </div>
             <p className="mt-2 text-center text-[11px] text-muted">세 항목 합이 100%가 되도록 자동 조절돼요.</p>
           </Question>
+        )}
+
+        {cur.id === "q11" && (
+          <ProductStep
+            capacity={Number(ans.capacity) || 3.6}
+            userKwh={Number(ans.acKwh) || 0}
+            models={newModels}
+            form={newForm ?? ((Number(ans.capacity) || 3.6) >= 5.5 ? "스탠드" : "벽걸이")}
+            onForm={changeNewForm}
+            selected={ans.newModelCode}
+            onSelect={(code) => patch({ newModelCode: code })}
+            expanded={expandedModel}
+            onExpand={(code) => setExpandedModel((p) => (p === code ? null : code))}
+          />
         )}
 
         {/* 에러 */}
@@ -484,5 +532,116 @@ function Slider({ label, desc, color, value, onChange }: { label: string; desc: 
       <input type="range" min={0} max={100} value={value} onChange={(e) => onChange(Number(e.target.value))}
         aria-label={`${label} ${value}퍼센트`} className="mt-2.5 w-full" style={{ accentColor: color }} />
     </div>
+  );
+}
+
+/* ── Q11 신형 비교 제품 선택 ── */
+function gradeCls(g: string) {
+  if (g.startsWith("1")) return "bg-[#e7f4ec] text-[#1a6b3d]";
+  if (g.startsWith("2")) return "bg-[#eaf6ef] text-[#2f8f55]";
+  if (g.startsWith("3")) return "bg-[#fff3da] text-[#a9730a]";
+  return "bg-[#f1f1f3] text-[#6b7178]";
+}
+const won = (n: number) => n.toLocaleString("ko-KR") + "원";
+
+function ProductStep({ capacity, userKwh, models, form, onForm, selected, onSelect, expanded, onExpand }: {
+  capacity: number; userKwh: number; models: NewModel[];
+  form: "벽걸이" | "스탠드"; onForm: (f: "벽걸이" | "스탠드") => void;
+  selected: string | null; onSelect: (code: string) => void;
+  expanded: string | null; onExpand: (code: string) => void;
+}) {
+  const list = models.filter((m) => m.form === form)
+    .sort((a, b) => Math.abs(a.capacity_kw - capacity) - Math.abs(b.capacity_kw - capacity));
+  const nearest = list[0]?.model_code;
+  const sel = models.find((m) => m.model_code === selected);
+  return (
+    <Question n={11} emoji="🆕" title={"바꾼다면 어떤 신형과\n비교해볼까요?"}
+      sub="고른 1등급 신형의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
+      {/* 형태 토글 */}
+      <div className="flex gap-1.5 rounded-2xl border border-line bg-white/70 p-1.5">
+        {(["벽걸이", "스탠드"] as const).map((f) => (
+          <button key={f} onClick={() => onForm(f)}
+            className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold transition ${form === f ? "bg-accent text-white shadow-[0_4px_12px_rgba(4,125,134,.28)]" : "text-ink-soft"}`}>
+            {f === "벽걸이" ? "🧱 벽걸이" : "🗼 스탠드"}
+          </button>
+        ))}
+      </div>
+
+      {/* 제품 카드 */}
+      <div className="space-y-2.5">
+        {list.length === 0 && <p className="py-6 text-center text-[12px] text-muted">제품을 불러오는 중…</p>}
+        {list.map((m) => {
+          const on = m.model_code === selected;
+          const big = m.capacity_kw > capacity * 1.5;
+          const open = expanded === m.model_code;
+          return (
+            <div key={m.model_code} onClick={() => onSelect(m.model_code)}
+              className={`relative rounded-[18px] p-3 shadow-[var(--shadow-card)] transition active:scale-[.99] ${on ? "border-2 border-accent bg-white" : "border border-line bg-white/80"}`}>
+              {on && <div className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-accent text-white"><Check size={13} /></div>}
+              <div className="flex gap-3">
+                <div className="flex h-[88px] w-[72px] shrink-0 items-center justify-center rounded-xl border border-[#e7e8e2] bg-gradient-to-b from-[#f3f2ee] to-[#e7e8e2]">
+                  {m.form === "벽걸이"
+                    ? <div className="h-6 w-14 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-white to-[#eceee9]" />
+                    : <div className="relative h-[70px] w-6 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-[#fbfbf8] to-[#e8e9e3]"><span className="absolute left-1/2 top-2 size-2 -translate-x-1/2 rounded-full bg-[#7a847f]" /></div>}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap gap-1">
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${gradeCls(m.grade)}`}>효율 {m.grade}</span>
+                    {m.grade.startsWith("1") && <span className="rounded-full border border-[#bfe6e4] bg-accent-soft px-1.5 py-0.5 text-[10px] font-extrabold text-accent">1등급 신형</span>}
+                    {m.model_code === nearest && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[10px] font-extrabold text-success">내 방에 맞음</span>}
+                  </div>
+                  <p className="mt-1 text-[13px] font-extrabold leading-tight text-ink">{m.line}</p>
+                  <p className="text-[10px] font-semibold text-ink-300">{m.model_code}</p>
+                  <p className="mt-1 text-[11.5px] font-semibold text-ink-soft">냉방 {m.pyeong}평 · {m.capacity_kw}kW · 월 {m.monthly_kwh}kWh</p>
+                  <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                    <span className="text-[11px] text-ink-300 line-through">{won(m.list_price)}</span>
+                    <span className="text-[14.5px] font-black text-ink">{won(m.sale_price)}</span>
+                    {m.sub_fee > 0 && <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10.5px] font-bold text-accent">구독 월 {m.sub_fee.toLocaleString("ko-KR")}원</span>}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {m.features.slice(0, 3).map((f) => <span key={f.name} className="rounded-full border border-line bg-sunken px-2 py-0.5 text-[10px] font-bold text-ink-soft">{f.name}</span>)}
+                  </div>
+                </div>
+              </div>
+              {big && <p className="mt-2 rounded-lg bg-[#FFF6E6] px-2.5 py-1.5 text-[10.5px] font-semibold text-[#9a6a00]">⚠️ 내 방({capacity}kW)보다 큰 용량이에요. 신형이 전기를 더 쓸 수 있어요.</p>}
+              <button onClick={(e) => { e.stopPropagation(); onExpand(m.model_code); }}
+                className="mt-2 w-full rounded-xl border border-dashed border-line py-1.5 text-[11.5px] font-extrabold text-accent">
+                {open ? "접기 ▲" : "기능·스펙 자세히 ▾"}
+              </button>
+              {open && (
+                <div className="mt-2.5 border-t border-line pt-2.5">
+                  <p className="text-[12.5px] font-extrabold text-ink">“{m.tagline}”</p>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-ink-500">{m.desc}</p>
+                  <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
+                    {m.features.map((f) => (
+                      <div key={f.name}>
+                        <p className="text-[11px] font-extrabold text-ink"><span className="text-accent">· </span>{f.name}</p>
+                        <p className="pl-2 text-[10px] leading-snug text-muted">{f.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 비교 하이라이트 */}
+      {sel && (
+        <div className="rounded-[18px] border border-[#bfe6e4] bg-accent-soft p-3.5">
+          <p className="text-[12.5px] font-extrabold text-teal-900">📊 비교 기준: {sel.line}</p>
+          <p className="mt-1.5 text-[11.5px] font-semibold text-ink-soft">
+            월 {sel.monthly_kwh}kWh · 효율 {sel.grade.replace("˙", "")} · 판매가 {won(sel.sale_price)}{sel.sub_fee > 0 ? ` · 구독 월 ${sel.sub_fee.toLocaleString("ko-KR")}원` : ""}
+          </p>
+          {userKwh > 0 && (
+            <p className="mt-1.5 text-[11.5px] font-bold text-accent">
+              내 에어컨 {userKwh}kWh → 신형 {sel.monthly_kwh}kWh{userKwh > sel.monthly_kwh ? ` (약 ${Math.round((userKwh - sel.monthly_kwh) / userKwh * 100)}%↓)` : ""}
+            </p>
+          )}
+          <p className="mt-1.5 text-[10.5px] leading-snug text-ink-500">이 신형 기준으로 전기료 절감·탄소·5가지 순위를 계산해요.</p>
+        </div>
+      )}
+    </Question>
   );
 }

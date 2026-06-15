@@ -1,0 +1,148 @@
+{
+  "_meta": {
+    "purpose": "설문 마지막(신형 비교) 화면용 큐레이션 1등급 신형 후보. 선택 시 신형 baseline(월간소비전력량·판매가·구독료)으로 계산에 반영.",
+    "source": "LG전자 공식(lge.co.kr). 가격=data/lg_aircon_catalog.csv, 월간소비전력량=268모델 엑셀 냉방소비전력×80h 환산, 기능/등급=자료/LG에어컨_스펙조사.md",
+    "kwh_basis": "표준 월간 소비전력량(효율관리제도 7.8h/일 기준). 구형 라벨값과 동일 기준이라 사용시간으로 동일하게 보정됨.",
+    "grade_to_verify": ["SQ09GK1WES", "FQ18GN9HE2"]
+  },
+  "models": [
+    {
+      "model_code": "SQ06EA1WCS", "form": "벽걸이", "line": "LG 휘센 벽걸이에어컨",
+      "pyeong": 6, "capacity_kw": 2.3, "monthly_kwh": 55, "grade": "5등급",
+      "list_price": 743000, "sale_price": 658000, "sub_fee": 20900,
+      "tagline": "작은 방에 딱, 기본에 충실한 인버터 벽걸이",
+      "desc": "꼭 필요한 냉방 기능만 담은 합리적인 벽걸이. 듀얼인버터로 전기료 부담을 줄이고, ThinQ로 외출 중에도 켜고 끌 수 있어요.",
+      "features": [
+        {"name": "듀얼인버터 컴프레서", "desc": "출력을 가변 제어해 효율을 높이는 냉방"},
+        {"name": "AI 운전", "desc": "사용 패턴 학습 자동 냉방"},
+        {"name": "간접냉방(유풍)", "desc": "찬바람이 직접 닿지 않게 분산"},
+        {"name": "AI건조", "desc": "사용 후 내부 습기 자동 건조"},
+        {"name": "열교환기 세척", "desc": "내부 청결 클린 기능"},
+        {"name": "ThinQ 원격제어", "desc": "Wi-Fi 원격·굿슬립·절전"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq06ea1wcs-akor"
+    },
+    {
+      "model_code": "SQ09GK1WES", "form": "벽걸이", "line": "LG 휘센 벽걸이에어컨",
+      "pyeong": 9, "capacity_kw": 3.6, "monthly_kwh": 70, "grade": "1등급˙",
+      "list_price": 1499000, "sale_price": 1350000, "sub_fee": 32900,
+      "tagline": "거실 한 대로 충분한 9평형 고효율 인버터",
+      "desc": "방·작은 거실에 적당한 9평형. AI 듀얼인버터로 1등급 수준 효율을 내고, AI건조+로 곰팡이·냄새를 억제합니다.",
+      "features": [
+        {"name": "AI 듀얼인버터(절전)", "desc": "AI 가변 제어로 고효율 냉방"},
+        {"name": "AI건조+", "desc": "온·습도 센싱 자동 건조"},
+        {"name": "강력 제습", "desc": "장마철 습기 강력 제거"},
+        {"name": "열교환기 세척", "desc": "내부 위생 관리"},
+        {"name": "ThinQ 스마트제어", "desc": "원격 on/off·스마트 진단"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/care-solutions/air-conditioners/sq09gk1wes-akor"
+    },
+    {
+      "model_code": "SQ11EK1WES", "form": "벽걸이", "line": "LG 휘센 벽걸이에어컨 (냉방전용)",
+      "pyeong": 11, "capacity_kw": 4.2, "monthly_kwh": 80, "grade": "1등급",
+      "list_price": 1610000, "sale_price": 1450000, "sub_fee": 33900,
+      "tagline": "에너지효율 1등급, 냉방전용 11평형",
+      "desc": "냉방전용으로 효율을 끌어올린 1등급 모델. 정격 약 1.0kW의 AI 듀얼인버터로 전기료를 아끼고 강력 제습까지.",
+      "features": [
+        {"name": "AI 듀얼인버터(절전)", "desc": "정격 ≈1.0kW, 효율 1등급"},
+        {"name": "강력 제습", "desc": "장마철 습기 강력 제거(냉방전용)"},
+        {"name": "AI건조+", "desc": "운전 후 자동 건조"},
+        {"name": "워시클린", "desc": "열교환기 세척"},
+        {"name": "ThinQ 스마트제어", "desc": "Wi-Fi 원격·진단"},
+        {"name": "다양한 운전모드", "desc": "절전·굿슬립·열대야·예약"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq11ek1wes"
+    },
+    {
+      "model_code": "SW16FK1WBS", "form": "벽걸이", "line": "LG 휘센 사계절에어컨 (벽걸이·냉난방)",
+      "pyeong": 16, "capacity_kw": 6.5, "monthly_kwh": 161, "grade": "냉방4등급",
+      "list_price": 2343000, "sale_price": 2110000, "sub_fee": 44900,
+      "tagline": "여름 냉방 + 겨울 난방, 사계절 한 대로",
+      "desc": "냉방 16평·난방 12평 겸용. 한 대로 사계절을 책임지는 벽걸이 냉난방기로, AI바람과 자동건조로 쾌적·위생을 챙겨요.",
+      "features": [
+        {"name": "듀얼 인버터(절전)", "desc": "인버터 압축기 절전 냉난방"},
+        {"name": "AI 운전(AI바람)", "desc": "위치·패턴 학습 풍량·온도 조절"},
+        {"name": "사계절 냉난방", "desc": "여름 냉방+겨울 난방"},
+        {"name": "강력 제습", "desc": "장마철 습기 제거"},
+        {"name": "자동건조(청정관리)", "desc": "사용 후 내부 건조"},
+        {"name": "공기청정", "desc": "공기질 저하 시 자동 청정"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/air-conditioners/sw16fk1wbs-akor"
+    },
+    {
+      "model_code": "FQ17GC1ED1", "form": "스탠드", "line": "LG 휘센 오브제컬렉션 쿨 (1시리즈)",
+      "pyeong": 17, "capacity_kw": 7.0, "monthly_kwh": 188, "grade": "3등급",
+      "list_price": 2105000, "sale_price": 1630000, "sub_fee": 42900,
+      "tagline": "오브제 디자인 입문형, 아이스 쿨파워 스탠드",
+      "desc": "오브제컬렉션 디자인을 합리적으로. 아이스 쿨파워로 빠르게 시원하게, 2단계 절전으로 전기료를 관리합니다.",
+      "features": [
+        {"name": "AI바람(AI쾌적)", "desc": "선호 온도·패턴 학습 맞춤 바람"},
+        {"name": "아이스 쿨파워", "desc": "최대 4℃ 낮은 강력 냉방"},
+        {"name": "듀얼인버터 2단계 절전", "desc": "절전 플래너로 전기료 절감"},
+        {"name": "쾌적 제습", "desc": "습한 날 보송하게 유지"},
+        {"name": "셀프청소·AI건조", "desc": "팬 셀프 청소+자동 건조"},
+        {"name": "굿슬립 취침모드", "desc": "최대 12h 맞춤 취침"},
+        {"name": "ThinQ 연동", "desc": "앱 원격 제어"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq17gc1ed1"
+    },
+    {
+      "model_code": "FQ18FV4EA2", "form": "스탠드", "line": "LG 휘센 오브제컬렉션 뷰I 프로 (4시리즈)",
+      "pyeong": 18, "capacity_kw": 7.2, "monthly_kwh": 168, "grade": "2등급",
+      "list_price": 4107000, "sale_price": 3700000, "sub_fee": 0,
+      "tagline": "레이더센서 AI바람 + UV-LED 공기청정",
+      "desc": "레이더센서가 사람·공간을 감지해 바람을 맞춰주는 2등급 프리미엄. UV-LED·알러지케어로 공기까지 관리합니다.",
+      "features": [
+        {"name": "AI바람(레이더센서)", "desc": "위치·패턴·공간 감지 자동 조절"},
+        {"name": "소프트바람(간접풍)", "desc": "직바람 없이 은은한 시원함"},
+        {"name": "듀얼인버터 AI절전", "desc": "맞춤 절전모드 전기료 절감"},
+        {"name": "공기청정(UV-LED·알러지)", "desc": "팬살균+집진+이온 청정"},
+        {"name": "AI 쾌적제습", "desc": "습도·전기료 고려 맞춤 제습"},
+        {"name": "ThinQ·AI음성인식", "desc": "원격·진단·음성"},
+        {"name": "0.5도 정밀제어", "desc": "0.5℃ 단위 + 아이스쿨파워"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18fv4ea2"
+    },
+    {
+      "model_code": "FQ18GN9HE2", "form": "스탠드", "line": "LG 휘센 오브제컬렉션 타워I (9시리즈)",
+      "pyeong": 18, "capacity_kw": 7.2, "monthly_kwh": 164, "grade": "1등급˙",
+      "list_price": 6627000, "sale_price": 5970000, "sub_fee": 125500,
+      "tagline": "온도를 넘어 습도까지, 프리미엄 타워",
+      "desc": "온도와 습도를 함께 잡는 AI콜드프리로 오래 켜도 춥지 않은 9시리즈 타워. 레이더 AI바람과 청정관리로 프리미엄 경험을.",
+      "features": [
+        {"name": "AI콜드프리", "desc": "맞춤 온·습도로 춥지 않은 바람"},
+        {"name": "AI바람(레이더)", "desc": "공간 감지 직/간접 자동 전환"},
+        {"name": "AI수면", "desc": "맞춤 온·습도·기류 수면 환경"},
+        {"name": "휘센 청정관리", "desc": "바람길 자동 건조·세척"},
+        {"name": "UVnano 송풍팬 살균", "desc": "UV-LED 팬 표면 살균"},
+        {"name": "ThinQ·AI음성인식", "desc": "원격·자가진단·음성"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/care-solutions/air-conditioners/fq18gn9he2"
+    },
+    {
+      "model_code": "FQ25GN9HE2", "form": "스탠드", "line": "LG 휘센 오브제컬렉션 타워I (9시리즈)",
+      "pyeong": 25, "capacity_kw": 9.0, "monthly_kwh": 200, "grade": "1등급",
+      "list_price": 7570000, "sale_price": 6820000, "sub_fee": 140500,
+      "tagline": "대형 거실용 4X 집중냉방 + 2in1",
+      "desc": "25평 대형 거실을 위한 플래그십 타워I. 4개 팬의 4X 집중냉방과 스탠드+벽걸이 2in1 구성, 1등급 효율을 갖췄어요.",
+      "features": [
+        {"name": "AI 바람 컨트롤", "desc": "레이더·스마트케어 직/간접 전환"},
+        {"name": "4X 집중냉방", "desc": "4개 팬 순환 강력 냉방"},
+        {"name": "UVnano 살균", "desc": "송풍팬 UV-LED 살균"},
+        {"name": "청정관리(자가 클린)", "desc": "내부까지 자동 건조·세척"},
+        {"name": "공기청정(PM1.0)", "desc": "PM1.0 센서+알러지 필터"},
+        {"name": "2in1 구성", "desc": "타워(25평)+벽걸이(6평)"},
+        {"name": "ThinQ 연동", "desc": "원격·음성·자가진단"}
+      ],
+      "image": null,
+      "product_url": "https://www.lge.co.kr/care-solutions/air-conditioners/fq25gn9he2"
+    }
+  ]
+}

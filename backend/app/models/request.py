@@ -42,6 +42,9 @@ class DiagnoseRequest(BaseModel):
     priority_env_score:         Optional[int] = Field(None, ge=0, le=100, description="환경 중시 0~100")
     priority_convenience_score: Optional[int] = Field(None, ge=0, le=100, description="편의 중시 0~100")
 
+    # ── 신형 비교 기준(설문 마지막 화면) ──
+    new_model_code: Optional[str] = Field(None, description="선택한 1등급 신형 모델코드. 지정 시 신형 baseline(월간소비전력량·판매가·구독료)으로 반영. data/new_models.json")
+
     # ── 레거시(과도기 하위호환 · 점진 폐기) ──
     symptom_type:      Optional[SymptomKeyLegacy] = Field(None, description="(레거시) 단일 증상 내부키")
     symptom_severity:  Optional[SeverityLegacy]   = Field(None, description="(레거시) 4단계 심각도")

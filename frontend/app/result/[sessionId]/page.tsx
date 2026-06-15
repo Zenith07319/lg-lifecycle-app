@@ -59,6 +59,8 @@ export default function ResultPage() {
   // 1순위 추천 액션 = 판단근거/결정가이드/홈/내 가전과 동일 소스(report.recommendation_1st)
   const ranked = [...(data.ranked_options ?? [])].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
   const rec1 = (data.report?.recommendation_1st as string) || ranked[0]?.label || "";
+  const sel = data.selected_new_model ?? inp.selected_new_model;   // 사용자가 고른 신형 비교 기준(세션 user_inputs에 영속)
+  const newLabel = sel ? `신형 ${sel.grade.replace("˙", "")}` : "1등급 신형";
 
   return (
     <div className="pb-6">
@@ -130,6 +132,11 @@ export default function ResultPage() {
               {byInput ? "입력값 기준" : "추정 기준"}
             </span>
           </div>
+          {sel && (
+            <p className="-mt-1.5 mb-2.5 text-[10.5px] font-semibold text-muted">
+              비교 기준 · <span className="font-extrabold text-ink-soft">{sel.line}</span> ({sel.grade.replace("˙", "")} · 월 {sel.monthly_kwh}kWh · {won(sel.sale_price)})
+            </p>
+          )}
           <div className="flex items-stretch gap-2.5">
             <div className="flex-1 rounded-2xl bg-white/70 p-3">
               <p className="text-[11px] font-semibold text-muted">내 에어컨</p>
@@ -137,7 +144,7 @@ export default function ResultPage() {
             </div>
             <div className="flex items-center text-[13px] font-bold text-muted">→</div>
             <div className="flex-1 rounded-2xl bg-white/70 p-3">
-              <p className="text-[11px] font-semibold text-muted">1등급 신형</p>
+              <p className="text-[11px] font-semibold text-muted">{newLabel}</p>
               <p className="text-[19px] font-extrabold text-accent" style={{ fontFamily: D }}>{won(newC)}</p>
             </div>
           </div>

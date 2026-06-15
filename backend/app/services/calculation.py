@@ -1,5 +1,6 @@
 """전체 진단 파이프라인 — 효율감퇴 모델 + 여름 고지서 기반 k_base 자동 도출."""
 import sys
+import json
 from pathlib import Path
 from dataclasses import asdict
 from datetime import date
@@ -36,6 +37,16 @@ def _cached_device_spec(product_type: str, model_year: int, capacity_kw: float) 
 @lru_cache(maxsize=20)
 def _cached_new_spec(product_type: str, capacity_kw: float) -> tuple:
     return tuple(sorted(get_new_device_spec(product_type, capacity_kw).items()))
+
+@lru_cache(maxsize=1)
+def _new_models_map() -> dict:
+    """data/new_models.json → {모델코드: 모델dict}. 신형 비교 기준 주입용."""
+    p = Path(__file__).parent.parent.parent / "data" / "new_models.json"
+    try:
+        with open(p, encoding="utf-8") as f:
+            return {m["model_code"]: m for m in json.load(f).get("models", [])}
+    except Exception:
+        return {}
 
 @lru_cache(maxsize=20)
 def _cached_cost_ref(product_type: str, capacity_kw: float) -> tuple:
@@ -118,6 +129,11 @@ def run_full_pipeline(inputs: dict) -> dict:
     yr  = inputs["purchase_year"]
     cap = inputs["capacity_kw"]
 
+    # 신형 비교 기준(설문 마지막 화면에서 선택). 있으면 신형 baseline을 실제 제품값으로 대체.
+    sel_model = _new_models_map().get(inputs.get("new_model_code")) if inputs.get("new_model_code") else None
+    # 세션 DB는 user_inputs만 영속화(고정 컬럼) → 결과화면이 읽도록 선택 모델을 inputs에 stash(form_estimated와 동일 패턴).
+    inputs["selected_new_model"] = sel_model
+
     rep_symptom, rep_severity, sym_pairs, symptom_labels = _resolve_symptom(inputs)
     priority = _resolve_priority(inputs)
     # report_generator/AS패스가 읽는 레거시 단일 필드 동기화(새 플로우는 symptoms 리스트만 전송)
@@ -148,8 +164,14 @@ def run_full_pipeline(inputs: dict) -> dict:
         old_monthly_kwh = base_kwh * ratio
         ac_kwh_source = "estimate"
     old_annual_kwh = old_monthly_kwh * 12
-    # 신형(1등급 고효율) 비교값 = 구형 라벨 × 효율비. 용량표 대신 효율비로 도출 → 전력 계산 용량 무관·연속.
-    new_monthly_kwh = round(old_monthly_kwh * NEW_EFF_RATIO, 1)
+    # 신형 비교값: 선택 제품이 있으면 그 제품의 실제 월간소비전력량(표준 라벨, 구형과 동일 기준),
+    # 없으면 구형 라벨 × 효율비(0.70) 폴백. → 선택 시 가정이 아닌 실제 1등급 스펙으로 비교(공신력).
+    if sel_model and sel_model.get("monthly_kwh"):
+        new_monthly_kwh = float(sel_model["monthly_kwh"])
+        new_kwh_source = "selected_model"
+    else:
+        new_monthly_kwh = round(old_monthly_kwh * NEW_EFF_RATIO, 1)
+        new_kwh_source = "eff_ratio"
     new_annual_kwh  = new_monthly_kwh * 12
 
     diagnosis = run_diagnosis(
@@ -214,6 +236,12 @@ def run_full_pipeline(inputs: dict) -> dict:
     visit_fee    = int(cost_ref.get("visit_fee",39600))
     sub_monthly  = int(cost_ref.get("subscription_monthly_fee",49000))
     purchase_mid = int((cost_ref.get("purchase_price_min",1000000)+cost_ref.get("purchase_price_max",1300000))/2)
+    # 선택 신형이 있으면 구매가=판매가, 구독료=구독월정액을 실제 제품값으로 대체(가격 공신력).
+    if sel_model:
+        if sel_model.get("sale_price"):
+            purchase_mid = int(sel_model["sale_price"])
+        if sel_model.get("sub_fee"):          # 구독 미제공(0) 모델은 카테고리 폴백 유지
+            sub_monthly = int(sel_model["sub_fee"])
 
     carbon_summary = calculate_carbon_summary(k_old, k_new, usage_months, carbon_ref)
 
@@ -300,6 +328,8 @@ def run_full_pipeline(inputs: dict) -> dict:
         "k_ac_new":        k_new,
         "k_base":          k_base,
         "ac_kwh_source":   ac_kwh_source,   # "input"=사용자 라벨값 / "estimate"=표 추정
+        "new_kwh_source":  new_kwh_source,  # "selected_model"=선택 신형 실값 / "eff_ratio"=0.70 폴백
+        "selected_new_model": sel_model,    # 선택한 1등형 신형(없으면 None)
         "current_eff":     current_eff,
         "rerep_prob":      rerep_prob,
         "parts_exceeded":  exceeded,

@@ -1,5 +1,5 @@
 // GitHub 자동배포 연결 검증용 주석
-import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, CentersResponse, OcrResult } from "./types";
+import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, NewModelsResponse, CentersResponse, OcrResult } from "./types";
 
 // 환경변수 입력 경로(PowerShell 등)에서 값 앞뒤에 BOM/제로폭 문자가 섞이면
 // 절대 URL이 깨져 요청이 프론트 도메인으로 새는 사고가 난다. 보이지 않는 문자를
@@ -32,6 +32,15 @@ export const getSession = (sessionId: string) =>
 
 export const getProducts = (capacityKw: number, kind: "buy" | "sub") =>
   apiFetch<ProductsResponse>(`/api/products?capacity_kw=${capacityKw}&kind=${kind}`);
+
+// 설문 마지막 '신형 비교' 화면 — 큐레이션 1등급 신형(벽걸이 4·스탠드 4)
+export const getNewModels = (form?: string, capacityKw?: number) => {
+  const q = new URLSearchParams();
+  if (form) q.set("form", form);
+  if (capacityKw) q.set("capacity_kw", String(capacityKw));
+  const qs = q.toString();
+  return apiFetch<NewModelsResponse>(`/api/new-models${qs ? `?${qs}` : ""}`);
+};
 
 export const getCenters = (region = "") =>
   apiFetch<CentersResponse>(`/api/centers${region ? `?region=${encodeURIComponent(region)}` : ""}`);

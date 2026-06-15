@@ -46,15 +46,26 @@ def _cached_carbon_ref(product_type: str) -> tuple:
     return tuple(sorted(get_carbon_ref(product_type).items()))
 
 
+SUMMER_PEAK_MONTHS = 2  # 한전 주택용 하계 요금 적용기간(7.1~8.31) = 2개월. 그 외 사용월은 평시(기타) 단가.
+
+
 def _calc_5yr_elec(catalog_kwh: float, eff_list: list, daily_hours: float,
                    k_base: float, contract_type: str, usage_months: int) -> int:
-    """연도별 효율감퇴를 반영한 5년 전기비 합산."""
+    """연도별 효율감퇴를 반영한 5년 전기비 합산.
+
+    사용월(설문)을 여름분/평시분으로 나눠 계절별 요금으로 합산한다.
+    하계 요금은 7~8월(SUMMER_PEAK_MONTHS)에만 적용되므로, 그 외 사용월은 '기타(평시)' 단가가 맞다.
+    사용월 ≤ 2개월이면 전부 하계(평시분 0).
+    """
+    summer_n = min(usage_months, SUMMER_PEAK_MONTHS)
+    normal_n = max(usage_months - summer_n, 0)
     total = 0
     for eff in eff_list:
         actual_kwh = catalog_kwh / eff
         k_ac = calc_ac_monthly_kwh(actual_kwh, daily_hours)
-        delta = calculate_ac_delta_cost(k_base, k_ac, contract_type, "하계")
-        total += delta["ac_delta_cost"] * usage_months
+        hot = calculate_ac_delta_cost(k_base, k_ac, contract_type, "하계")["ac_delta_cost"]
+        nor = calculate_ac_delta_cost(k_base, k_ac, contract_type, "기타")["ac_delta_cost"]
+        total += hot * summer_n + nor * normal_n
     return int(total)
 
 

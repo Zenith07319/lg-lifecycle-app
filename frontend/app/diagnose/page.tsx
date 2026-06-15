@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Camera, Loader2, Check } from "lucide-react";
 import { diagnose, ocrEnergyLabel, getNewModels, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel, NewModel } from "@/lib/types";
+import { NewModelCard, won } from "@/components/ProductLineup";
 
 /* 02 진단 — Figma "02 진단" 재구축: 시작 → 한 화면당 질문 1개(Q1~Q10) →
    증상 선택 시 조건부 심각도 분기 → 우선순위 슬라이더 → 로딩 → 결과.
@@ -536,15 +537,7 @@ function Slider({ label, desc, color, value, onChange }: { label: string; desc: 
   );
 }
 
-/* ── Q11 신형 비교 제품 선택 ── */
-function gradeCls(g: string) {
-  if (g.startsWith("1")) return "bg-[#e7f4ec] text-[#1a6b3d]";
-  if (g.startsWith("2")) return "bg-[#eaf6ef] text-[#2f8f55]";
-  if (g.startsWith("3")) return "bg-[#fff3da] text-[#a9730a]";
-  return "bg-[#f1f1f3] text-[#6b7178]";
-}
-const won = (n: number) => n.toLocaleString("ko-KR") + "원";
-
+/* ── Q11 신형 비교 제품 선택 (카드는 components/ProductLineup 공용) ── */
 function ProductStep({ capacity, tab, onTab, models, recommended, selected, onSelect, expanded, onExpand }: {
   capacity: number; tab: "벽걸이" | "스탠드"; onTab: (f: "벽걸이" | "스탠드") => void; models: NewModel[];
   recommended?: string; selected: string | null; onSelect: (code: string) => void;
@@ -573,76 +566,14 @@ function ProductStep({ capacity, tab, onTab, models, recommended, selected, onSe
       <div className="space-y-2.5">
         {models.length === 0 && <p className="py-6 text-center text-[12px] text-muted">라인업을 불러오는 중…</p>}
         {list.map((m) => (
-          <ProductCard key={m.model_code} m={m} capacity={capacity}
-            on={m.model_code === selected} rec={m.model_code === recommended} open={expanded === m.model_code}
-            onSelect={onSelect} onExpand={onExpand} />
+          <NewModelCard key={m.model_code} m={m} capacity={capacity}
+            recommended={m.model_code === recommended} selected={m.model_code === selected}
+            onSelect={onSelect} expanded={expanded === m.model_code} onToggleExpand={onExpand} priceMode="both" />
         ))}
       </div>
 
       {sel && <CompareBox sel={sel} />}
     </Question>
-  );
-}
-
-function ProductCard({ m, capacity, on, rec, open, onSelect, onExpand }: {
-  m: NewModel; capacity: number; on: boolean; rec: boolean; open: boolean;
-  onSelect: (code: string) => void; onExpand: (code: string) => void;
-}) {
-  const [imgErr, setImgErr] = useState(false);
-  const big = m.capacity_kw > capacity * 1.5;
-  const tall = m.form === "스탠드";
-  return (
-    <div onClick={() => onSelect(m.model_code)}
-      className={`relative rounded-[18px] p-3 shadow-[var(--shadow-card)] transition active:scale-[.99] ${on ? "border-2 border-accent bg-white" : "border border-line bg-white/80"}`}>
-      {on && <div className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-accent text-white"><Check size={13} /></div>}
-      <div className="flex gap-3">
-        <div className="flex size-[88px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#e7e8e2] bg-white">
-          {m.image && !imgErr
-            ? <img src={m.image} alt={m.line} loading="lazy" onError={() => setImgErr(true)} className="size-full object-cover" />
-            : tall
-              ? <div className="relative h-[70px] w-6 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-[#fbfbf8] to-[#e8e9e3]"><span className="absolute left-1/2 top-2 size-2 -translate-x-1/2 rounded-full bg-[#7a847f]" /></div>
-              : <div className="h-6 w-14 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-white to-[#eceee9]" />}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1">
-            {m.grade
-              ? <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${gradeCls(m.grade)}`}>효율 {m.grade}</span>
-              : <span className="rounded-full bg-[#f1f1f3] px-1.5 py-0.5 text-[10px] font-extrabold text-[#6b7178]">등급 미표기</span>}
-            {rec && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[10px] font-extrabold text-success">내 방에 맞음</span>}
-          </div>
-          <p className="mt-1 text-[13.5px] font-extrabold leading-tight text-ink">{m.line}</p>
-          <p className="text-[10px] font-semibold text-ink-300">{m.product_type_raw} · {m.model_code}</p>
-          <p className="mt-1 text-[11.5px] font-semibold text-ink-soft">냉방 {m.pyeong}평{m.cooling_area_m2 ? `(${m.cooling_area_m2}㎡)` : ""} · {m.capacity_kw}kW · 월 {m.monthly_kwh}kWh</p>
-          <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
-            <span className="text-[11px] text-ink-300 line-through">{won(m.list_price)}</span>
-            <span className="text-[14.5px] font-black text-ink">{won(m.sale_price)}</span>
-            {m.sub_fee > 0 && <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10.5px] font-bold text-accent">구독 월 {m.sub_fee.toLocaleString("ko-KR")}원</span>}
-          </div>
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {m.features.slice(0, 3).map((f) => <span key={f.name} className="rounded-full border border-line bg-sunken px-2 py-0.5 text-[10px] font-bold text-ink-soft">{f.name}</span>)}
-          </div>
-        </div>
-      </div>
-      {big && <p className="mt-2 rounded-lg bg-[#FFF6E6] px-2.5 py-1.5 text-[10.5px] font-semibold text-[#9a6a00]">⚠️ 내 방({capacity}kW)보다 큰 용량이에요. 신형이 전기를 더 쓸 수 있어요.</p>}
-      <button onClick={(e) => { e.stopPropagation(); onExpand(m.model_code); }}
-        className="mt-2 w-full rounded-xl border border-dashed border-line py-1.5 text-[11.5px] font-extrabold text-accent">
-        {open ? "접기 ▲" : "기능·스펙 자세히 ▾"}
-      </button>
-      {open && (
-        <div className="mt-2.5 border-t border-line pt-2.5">
-          <p className="text-[12.5px] font-extrabold text-ink">“{m.tagline}”</p>
-          {m.product_name && <p className="mt-1 text-[10px] leading-snug text-ink-300">{m.product_name}</p>}
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
-            {m.features.map((f) => (
-              <div key={f.name}>
-                <p className="text-[11px] font-extrabold text-ink"><span className="text-accent">· </span>{f.name}</p>
-                <p className="pl-2 text-[10px] leading-snug text-muted">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 

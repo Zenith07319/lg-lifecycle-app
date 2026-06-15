@@ -37,6 +37,10 @@ export default function DevicesPage() {
     return days <= 0 ? "오늘" : days === 1 ? "어제" : `${days}일 전`;
   };
 
+  // 대표 가전을 최상단으로(나머지는 최신순 유지)
+  const primary = list.find((d) => d.sessionId === primaryId);
+  const ordered = primary ? [primary, ...list.filter((d) => d.sessionId !== primaryId)] : list;
+
   return (
     <div className="pb-28">
       <AppHeader
@@ -65,7 +69,7 @@ export default function DevicesPage() {
         ) : (
           /* ── 목록 (Figma 3-3: 등급별 틸 카드 스택) ── */
           <div className="space-y-1.5">
-            {list.map((dev) => {
+            {ordered.map((dev) => {
               const bg = GRADE_CARD_BG[dev.grade] ?? GRADE_CARD_BG.C;
               const img = deviceImage(dev.form, registrationRank(list, dev.sessionId));
               const isPrimary = dev.sessionId === primaryId;
@@ -118,14 +122,14 @@ export default function DevicesPage() {
                     <Trash2 size={17} />
                   </button>
 
-                  {/* 대표 설정 — 2대 이상일 때, 대표가 아닌 카드에만 */}
+                  {/* 대표 설정 — 2대 이상·비대표 카드에만, 별표 아이콘만 */}
                   {list.length > 1 && !isPrimary && (
                     <button
                       onClick={() => setPrimaryDevice(dev.sessionId)}
-                      className="absolute bottom-3 left-[52px] z-10 flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1.5 text-[11px] font-bold text-ink-soft shadow-[0_2px_6px_rgba(0,0,0,.08)] backdrop-blur-sm active:scale-95 transition"
-                      aria-label="대표 에어컨으로 설정"
+                      className="absolute bottom-3 left-12 z-10 rounded-full p-2 text-ink/35 hover:text-ink/60 active:scale-95 transition"
+                      aria-label="대표 에어컨으로 설정" title="대표로 설정"
                     >
-                      <Star size={13} /> 대표로 설정
+                      <Star size={17} />
                     </button>
                   )}
                 </div>

@@ -1,142 +1,96 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ExternalLink, Snowflake, Repeat, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { AppHeader, LgBadge } from "@/components/ui";
-import { getSession, getProducts } from "@/lib/api";
-import type { SessionData, CatalogItem } from "@/lib/types";
-import { fmt } from "@/lib/utils";
+import { getSession, getNewModels } from "@/lib/api";
+import { NewModelCard } from "@/components/ProductLineup";
+import type { SessionData, NewModel } from "@/lib/types";
 
-const withUtm = (url: string) =>
-  url + (url.includes("?") ? "&" : "?") + "utm_source=ROR&utm_medium=recommend";
-
-export default function ProductsPage() {
+/* 추천 제품 — 결정가이드의 '추천 신제품(구매)' / '구독 상품 보기(구독)'에서 진입.
+   화면 구성은 설문 마지막 신형 비교(Q11)와 동일: 벽걸이/스탠드 탭 + 공용 라인업 카드.
+   mode(buy/sub)로 가격 표시·CTA만 분리. */
+function ProductsInner() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const sp = useSearchParams();
+  const mode: "buy" | "sub" = sp.get("mode") === "sub" ? "sub" : "buy";
+
   const [data, setData] = useState<SessionData | null>(null);
-  const [tab, setTab] = useState<"buy" | "sub">("buy");
-  const [items, setItems] = useState<CatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [models, setModels] = useState<NewModel[]>([]);
+  const [tab, setTab] = useState<"벽걸이" | "스탠드" | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => { if (sessionId) getSession(sessionId).then(setData).catch(() => {}); }, [sessionId]);
+  useEffect(() => { getNewModels().then((r) => setModels(r.items)).catch(() => {}); }, []);
 
-  const capRaw = (data?.user_inputs.capacity_kw as number) ?? 3.6;
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    getProducts(capRaw, tab)
-      .then((r) => { if (alive) setItems(r.items); })
-      .catch(() => { if (alive) setItems([]); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, [capRaw, tab]);
+  const cap = (data?.user_inputs.capacity_kw as number) ?? 3.6;
+  const userForm: "벽걸이" | "스탠드" = cap >= 5.5 ? "스탠드" : "벽걸이";
+  const activeTab = tab ?? userForm;
 
-  const months = (data?.user_inputs.usage_months as number) ?? 4;
-  const oldC = (data?.delta_old.ac_delta_cost as number) ?? 0;
-  const newC = (data?.delta_new.ac_delta_cost as number) ?? 0;
-  const save5 = Math.max(0, (oldC - newC) * months * 5);
+  // 구독 탭은 구독 제공 모델만(구독료 0 제외)
+  const pool = mode === "sub" ? models.filter((m) => m.sub_fee > 0) : models;
+  const counts = { 벽걸이: pool.filter((m) => m.form === "벽걸이").length, 스탠드: pool.filter((m) => m.form === "스탠드").length };
+  const nearest = [...pool].filter((m) => m.form === userForm)
+    .sort((a, b) => Math.abs(a.capacity_kw - cap) - Math.abs(b.capacity_kw - cap))[0];
+  const list = pool.filter((m) => m.form === activeTab).sort((a, b) => {
+    if (nearest && a.model_code === nearest.model_code) return -1;
+    if (nearest && b.model_code === nearest.model_code) return 1;
+    return a.capacity_kw - b.capacity_kw;
+  });
+
+  const title = mode === "sub" ? "구독 상품" : "추천 신제품";
+  const subtitle = mode === "sub" ? "케어십 포함 · 초기비용 0원 구독" : "교체 경로 · LG 1등급 신형";
 
   return (
     <div className="pb-28">
       <div className="px-6 pt-4">
-        <Link href={`/result/${sessionId}`} className="-ml-1 flex items-center text-ink-soft" aria-label="뒤로">
+        <Link href={`/result/${sessionId}/guide`} className="-ml-1 flex items-center text-ink-soft" aria-label="뒤로">
           <ChevronLeft size={24} />
         </Link>
       </div>
-      <AppHeader
-        title="추천 제품"
-        subtitle={tab === "buy" ? "교체 경로 · 진단값에 맞춘 1등급 제품" : "우리집 가전에 맞는 구독 상품 살펴보기"}
-        right={<LgBadge />}
-      />
+      <AppHeader title={title} subtitle={subtitle} right={<LgBadge />} />
 
-      <div className="px-6 pt-3">
-        {/* 구매 / 구독 탭 토글 */}
-        <div className="reveal reveal-1 flex gap-2">
-          {([["buy", "신제품 구매", Snowflake], ["sub", "구독", Repeat]] as const).map(([t, l, Icon]) => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-[14px] border py-3 text-[13px] font-bold transition active:scale-[.99] ${
-                tab === t
-                  ? "border-accent bg-accent-soft text-accent"
-                  : "border-line bg-white/60 text-muted"
-              }`}>
-              <Icon size={15} strokeWidth={2.4} />{l}
+      <div className="space-y-2.5 px-6 pt-3">
+        {/* 내 용량 안내 */}
+        <p className="px-1 text-[11px] text-muted">내 에어컨 <b className="text-ink-soft">{cap}kW</b> 기준 · 용량에 맞는 모델을 <b className="text-accent">내 방에 맞음</b>으로 표시</p>
+
+        {/* 벽걸이 / 스탠드 탭 (Q11 동일) */}
+        <div className="flex gap-1.5 rounded-2xl border border-line bg-white/70 p-1.5">
+          {(["벽걸이", "스탠드"] as const).map((f) => (
+            <button key={f} onClick={() => { setTab(f); setExpanded(null); }}
+              className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold transition ${activeTab === f ? "bg-accent text-white shadow-[0_4px_12px_rgba(4,125,134,.28)]" : "text-ink-soft"}`}>
+              {f} <span className={activeTab === f ? "text-white/75" : "text-ink-300"}>{counts[f]}</span>
             </button>
           ))}
         </div>
 
-        {/* 절감 안내 배너 */}
-        <div className="reveal reveal-2 mt-3 rounded-[16px] bg-accent-soft px-4 py-3.5 text-[12px] leading-relaxed text-ink-soft">
-          내 에어컨(<b>{capRaw}kW</b>)에 맞는 1등급 제품 · 교체 시 여름철 5년 전기료 절감 약{" "}
-          <b className="text-accent">{fmt(save5)}</b>
-        </div>
-
-        {loading ? (
-          <p className="py-16 text-center text-[13px] text-muted">
-            <Loader2 className="mr-1 inline animate-spin" size={14} />불러오는 중…
-          </p>
-        ) : items.length === 0 ? (
-          <p className="py-16 text-center text-[13px] text-muted">해당 용량의 추천 제품을 준비 중이에요.</p>
+        {models.length === 0 ? (
+          <p className="py-16 text-center text-[12px] text-muted">제품을 불러오는 중…</p>
+        ) : list.length === 0 ? (
+          <p className="py-16 text-center text-[12px] text-muted">해당 형태의 {mode === "sub" ? "구독 상품" : "제품"}을 준비 중이에요.</p>
         ) : (
-          <div className="mt-3 space-y-3">
-            {items.map((p) => (
-              <div key={p.model_code}
-                className="reveal flex gap-3.5 rounded-[18px] bg-white/64 p-3.5 shadow-[0_2px_8px_rgba(5,31,31,.06)] backdrop-blur-sm">
-                {/* 이미지 밴드 */}
-                <div className={`flex size-[88px] shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br shadow-[inset_0_0_0_1px_rgba(255,255,255,.6)] ${
-                  tab === "buy" ? "from-[#eef1f6] to-[#e1e7f0]" : "from-accent-soft to-[#d3edee]"
-                }`}>
-                  {tab === "buy"
-                    ? <Snowflake size={34} className="text-accent/70" strokeWidth={1.8} />
-                    : <Repeat size={32} className="text-accent" strokeWidth={1.8} />}
-                </div>
-
-                {/* 본문 */}
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <div className="flex items-start gap-2">
-                    <h3 className="min-w-0 flex-1 text-[14px] font-extrabold leading-snug text-ink">{p.model_name}</h3>
-                    {p.form && (
-                      <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-extrabold text-accent">{p.form}</span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-[11px] text-muted">냉방 {p.capacity_kw}kW · {p.model_code}</p>
-
-                  {/* 가격 */}
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[11px] text-muted">{tab === "buy" ? "판매가(참고)" : "월 구독료"}</span>
-                    <div className="text-right">
-                      {tab === "buy" && p.list_price && p.price && p.list_price > p.price && (
-                        <span className="mr-1.5 text-[10.5px] text-muted line-through">{fmt(p.list_price)}</span>
-                      )}
-                      <span className="text-[15px] font-extrabold text-ink" style={{ fontFamily: "var(--font-display)" }}>
-                        {tab === "buy"
-                          ? (p.price ? fmt(p.price) : "LG에서 확인")
-                          : (p.monthly_fee ? `${fmt(p.monthly_fee)}/월` : "LG에서 확인")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 그린 절감 박스 */}
-                  <div className="mt-2 rounded-[10px] bg-[#eef8f0] px-3 py-2 text-[11.5px] font-bold leading-snug text-[#1a7f3c]">
-                    {tab === "buy"
-                      ? `교체 시 여름철 5년 전기료 절감 약 ${fmt(save5)} · 용량 적합`
-                      : "초기비용 0원 · 신형 효율로 전기료 ↓ · 설치·관리 포함"}
-                  </div>
-
-                  {/* LG CTA */}
-                  <a href={withUtm(p.product_url)} target="_blank" rel="noopener"
-                    className="mt-3 flex items-center justify-center gap-1.5 rounded-[12px] border border-accent py-2.5 text-[13px] font-extrabold text-accent active:scale-[.99] transition">
-                    {tab === "buy" ? "LG에서 보기" : "LG 구독 상담"} <ExternalLink size={15} />
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+          list.map((m) => (
+            <NewModelCard key={m.model_code} m={m} capacity={cap}
+              recommended={!!nearest && m.model_code === nearest.model_code}
+              expanded={expanded === m.model_code}
+              onToggleExpand={(code) => setExpanded((p) => (p === code ? null : code))}
+              priceMode={mode} cta={mode} />
+          ))
         )}
 
-        <p className="mt-4 px-1 text-[10px] leading-relaxed text-muted">
-          ※ 표시가는 LG.com 기준 <b>참고 판매가</b>이며, 실제 가격·재고·프로모션·구독료는 [LG에서 보기]에서 확인하세요. 추천은 용량 적합도 기반 비교입니다.
+        <p className="px-1 pt-2 text-[10px] leading-relaxed text-muted">
+          ※ 가격·구독료는 LG.com 기준 참고값이며, 실제 가격·재고·프로모션은 [{mode === "sub" ? "LG 구독 상담" : "LG에서 보기"}]에서 확인하세요.
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="px-6 py-32 text-center text-muted">불러오는 중…</div>}>
+      <ProductsInner />
+    </Suspense>
   );
 }

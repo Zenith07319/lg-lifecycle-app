@@ -1,28 +1,28 @@
 {
   "_meta": {
     "purpose": "설문 마지막 '신형 비교(라인업 선택)' 화면용. 선택 시 신형 baseline(월간소비전력량·판매가·구독료)으로 계산 반영.",
-    "source": "LG 공식 라인업 CSV(data/lg_lineups_2026.csv, 수집 2026-06-15). 월간소비전력량=정격 냉방소비전력×80h 환산.",
+    "source": "LG 공식 라인업 CSV(data/lg_lineups_2026.csv, 단품=2in1 제외, 대표이미지 포함, 수집 2026-06-15). 월간소비전력량=정격 냉방소비전력×80h 환산. 이미지=static.lge.co.kr CDN 직링크.",
     "price_mapping": "sale_price=회원할인가, list_price=정상가, max_benefit_price=최대혜택가, sub_fee=구독_월(없으면 0).",
     "groups": "스탠드(2in1) / 벽걸이 / 창호형 / 이동식"
   },
   "models": [
     {
-      "model_code": "FQ25GN9BE2",
+      "model_code": "FQ25GN9BE1",
       "lineup": "타워I",
       "line": "타워I",
-      "product_name": "LG 휘센 AI 오브제컬렉션 타워I 에어컨 2in1 (9시리즈) 81.8㎡ 1등급",
+      "product_name": "LG 휘센 AI 오브제컬렉션 타워I 에어컨 싱글 (9시리즈)",
       "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
+      "product_type_raw": "스탠드형 / 일반배관",
       "cooling_area_m2": 81.8,
       "pyeong": 25,
       "capacity_kw": 9.0,
       "rated_power_w": 2500,
       "monthly_kwh": 200,
       "grade": "1등급",
-      "list_price": 7570000,
-      "sale_price": 6820000,
-      "max_benefit_price": 6075200,
-      "sub_fee": 140500,
+      "list_price": 6844000,
+      "sale_price": 6166000,
+      "max_benefit_price": 5517000,
+      "sub_fee": 123200,
       "tagline": "온도를 넘어 습도까지, 마침내 완벽한 바람",
       "desc": "온도를 넘어 습도까지, 마침내 완벽한 바람",
       "features": [
@@ -43,25 +43,231 @@
           "desc": "바람이 지나는 길을 꼼꼼하고 깨끗하게 관리"
         }
       ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq25gn9be2"
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731826/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq25gn9be1"
     },
     {
-      "model_code": "FQ20VDWHM2",
+      "model_code": "FQ18GV6EE1",
+      "lineup": "뷰I 프로",
+      "line": "뷰I 프로",
+      "product_name": "LG 휘센 AI 오브제컬렉션 뷰I 프로 에어컨 싱글 (6시리즈)",
+      "form": "스탠드",
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 58.5,
+      "pyeong": 18,
+      "capacity_kw": 7.2,
+      "rated_power_w": 2050,
+      "monthly_kwh": 164,
+      "grade": "1등급",
+      "list_price": 4624000,
+      "sale_price": 4166000,
+      "max_benefit_price": 3707000,
+      "sub_fee": 87900,
+      "tagline": "온도를 넘어 습도까지, 마침내 완벽한 바람",
+      "desc": "온도를 넘어 습도까지, 마침내 완벽한 바람",
+      "features": [
+        {
+          "name": "AI콜드프리",
+          "desc": "맞춤 온도와 습도로 오래 켜 놔도 춥지 않고 보송한 바람"
+        },
+        {
+          "name": "AI바람",
+          "desc": "레이더센서로 공간 감지, 사용패턴 기반 온도와 기류 제어"
+        },
+        {
+          "name": "클린뷰",
+          "desc": "심플한 오픈 구조로 편리하게 내부 청정 상태 확인 가능"
+        },
+        {
+          "name": "뷰케이스",
+          "desc": "라이프스타일과 취향에 맞게 꾸미는 나만의 쇼룸"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10729830/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gv6ee1"
+    },
+    {
+      "model_code": "FQ18GV3EE1",
+      "lineup": "뷰I",
+      "line": "뷰I",
+      "product_name": "LG 휘센 AI 오브제컬렉션 뷰I 에어컨 싱글 (3시리즈)",
+      "form": "스탠드",
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 58.5,
+      "pyeong": 18,
+      "capacity_kw": 7.2,
+      "rated_power_w": 1810,
+      "monthly_kwh": 145,
+      "grade": "1등급",
+      "list_price": 3869000,
+      "sale_price": 3486000,
+      "max_benefit_price": 3074600,
+      "sub_fee": 67900,
+      "tagline": "맞춤형 냉방으로 쉽고 에너지 사용 부담은 적게",
+      "desc": "맞춤형 냉방으로 쉽고 에너지 사용 부담은 적게",
+      "features": [
+        {
+          "name": "AI바람",
+          "desc": "실내 환경을 감지하고 사용 패턴에 맞춘 냉방"
+        },
+        {
+          "name": "쾌적제습",
+          "desc": "에너지 사용 걱정 덜어주는 가벼운 제습"
+        },
+        {
+          "name": "클린뷰",
+          "desc": "심플한 오픈 구조로 편리하게 청정 상태 확인 가능"
+        },
+        {
+          "name": "뷰케이스",
+          "desc": "라이프스타일과 취향에 맞게 꾸미는 나만의 쇼룸"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10782840/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gv3ee1"
+    },
+    {
+      "model_code": "FQ18FU1EA1",
+      "lineup": "뷰II",
+      "line": "뷰II",
+      "product_name": "LG 휘센 AI 오브제컬렉션 뷰II 에어컨 싱글 (1시리즈)",
+      "form": "스탠드",
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 58.5,
+      "pyeong": 18,
+      "capacity_kw": 7.2,
+      "rated_power_w": 2200,
+      "monthly_kwh": 176,
+      "grade": "3등급",
+      "list_price": 2493000,
+      "sale_price": 2246000,
+      "max_benefit_price": 1977200,
+      "sub_fee": 47900,
+      "tagline": "에너지 사용 부담은 적게 관리는 편리하게",
+      "desc": "에너지 사용 부담은 적게 관리는 편리하게",
+      "features": [
+        {
+          "name": "AI바람",
+          "desc": "실내 환경을 감지하고 사용 패턴에 맞춘 냉방"
+        },
+        {
+          "name": "쾌적제습",
+          "desc": "에너지 사용 걱정 덜어주는 가벼운 제습"
+        },
+        {
+          "name": "클린뷰",
+          "desc": "심플한 오픈 구조로 편리하게 내부 청정 상태 확인 가능"
+        },
+        {
+          "name": "뷰케이스",
+          "desc": "라이프스타일과 취향에 맞게 꾸미는 나만의 쇼룸"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10558826/gallery/large-interior02.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18fu1ea1"
+    },
+    {
+      "model_code": "FQ18GC4EA1",
+      "lineup": "쿨 프로",
+      "line": "쿨 프로",
+      "product_name": "LG 휘센 AI 오브제컬렉션 쿨 프로 에어컨 싱글 (4시리즈)",
+      "form": "스탠드",
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 58.5,
+      "pyeong": 18,
+      "capacity_kw": 7.2,
+      "rated_power_w": 2400,
+      "monthly_kwh": 192,
+      "grade": "3등급",
+      "list_price": 2549000,
+      "sale_price": 2296000,
+      "max_benefit_price": 2023700,
+      "sub_fee": 59900,
+      "tagline": "6가지 휘센 바람과 간편한 관리로 실내를 쾌적하게",
+      "desc": "6가지 휘센 바람과 간편한 관리로 실내를 쾌적하게",
+      "features": [
+        {
+          "name": "에어커버",
+          "desc": "바람을 넓게 분산하고 먼지와 오염으로부터 보호"
+        },
+        {
+          "name": "6가지 휘센 바람",
+          "desc": "다양한 바람으로 상황에 맞게 냉방"
+        },
+        {
+          "name": "쾌적제습",
+          "desc": "에너지 사용 부담 덜어주는 제습"
+        },
+        {
+          "name": "쿨오픈",
+          "desc": "간편한 에어컨 내부 팬 셀프 청소"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10780826/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gc4ea1"
+    },
+    {
+      "model_code": "FQ18GC1EA1",
+      "lineup": "쿨",
+      "line": "쿨",
+      "product_name": "LG 휘센 AI 오브제컬렉션 쿨 에어컨 싱글 (1시리즈)",
+      "form": "스탠드",
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 58.5,
+      "pyeong": 18,
+      "capacity_kw": 7.2,
+      "rated_power_w": 2400,
+      "monthly_kwh": 192,
+      "grade": "3등급",
+      "list_price": 2216000,
+      "sale_price": 1996000,
+      "max_benefit_price": 1763300,
+      "sub_fee": 0,
+      "tagline": "간단하게 열고 냉방은 확실하게",
+      "desc": "간단하게 열고 냉방은 확실하게",
+      "features": [
+        {
+          "name": "AI바람",
+          "desc": "사용자 선호 온도와 패턴을 학습하여 사용할수록 똑똑해지는 바람"
+        },
+        {
+          "name": "아이스쿨파워",
+          "desc": "무더운 여름 최대 4℃ 낮은 빠르고 강력한 냉방"
+        },
+        {
+          "name": "절전",
+          "desc": "절전 효율을 높일 수 있는 2단계 절전모드와 절전플래너"
+        },
+        {
+          "name": "쿨오픈",
+          "desc": "심플한 오픈 구조로 편리하게 내부 청정 상태 확인 가능"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10781866/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gc1ea1"
+    },
+    {
+      "model_code": "FQ18GW1HR1",
       "lineup": "위너 / 칸",
       "line": "위너 / 칸",
-      "product_name": "LG 휘센 오브제컬렉션 위너 2in1 65.9㎡ 3등급",
+      "product_name": "LG 휘센 AI 오브제컬렉션 위너 에어컨 싱글 (1시리즈)",
       "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
-      "cooling_area_m2": 65.9,
-      "pyeong": 20,
-      "capacity_kw": 8.1,
-      "rated_power_w": 2530,
-      "monthly_kwh": 202,
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 58.5,
+      "pyeong": 18,
+      "capacity_kw": 7.2,
+      "rated_power_w": 2400,
+      "monthly_kwh": 192,
       "grade": "3등급",
-      "list_price": 2997000,
-      "sale_price": 2090000,
-      "max_benefit_price": 1832100,
+      "list_price": 2331000,
+      "sale_price": 2100000,
+      "max_benefit_price": 1841400,
       "sub_fee": 0,
       "tagline": "맞춤형 냉방으로 공간을 더욱 쾌적하게",
       "desc": "맞춤형 냉방으로 공간을 더욱 쾌적하게",
@@ -83,26 +289,27 @@
           "desc": "열교환기 세척, AI건조로 바람이 지나는 길을 관리"
         }
       ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq20vdwhm2"
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10820840/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gw1hr1"
     },
     {
-      "model_code": "FW20HDNBM2",
+      "model_code": "FW16HDWWA1",
       "lineup": "사계절",
       "line": "사계절",
-      "product_name": "LG 휘센 오브제컬렉션 사계절에어컨 2in1 (타워 히트) 65.9㎡",
+      "product_name": "LG 휘센 사계절에어컨 (위너)",
       "form": "스탠드",
-      "product_type_raw": "2in1 / 타워 히트",
-      "cooling_area_m2": 65.9,
-      "pyeong": 20,
-      "capacity_kw": 8.1,
-      "rated_power_w": 2390,
-      "monthly_kwh": 191,
-      "grade": "",
-      "list_price": 4440000,
-      "sale_price": 4000000,
-      "max_benefit_price": 3552600,
-      "sub_fee": 81900,
+      "product_type_raw": "스탠드형 냉난방 / 일반배관",
+      "cooling_area_m2": 52.8,
+      "pyeong": 16,
+      "capacity_kw": 6.5,
+      "rated_power_w": 2200,
+      "monthly_kwh": 176,
+      "grade": "냉방 4등급 / 난방 5등급",
+      "list_price": 2886000,
+      "sale_price": 2600000,
+      "max_benefit_price": 2306400,
+      "sub_fee": 54900,
       "tagline": "냉방은 기본 온풍도 확실하게",
       "desc": "냉방은 기본 온풍도 확실하게",
       "features": [
@@ -123,216 +330,17 @@
           "desc": "장마철에도 꿉꿉하지 않은 대용량 제습"
         }
       ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fw20hdnbm2"
-    },
-    {
-      "model_code": "FQ18GV6EE2",
-      "lineup": "뷰I 프로",
-      "line": "뷰I 프로",
-      "product_name": "LG 휘센 AI 오브제컬렉션 뷰I 프로 에어컨 2in1 (6시리즈) 58.5㎡ 1등급",
-      "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
-      "cooling_area_m2": 58.5,
-      "pyeong": 18,
-      "capacity_kw": 7.2,
-      "rated_power_w": 2050,
-      "monthly_kwh": 164,
-      "grade": "1등급",
-      "list_price": 5350000,
-      "sale_price": 4820000,
-      "max_benefit_price": 4215200,
-      "sub_fee": 103500,
-      "tagline": "온도를 넘어 습도까지, 마침내 완벽한 바람",
-      "desc": "온도를 넘어 습도까지, 마침내 완벽한 바람",
-      "features": [
-        {
-          "name": "AI콜드프리",
-          "desc": "맞춤 온도와 습도로 오래 켜 놔도 춥지 않고 보송한 바람"
-        },
-        {
-          "name": "AI바람",
-          "desc": "레이더센서로 공간 감지, 사용패턴 기반 온도와 기류 제어"
-        },
-        {
-          "name": "클린뷰",
-          "desc": "심플한 오픈 구조로 편리하게 내부 청정 상태 확인 가능"
-        },
-        {
-          "name": "뷰케이스",
-          "desc": "라이프스타일과 취향에 맞게 꾸미는 나만의 쇼룸"
-        }
-      ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gv6ee2"
-    },
-    {
-      "model_code": "FQ18GV3EE2",
-      "lineup": "뷰I",
-      "line": "뷰I",
-      "product_name": "LG 휘센 AI 오브제컬렉션 뷰I 에어컨 2in1 (3시리즈) 58.5㎡ 1등급",
-      "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
-      "cooling_area_m2": 58.5,
-      "pyeong": 18,
-      "capacity_kw": 7.2,
-      "rated_power_w": 1810,
-      "monthly_kwh": 145,
-      "grade": "1등급",
-      "list_price": 4407000,
-      "sale_price": 3970000,
-      "max_benefit_price": 3524700,
-      "sub_fee": 79900,
-      "tagline": "맞춤형 냉방으로 쉽고 에너지 사용 부담은 적게",
-      "desc": "맞춤형 냉방으로 쉽고 에너지 사용 부담은 적게",
-      "features": [
-        {
-          "name": "AI바람",
-          "desc": "실내 환경을 감지하고 사용 패턴에 맞춘 냉방"
-        },
-        {
-          "name": "쾌적제습",
-          "desc": "에너지 사용 걱정 덜어주는 가벼운 제습"
-        },
-        {
-          "name": "클린뷰",
-          "desc": "심플한 오픈 구조로 편리하게 청정 상태 확인 가능"
-        },
-        {
-          "name": "뷰케이스",
-          "desc": "라이프스타일과 취향에 맞게 꾸미는 나만의 쇼룸"
-        }
-      ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq18gv3ee2"
-    },
-    {
-      "model_code": "FQ17GU1ED2",
-      "lineup": "뷰II",
-      "line": "뷰II",
-      "product_name": "LG 휘센 AI 오브제컬렉션 뷰II 에어컨 2in1 (1시리즈) 56.9㎡ 3등급",
-      "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
-      "cooling_area_m2": 56.9,
-      "pyeong": 17,
-      "capacity_kw": 7.0,
-      "rated_power_w": 2080,
-      "monthly_kwh": 166,
-      "grade": "3등급",
-      "list_price": 3108000,
-      "sale_price": 2300000,
-      "max_benefit_price": 2027400,
-      "sub_fee": 56900,
-      "tagline": "에너지 사용 부담은 적게 관리는 편리하게",
-      "desc": "에너지 사용 부담은 적게 관리는 편리하게",
-      "features": [
-        {
-          "name": "AI바람",
-          "desc": "실내 환경을 감지하고 사용 패턴에 맞춘 냉방"
-        },
-        {
-          "name": "쾌적제습",
-          "desc": "에너지 사용 걱정 덜어주는 가벼운 제습"
-        },
-        {
-          "name": "클린뷰",
-          "desc": "심플한 오픈 구조로 편리하게 내부 청정 상태 확인 가능"
-        },
-        {
-          "name": "뷰케이스",
-          "desc": "라이프스타일과 취향에 맞게 꾸미는 나만의 쇼룸"
-        }
-      ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq17gu1ed2"
-    },
-    {
-      "model_code": "FQ17GC4ED2",
-      "lineup": "쿨 프로",
-      "line": "쿨 프로",
-      "product_name": "LG 휘센 AI 오브제컬렉션 쿨 프로 에어컨 2in1 (4시리즈) 56.9㎡ 3등급",
-      "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
-      "cooling_area_m2": 56.9,
-      "pyeong": 17,
-      "capacity_kw": 7.0,
-      "rated_power_w": 2350,
-      "monthly_kwh": 188,
-      "grade": "3등급",
-      "list_price": 2997000,
-      "sale_price": 2550000,
-      "max_benefit_price": 2259900,
-      "sub_fee": 68900,
-      "tagline": "6가지 휘센 바람과 간편한 관리로 실내를 쾌적하게",
-      "desc": "6가지 휘센 바람과 간편한 관리로 실내를 쾌적하게",
-      "features": [
-        {
-          "name": "에어커버",
-          "desc": "바람을 넓게 분산하고 먼지와 오염으로부터 보호"
-        },
-        {
-          "name": "6가지 휘센 바람",
-          "desc": "다양한 바람으로 상황에 맞게 냉방"
-        },
-        {
-          "name": "쾌적제습",
-          "desc": "에너지 사용 부담 덜어주는 제습"
-        },
-        {
-          "name": "쿨오픈",
-          "desc": "간편한 에어컨 내부 팬 셀프 청소"
-        }
-      ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq17gc4ed2"
-    },
-    {
-      "model_code": "FQ17GC1ED2",
-      "lineup": "쿨",
-      "line": "쿨",
-      "product_name": "LG 휘센 AI 오브제컬렉션 쿨 에어컨 2in1 (1시리즈) 56.9㎡ 3등급",
-      "form": "스탠드",
-      "product_type_raw": "2in1 / 일반배관",
-      "cooling_area_m2": 56.9,
-      "pyeong": 17,
-      "capacity_kw": 7.0,
-      "rated_power_w": 2350,
-      "monthly_kwh": 188,
-      "grade": "3등급",
-      "list_price": 2720000,
-      "sale_price": 2080000,
-      "max_benefit_price": 1822800,
-      "sub_fee": 54900,
-      "tagline": "간단하게 열고 냉방은 확실하게",
-      "desc": "간단하게 열고 냉방은 확실하게",
-      "features": [
-        {
-          "name": "AI바람",
-          "desc": "사용자 선호 온도와 패턴을 학습하여 사용할수록 똑똑해지는 바람"
-        },
-        {
-          "name": "아이스쿨파워",
-          "desc": "무더운 여름 최대 4℃ 낮은 빠르고 강력한 냉방"
-        },
-        {
-          "name": "절전",
-          "desc": "절전 효율을 높일 수 있는 2단계 절전모드와 절전플래너"
-        },
-        {
-          "name": "쿨오픈",
-          "desc": "심플한 오픈 구조로 편리하게 내부 청정 상태 확인 가능"
-        }
-      ],
-      "image": null,
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq17gc1ed2"
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md09765838/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fw16hdwwa1"
     },
     {
       "model_code": "SQ07GS9EES",
       "lineup": "벽걸이",
       "line": "벽걸이",
-      "product_name": "LG 휘센 AI 오브제컬렉션 듀얼쿨 벽걸이에어컨 22.8㎡ 1등급",
+      "product_name": "LG 휘센 AI 오브제컬렉션 듀얼쿨 벽걸이에어컨",
       "form": "벽걸이",
-      "product_type_raw": "벽걸이",
+      "product_type_raw": "벽걸이형",
       "cooling_area_m2": 22.8,
       "pyeong": 7,
       "capacity_kw": 2.8,
@@ -363,14 +371,15 @@
           "desc": "미세하고 고르게 퍼지는 조용한 냉방"
         }
       ],
-      "image": null,
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731828/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
       "product_url": "https://www.lge.co.kr/air-conditioners/sq07gs9ees-akor"
     },
     {
       "model_code": "WQ06FCWUS1",
       "lineup": "엣지(창호형에어컨)",
       "line": "엣지",
-      "product_name": "LG 휘센 오브제컬렉션 엣지 창호형 에어컨",
+      "product_name": "LG 휘센 오브제컬렉션 엣지 창호형 에어컨 마감키트",
       "form": "창호형",
       "product_type_raw": "창호형 / 창문형",
       "cooling_area_m2": 19.4,
@@ -403,16 +412,17 @@
           "desc": "에너지 절약을 도와주는 절전모드"
         }
       ],
-      "image": null,
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10771829/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
       "product_url": "https://www.lge.co.kr/air-conditioners/wq06fcwus1"
     },
     {
       "model_code": "PQ08FDWAS",
       "lineup": "이동식 에어컨",
       "line": "이동식 에어컨",
-      "product_name": "LG 휘센 오브제컬렉션 이동식 에어컨 (듀얼호스) 26㎡ 1등급",
+      "product_name": "LG 휘센 오브제컬렉션 이동식 에어컨 (듀얼호스)",
       "form": "이동식",
-      "product_type_raw": "이동식",
+      "product_type_raw": "이동식 / 듀얼호스",
       "cooling_area_m2": 26.0,
       "pyeong": 8,
       "capacity_kw": 3.2,
@@ -443,7 +453,8 @@
           "desc": "복잡한 시공 없이 쉬운 설치와 이동"
         }
       ],
-      "image": null,
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10572832/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
       "product_url": "https://www.lge.co.kr/air-conditioners/pq08fdwas-akor"
     }
   ]

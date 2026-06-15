@@ -536,7 +536,7 @@ function gradeCls(g: string) {
 }
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-const GROUP_LABEL: Record<string, string> = { "스탠드": "스탠드 (2in1)", "벽걸이": "벽걸이", "창호형": "창호형", "이동식": "이동식" };
+const GROUP_LABEL: Record<string, string> = { "스탠드": "스탠드", "벽걸이": "벽걸이", "창호형": "창호형", "이동식": "이동식" };
 
 function ProductStep({ capacity, userKwh, userForm, models, recommended, selected, onSelect, expanded, onExpand }: {
   capacity: number; userKwh: number; userForm: "벽걸이" | "스탠드"; models: NewModel[];
@@ -578,6 +578,7 @@ function ProductCard({ m, capacity, on, rec, open, onSelect, onExpand }: {
   m: NewModel; capacity: number; on: boolean; rec: boolean; open: boolean;
   onSelect: (code: string) => void; onExpand: (code: string) => void;
 }) {
+  const [imgErr, setImgErr] = useState(false);
   const big = m.capacity_kw > capacity * 1.5;
   const tall = m.form === "스탠드";
   return (
@@ -585,10 +586,12 @@ function ProductCard({ m, capacity, on, rec, open, onSelect, onExpand }: {
       className={`relative rounded-[18px] p-3 shadow-[var(--shadow-card)] transition active:scale-[.99] ${on ? "border-2 border-accent bg-white" : "border border-line bg-white/80"}`}>
       {on && <div className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-accent text-white"><Check size={13} /></div>}
       <div className="flex gap-3">
-        <div className="flex h-[88px] w-[72px] shrink-0 items-center justify-center rounded-xl border border-[#e7e8e2] bg-gradient-to-b from-[#f3f2ee] to-[#e7e8e2]">
-          {tall
-            ? <div className="relative h-[70px] w-6 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-[#fbfbf8] to-[#e8e9e3]"><span className="absolute left-1/2 top-2 size-2 -translate-x-1/2 rounded-full bg-[#7a847f]" /></div>
-            : <div className="h-6 w-14 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-white to-[#eceee9]" />}
+        <div className="flex size-[88px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#e7e8e2] bg-white">
+          {m.image && !imgErr
+            ? <img src={m.image} alt={m.line} loading="lazy" onError={() => setImgErr(true)} className="size-full object-cover" />
+            : tall
+              ? <div className="relative h-[70px] w-6 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-[#fbfbf8] to-[#e8e9e3]"><span className="absolute left-1/2 top-2 size-2 -translate-x-1/2 rounded-full bg-[#7a847f]" /></div>
+              : <div className="h-6 w-14 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-white to-[#eceee9]" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1">

@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api", tags=["centers"])
 _CSV = Path(__file__).resolve().parent.parent.parent / "data" / "lg_service_centers.csv"
 TEL = "1544-7777"
 HOURS = "평일 09:00–18:00 · 토 09:00–13:00"
-RESERVE_URL = "https://www.lge.co.kr/support/repair-and-engineer-visit"
+RESERVE_URL = "https://www.lge.co.kr/support"   # 구 URL(/support/repair-and-engineer-visit) 404 → 공식 지원 허브로 교체
 _ORDER = ["서울", "경기", "인천", "대전/세종", "충청", "강원", "대구", "경북",
           "부산", "울산", "경남", "광주", "전라", "제주"]
 

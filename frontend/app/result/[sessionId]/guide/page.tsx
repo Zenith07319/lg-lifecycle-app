@@ -39,7 +39,7 @@ export default function GuidePage() {
   const score = Math.round(opt.final_score * 100);
 
   const next = [
-    { icon: ShoppingBag, label: "추천 신제품", sub: "구매 · 1등급 신형", href: `/products/${sessionId}?mode=buy`, lg: true },
+    { icon: ShoppingBag, label: "추천 신제품", sub: "구매 · LG 신형", href: `/products/${sessionId}?mode=buy`, lg: true },
     { icon: Repeat, label: "구독 상품 보기", sub: "케어십 포함 구독", href: `/products/${sessionId}?mode=sub`, lg: true },
     { icon: MapPin, label: "주변 서비스센터", sub: "수리 · 점검 예약", href: "/centers", lg: false },
     { icon: FileText, label: "A/S Fast Pass", sub: "상태 요약 PDF", href: `/fastpass/${sessionId}`, lg: false },

@@ -40,7 +40,7 @@ function ProductsInner() {
   });
 
   const title = mode === "sub" ? "구독 상품" : "추천 신제품";
-  const subtitle = mode === "sub" ? "케어십 포함 · 초기비용 0원 구독" : "교체 경로 · LG 1등급 신형";
+  const subtitle = mode === "sub" ? "케어십 포함 · 초기비용 0원 구독" : "교체 경로 · LG 신형";
 
   return (
     <div className="pb-28">

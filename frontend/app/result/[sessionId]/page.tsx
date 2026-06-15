@@ -60,7 +60,7 @@ export default function ResultPage() {
   const ranked = [...(data.ranked_options ?? [])].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
   const rec1 = (data.report?.recommendation_1st as string) || ranked[0]?.label || "";
   const sel = data.selected_new_model ?? inp.selected_new_model;   // 사용자가 고른 신형 비교 기준(세션 user_inputs에 영속)
-  const newLabel = sel ? (sel.grade ? `신형 ${sel.grade}` : "신형") : "1등급 신형";
+  const newLabel = "신형";   // 실제 등급은 아래 '비교 기준' 줄에 표기(1등급 단정 회피)
   const selMeta = sel ? [sel.grade, `월 ${sel.monthly_kwh}kWh`, won(sel.sale_price)].filter(Boolean).join(" · ") : "";
 
   return (

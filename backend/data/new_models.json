@@ -1,51 +1,379 @@
 {
   "_meta": {
-    "purpose": "설문 마지막 '신형 비교(라인업 선택)' 화면용. 선택 시 신형 baseline(월간소비전력량·판매가·구독료)으로 계산 반영.",
-    "source": "LG 공식 라인업 CSV(data/lg_lineups_2026.csv, 단품=2in1 제외, 대표이미지 포함, 수집 2026-06-15). 월간소비전력량=정격 냉방소비전력×80h 환산. 이미지=static.lge.co.kr CDN 직링크.",
+    "purpose": "설문 마지막 '신형 비교' 화면(벽걸이/스탠드 탭). 선택 시 신형 baseline(월kWh·판매가·구독료)으로 계산 반영.",
+    "source": "벽걸이=lg_wall_lineups_2026.csv(8종), 스탠드=lg_lineups_2026.csv 단품(8종). 수집 2026-06-15. 월kWh=정격소비전력×80h. 이미지=static.lge.co.kr 직링크. 창호·이동식 제외.",
     "price_mapping": "sale_price=회원할인가, list_price=정상가, max_benefit_price=최대혜택가, sub_fee=구독_월(없으면 0).",
-    "groups": "스탠드(2in1) / 벽걸이 / 창호형 / 이동식"
+    "tabs": "벽걸이 / 스탠드"
   },
   "models": [
     {
-      "model_code": "FQ25GN9BE1",
-      "lineup": "타워I",
-      "line": "타워I",
-      "product_name": "LG 휘센 AI 오브제컬렉션 타워I 에어컨 싱글 (9시리즈)",
-      "form": "스탠드",
-      "product_type_raw": "스탠드형 / 일반배관",
-      "cooling_area_m2": 81.8,
-      "pyeong": 25,
-      "capacity_kw": 9.0,
-      "rated_power_w": 2500,
-      "monthly_kwh": 200,
+      "model_code": "SQ06EJ1WES",
+      "lineup": "휘센 6평 1등급 벽걸이",
+      "line": "휘센 6평 1등급 벽걸이",
+      "product_name": "LG 휘센 벽걸이에어컨 18.7㎡ 1등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 18.7,
+      "pyeong": 6,
+      "capacity_kw": 2.3,
+      "rated_power_w": 510,
+      "monthly_kwh": 41,
       "grade": "1등급",
-      "list_price": 6844000,
-      "sale_price": 6166000,
-      "max_benefit_price": 5517000,
-      "sub_fee": 123200,
-      "tagline": "온도를 넘어 습도까지, 마침내 완벽한 바람",
-      "desc": "온도를 넘어 습도까지, 마침내 완벽한 바람",
+      "list_price": 1263000,
+      "sale_price": 1070000,
+      "max_benefit_price": 967200,
+      "sub_fee": 26900,
+      "tagline": "원룸·작은방용 18.7㎡ 1등급 벽걸이",
+      "desc": "원룸·작은방용 18.7㎡ 1등급 벽걸이",
+      "features": [
+        {
+          "name": "AI건조",
+          "desc": "에어컨 사용 후 송풍으로 내부 습기 관리"
+        },
+        {
+          "name": "스마트케어",
+          "desc": "공간 온도와 사용 패턴에 맞춰 쾌적 운전"
+        },
+        {
+          "name": "아이스쿨파워",
+          "desc": "더운 공간을 빠르게 식히는 강한 냉방"
+        },
+        {
+          "name": "열교환기 세척",
+          "desc": "열교환기 청정 관리를 지원"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10269826/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq06ej1wes"
+    },
+    {
+      "model_code": "SW07GK1WES",
+      "lineup": "휘센 사계절 벽걸이",
+      "line": "휘센 사계절 벽걸이",
+      "product_name": "LG 휘센 사계절에어컨 (벽걸이) 22㎡ 1등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 사계절 냉난방",
+      "cooling_area_m2": 22.0,
+      "pyeong": 7,
+      "capacity_kw": 2.7,
+      "rated_power_w": 590,
+      "monthly_kwh": 47,
+      "grade": "1등급",
+      "list_price": 1991000,
+      "sale_price": 1810000,
+      "max_benefit_price": 1590300,
+      "sub_fee": 39900,
+      "tagline": "냉방과 난방을 함께 고려한 2026년형 사계절 벽걸이",
+      "desc": "냉방과 난방을 함께 고려한 2026년형 사계절 벽걸이",
+      "features": [
+        {
+          "name": "냉난방",
+          "desc": "냉방 22.0㎡, 난방 17.1㎡ 공간 대응"
+        },
+        {
+          "name": "AI건조",
+          "desc": "운전 후 내부 습기 관리"
+        },
+        {
+          "name": "올클리닝",
+          "desc": "청정 관리가 쉬운 구조"
+        },
+        {
+          "name": "ThinQ(Wi-Fi)",
+          "desc": "앱 연동 및 예약 편의 지원"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731832/gallery/large-interior02.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sw07gk1wes-akor"
+    },
+    {
+      "model_code": "SQ07GS9EES",
+      "lineup": "듀얼쿨 AI 벽걸이",
+      "line": "듀얼쿨 AI 벽걸이",
+      "product_name": "LG 휘센 AI 오브제컬렉션 듀얼쿨 벽걸이에어컨 22.8㎡ 1등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 22.8,
+      "pyeong": 7,
+      "capacity_kw": 2.8,
+      "rated_power_w": 690,
+      "monthly_kwh": 55,
+      "grade": "1등급",
+      "list_price": 1716000,
+      "sale_price": 1460000,
+      "max_benefit_price": 1292700,
+      "sub_fee": 34900,
+      "tagline": "맞춤 온습도와 위생 관리까지 강화한 2026년형 듀얼쿨 벽걸이",
+      "desc": "맞춤 온습도와 위생 관리까지 강화한 2026년형 듀얼쿨 벽걸이",
       "features": [
         {
           "name": "AI콜드프리",
-          "desc": "맞춤 온도와 습도로 오래 켜 놔도 춥지 않고 보송한 바람"
+          "desc": "정온제습 기술로 온도와 습도를 맞춰 냉방"
         },
         {
-          "name": "AI바람",
-          "desc": "레이더센서로 공간 감지, 사용패턴 기반 온도와 기류 제어"
+          "name": "레이더센서 AI바람",
+          "desc": "공간과 사용 패턴을 감지해 기류를 제어"
         },
         {
-          "name": "AI수면",
-          "desc": "편안한 수면 환경 유지하는 맞춤형 온도, 습도, 기류제어"
+          "name": "UV-LED 팬살균",
+          "desc": "시원한 바람을 만드는 팬을 UV-LED로 관리"
         },
         {
-          "name": "휘센 청정관리",
-          "desc": "바람이 지나는 길을 꼼꼼하고 깨끗하게 관리"
+          "name": "아이스쿨파워",
+          "desc": "빠르고 강한 냉방 운전"
         }
       ],
-      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731826/gallery/large-interior01.jpg",
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731828/gallery/large-interior01.jpg",
       "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
-      "product_url": "https://www.lge.co.kr/air-conditioners/fq25gn9be1"
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq07gs9ees-akor"
+    },
+    {
+      "model_code": "SQ07GS8EAS",
+      "lineup": "듀얼쿨 벽걸이",
+      "line": "듀얼쿨 벽걸이",
+      "product_name": "LG 휘센 오브제컬렉션 듀얼쿨 벽걸이에어컨 22.8㎡ 3등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 22.8,
+      "pyeong": 7,
+      "capacity_kw": 2.8,
+      "rated_power_w": 820,
+      "monthly_kwh": 66,
+      "grade": "3등급",
+      "list_price": 1454000,
+      "sale_price": 1210000,
+      "max_benefit_price": 1060200,
+      "sub_fee": 30900,
+      "tagline": "소프트바람과 위생 관리 기능을 갖춘 듀얼쿨 벽걸이",
+      "desc": "소프트바람과 위생 관리 기능을 갖춘 듀얼쿨 벽걸이",
+      "features": [
+        {
+          "name": "아이스쿨파워",
+          "desc": "강력한 바람으로 빠른 냉방 지원"
+        },
+        {
+          "name": "AI건조",
+          "desc": "운전 정지 후 자동 건조로 내부 습기 관리"
+        },
+        {
+          "name": "UV-LED 팬살균",
+          "desc": "팬 위생 관리를 돕는 UV-LED 기능"
+        },
+        {
+          "name": "올클리닝",
+          "desc": "분리·세척 중심의 청정 관리 구조"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731828/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq07gs8eas-akor"
+    },
+    {
+      "model_code": "SQ07GJ3WES",
+      "lineup": "휘센 7평 1등급 벽걸이",
+      "line": "휘센 7평 1등급 벽걸이",
+      "product_name": "LG 휘센 벽걸이에어컨 22.8㎡ 1등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 22.8,
+      "pyeong": 7,
+      "capacity_kw": 2.8,
+      "rated_power_w": 700,
+      "monthly_kwh": 56,
+      "grade": "1등급",
+      "list_price": 1388000,
+      "sale_price": 1250000,
+      "max_benefit_price": 1097400,
+      "sub_fee": 29900,
+      "tagline": "7평형 공간에 맞춘 1등급 인버터 벽걸이",
+      "desc": "7평형 공간에 맞춘 1등급 인버터 벽걸이",
+      "features": [
+        {
+          "name": "아이스쿨파워",
+          "desc": "정격 2,800W 냉방능력으로 빠른 냉방 지원"
+        },
+        {
+          "name": "AI건조",
+          "desc": "운전 후 송풍 건조로 내부 습기 관리"
+        },
+        {
+          "name": "스마트케어",
+          "desc": "온도와 사용 패턴 기반의 자동 운전 지원"
+        },
+        {
+          "name": "ThinQ(Wi-Fi)",
+          "desc": "앱 기반 원격 제어와 사용 편의 기능"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731831/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq07gj3wes-akor"
+    },
+    {
+      "model_code": "SQ11EK1WES",
+      "lineup": "휘센 11평 1등급 벽걸이",
+      "line": "휘센 11평 1등급 벽걸이",
+      "product_name": "LG 휘센 벽걸이에어컨 34.1㎡ 1등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 34.1,
+      "pyeong": 10,
+      "capacity_kw": 4.2,
+      "rated_power_w": 1000,
+      "monthly_kwh": 80,
+      "grade": "1등급",
+      "list_price": 1610000,
+      "sale_price": 1450000,
+      "max_benefit_price": 1283400,
+      "sub_fee": 33900,
+      "tagline": "34.1㎡ 중형 공간용 1등급 벽걸이",
+      "desc": "34.1㎡ 중형 공간용 1등급 벽걸이",
+      "features": [
+        {
+          "name": "아이스쿨파워",
+          "desc": "시원한 공기를 빠르게 채우는 냉방"
+        },
+        {
+          "name": "AI건조",
+          "desc": "에어컨 사용 후 송풍으로 습기 제거 지원"
+        },
+        {
+          "name": "스마트케어",
+          "desc": "사용 패턴에 맞춘 쾌적 운전"
+        },
+        {
+          "name": "ThinQ(Wi-Fi)",
+          "desc": "원격 제어와 편의 기능 지원"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10269827/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq11ek1wes"
+    },
+    {
+      "model_code": "SQ13EK1WAS",
+      "lineup": "휘센 13평 2등급 벽걸이",
+      "line": "휘센 13평 2등급 벽걸이",
+      "product_name": "LG 휘센 벽걸이에어컨 42.3㎡ 2등급",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 42.3,
+      "pyeong": 13,
+      "capacity_kw": 5.2,
+      "rated_power_w": 1420,
+      "monthly_kwh": 114,
+      "grade": "2등급",
+      "list_price": 1794000,
+      "sale_price": 1520000,
+      "max_benefit_price": 1320600,
+      "sub_fee": 34900,
+      "tagline": "42.3㎡ 넓은 방·소형 거실용 2등급 벽걸이",
+      "desc": "42.3㎡ 넓은 방·소형 거실용 2등급 벽걸이",
+      "features": [
+        {
+          "name": "아이스쿨파워",
+          "desc": "정격 5,200W 냉방능력으로 빠른 냉방 지원"
+        },
+        {
+          "name": "AI건조",
+          "desc": "운전 후 내부 습기 관리"
+        },
+        {
+          "name": "스마트케어",
+          "desc": "상황과 패턴에 맞춘 냉방 운전"
+        },
+        {
+          "name": "전력량 표시",
+          "desc": "사용 전력 확인을 돕는 편의 기능"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10269828/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq13ek1was"
+    },
+    {
+      "model_code": "SQ16EK1WAS",
+      "lineup": "휘센 16평 벽걸이",
+      "line": "휘센 16평 벽걸이",
+      "product_name": "LG 휘센 벽걸이에어컨 52.8㎡",
+      "form": "벽걸이",
+      "product_type_raw": "벽걸이형 / 냉방전용",
+      "cooling_area_m2": 52.8,
+      "pyeong": 16,
+      "capacity_kw": 6.5,
+      "rated_power_w": 2050,
+      "monthly_kwh": 164,
+      "grade": "3등급",
+      "list_price": 2030000,
+      "sale_price": 1720000,
+      "max_benefit_price": 1506600,
+      "sub_fee": 37900,
+      "tagline": "52.8㎡ 대면적 공간용 고출력 벽걸이",
+      "desc": "52.8㎡ 대면적 공간용 고출력 벽걸이",
+      "features": [
+        {
+          "name": "아이스쿨파워",
+          "desc": "정격 6,500W 냉방능력으로 강한 냉방 지원"
+        },
+        {
+          "name": "AI건조",
+          "desc": "운전 후 내부 습기 관리"
+        },
+        {
+          "name": "스마트케어",
+          "desc": "상황·패턴 학습 기반 냉방 운전"
+        },
+        {
+          "name": "장마철강력제습",
+          "desc": "습도 높은 날의 제습 운전 지원"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10296830/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/sq16ek1was-akor"
+    },
+    {
+      "model_code": "FW16HDWWA1",
+      "lineup": "사계절",
+      "line": "사계절",
+      "product_name": "LG 휘센 사계절에어컨 (위너)",
+      "form": "스탠드",
+      "product_type_raw": "스탠드형 냉난방 / 일반배관",
+      "cooling_area_m2": 52.8,
+      "pyeong": 16,
+      "capacity_kw": 6.5,
+      "rated_power_w": 2200,
+      "monthly_kwh": 176,
+      "grade": "냉방 4등급 / 난방 5등급",
+      "list_price": 2886000,
+      "sale_price": 2600000,
+      "max_benefit_price": 2306400,
+      "sub_fee": 54900,
+      "tagline": "냉방은 기본 온풍도 확실하게",
+      "desc": "냉방은 기본 온풍도 확실하게",
+      "features": [
+        {
+          "name": "온풍",
+          "desc": "영하 10도까지 내려가는 겨울에도 따뜻한 파워온풍"
+        },
+        {
+          "name": "한쪽바람",
+          "desc": "왼쪽, 오른쪽 원하는 방향으로 보내는 간접바람 (모델별 상이)"
+        },
+        {
+          "name": "공기청정",
+          "desc": "추울 때는 따뜻한 공기청정, 더울 때는 시원한 공기청정"
+        },
+        {
+          "name": "제습",
+          "desc": "장마철에도 꿉꿉하지 않은 대용량 제습"
+        }
+      ],
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md09765838/gallery/large-interior01.jpg",
+      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
+      "product_url": "https://www.lge.co.kr/air-conditioners/fw16hdwwa1"
     },
     {
       "model_code": "FQ18GV6EE1",
@@ -294,65 +622,24 @@
       "product_url": "https://www.lge.co.kr/air-conditioners/fq18gw1hr1"
     },
     {
-      "model_code": "FW16HDWWA1",
-      "lineup": "사계절",
-      "line": "사계절",
-      "product_name": "LG 휘센 사계절에어컨 (위너)",
+      "model_code": "FQ25GN9BE1",
+      "lineup": "타워I",
+      "line": "타워I",
+      "product_name": "LG 휘센 AI 오브제컬렉션 타워I 에어컨 싱글 (9시리즈)",
       "form": "스탠드",
-      "product_type_raw": "스탠드형 냉난방 / 일반배관",
-      "cooling_area_m2": 52.8,
-      "pyeong": 16,
-      "capacity_kw": 6.5,
-      "rated_power_w": 2200,
-      "monthly_kwh": 176,
-      "grade": "냉방 4등급 / 난방 5등급",
-      "list_price": 2886000,
-      "sale_price": 2600000,
-      "max_benefit_price": 2306400,
-      "sub_fee": 54900,
-      "tagline": "냉방은 기본 온풍도 확실하게",
-      "desc": "냉방은 기본 온풍도 확실하게",
-      "features": [
-        {
-          "name": "온풍",
-          "desc": "영하 10도까지 내려가는 겨울에도 따뜻한 파워온풍"
-        },
-        {
-          "name": "한쪽바람",
-          "desc": "왼쪽, 오른쪽 원하는 방향으로 보내는 간접바람 (모델별 상이)"
-        },
-        {
-          "name": "공기청정",
-          "desc": "추울 때는 따뜻한 공기청정, 더울 때는 시원한 공기청정"
-        },
-        {
-          "name": "제습",
-          "desc": "장마철에도 꿉꿉하지 않은 대용량 제습"
-        }
-      ],
-      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md09765838/gallery/large-interior01.jpg",
-      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
-      "product_url": "https://www.lge.co.kr/air-conditioners/fw16hdwwa1"
-    },
-    {
-      "model_code": "SQ07GS9EES",
-      "lineup": "벽걸이",
-      "line": "벽걸이",
-      "product_name": "LG 휘센 AI 오브제컬렉션 듀얼쿨 벽걸이에어컨",
-      "form": "벽걸이",
-      "product_type_raw": "벽걸이형",
-      "cooling_area_m2": 22.8,
-      "pyeong": 7,
-      "capacity_kw": 2.8,
-      "rated_power_w": 690,
-      "monthly_kwh": 55,
+      "product_type_raw": "스탠드형 / 일반배관",
+      "cooling_area_m2": 81.8,
+      "pyeong": 25,
+      "capacity_kw": 9.0,
+      "rated_power_w": 2500,
+      "monthly_kwh": 200,
       "grade": "1등급",
-      "list_price": 1716000,
-      "sale_price": 1460000,
-      "max_benefit_price": 1292700,
-      "sub_fee": 34900,
-      "tagline": "춥지 않은 쾌적한 바람",
-      "desc": "춥지 않은 쾌적한 바람",
+      "list_price": 6844000,
+      "sale_price": 6166000,
+      "max_benefit_price": 5517000,
+      "sub_fee": 123200,
+      "tagline": "온도를 넘어 습도까지, 마침내 완벽한 바람",
+      "desc": "온도를 넘어 습도까지, 마침내 완벽한 바람",
       "features": [
         {
           "name": "AI콜드프리",
@@ -363,99 +650,17 @@
           "desc": "레이더센서로 공간 감지, 사용패턴 기반 온도와 기류 제어"
         },
         {
+          "name": "AI수면",
+          "desc": "편안한 수면 환경 유지하는 맞춤형 온도, 습도, 기류제어"
+        },
+        {
           "name": "휘센 청정관리",
-          "desc": "AI열교환기 세척, AI건조, UV-LED로 일상 속 관리"
-        },
-        {
-          "name": "소프트바람",
-          "desc": "미세하고 고르게 퍼지는 조용한 냉방"
+          "desc": "바람이 지나는 길을 꼼꼼하고 깨끗하게 관리"
         }
       ],
-      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731828/gallery/large-interior01.jpg",
+      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10731826/gallery/large-interior01.jpg",
       "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
-      "product_url": "https://www.lge.co.kr/air-conditioners/sq07gs9ees-akor"
-    },
-    {
-      "model_code": "WQ06FCWUS1",
-      "lineup": "엣지(창호형에어컨)",
-      "line": "엣지",
-      "product_name": "LG 휘센 오브제컬렉션 엣지 창호형 에어컨 마감키트",
-      "form": "창호형",
-      "product_type_raw": "창호형 / 창문형",
-      "cooling_area_m2": 19.4,
-      "pyeong": 6,
-      "capacity_kw": 2.4,
-      "rated_power_w": 990,
-      "monthly_kwh": 79,
-      "grade": "1등급",
-      "list_price": 1554000,
-      "sale_price": 1400000,
-      "max_benefit_price": 1236900,
-      "sub_fee": 0,
-      "tagline": "내가 찾던 인테리어 창호형 에어컨",
-      "desc": "내가 찾던 인테리어 창호형 에어컨",
-      "features": [
-        {
-          "name": "스마트케어",
-          "desc": "사용 패턴에 맞춰 쾌적한 온도 유지"
-        },
-        {
-          "name": "강력제습",
-          "desc": "장마철이나 습도 높은 환경에도 쾌적한 공간 유지"
-        },
-        {
-          "name": "간편한 설치",
-          "desc": "복잡한 시공 없이 창문에 설치"
-        },
-        {
-          "name": "절전",
-          "desc": "에너지 절약을 도와주는 절전모드"
-        }
-      ],
-      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10771829/gallery/large-interior01.jpg",
-      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
-      "product_url": "https://www.lge.co.kr/air-conditioners/wq06fcwus1"
-    },
-    {
-      "model_code": "PQ08FDWAS",
-      "lineup": "이동식 에어컨",
-      "line": "이동식 에어컨",
-      "product_name": "LG 휘센 오브제컬렉션 이동식 에어컨 (듀얼호스)",
-      "form": "이동식",
-      "product_type_raw": "이동식 / 듀얼호스",
-      "cooling_area_m2": 26.0,
-      "pyeong": 8,
-      "capacity_kw": 3.2,
-      "rated_power_w": 1540,
-      "monthly_kwh": 123,
-      "grade": "1등급",
-      "list_price": 1221000,
-      "sale_price": 1130000,
-      "max_benefit_price": 1023000,
-      "sub_fee": 0,
-      "tagline": "전기료 걱정 없이 시원한 냉방",
-      "desc": "전기료 걱정 없이 시원한 냉방",
-      "features": [
-        {
-          "name": "듀얼호스",
-          "desc": "휘센만의 듀얼호스로 빠른 냉방, 낮은 소비전력량, 저소음으로 쾌적한 냉방"
-        },
-        {
-          "name": "1등급 인버터",
-          "desc": "국내 최초 1등급 인버터 이동식 에어컨으로 전기료 걱정 없는 냉방"
-        },
-        {
-          "name": "강력 제습",
-          "desc": "장마철에도 44L의 강력한 제습, 물통 비울 필요 없는 편리함, 제습 모니터링"
-        },
-        {
-          "name": "간편한 설치",
-          "desc": "복잡한 시공 없이 쉬운 설치와 이동"
-        }
-      ],
-      "image": "https://static.lge.co.kr/kr/images/air-conditioners/md10572832/gallery/large-interior01.jpg",
-      "image_alt": "제품 대표 이미지(소비자의 이해를 돕기 위한 연출 이미지)",
-      "product_url": "https://www.lge.co.kr/air-conditioners/pq08fdwas-akor"
+      "product_url": "https://www.lge.co.kr/air-conditioners/fq25gn9be1"
     }
   ]
 }

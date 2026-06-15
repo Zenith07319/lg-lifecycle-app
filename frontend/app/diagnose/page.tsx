@@ -98,6 +98,7 @@ export default function DiagnosePage() {
   const topRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const [newModels, setNewModels] = useState<NewModel[]>([]);
+  const [newTab, setNewTab] = useState<"벽걸이" | "스탠드" | null>(null);
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
 
   const patch = (p: Partial<Answers>) => setAns((s) => ({ ...s, ...p }));
@@ -123,16 +124,22 @@ export default function DiagnosePage() {
   // 신형 비교 라인업(LG 실제 라인업) 1회 로드
   useEffect(() => { getNewModels().then((r) => setNewModels(r.items)).catch(() => {}); }, []);
 
-  // 내 형태(용량 기준) + 추천 라인업(내 형태 중 용량 근접, 없으면 전체 근접)
+  // 내 형태(용량 기준) + 활성 탭 + 용량 근접 모델
   const userForm: "벽걸이" | "스탠드" = (Number(ans.capacity) || 3.6) >= 5.5 ? "스탠드" : "벽걸이";
-  const recommendedModel = (() => {
-    if (newModels.length === 0) return undefined;
+  const activeTab: "벽걸이" | "스탠드" = newTab ?? userForm;
+  const nearestIn = (form: "벽걸이" | "스탠드") => {
     const cap = Number(ans.capacity) || 3.6;
-    const same = newModels.filter((m) => m.form === userForm);
-    const pool = same.length ? same : newModels;
-    return [...pool].sort((a, b) => Math.abs(a.capacity_kw - cap) - Math.abs(b.capacity_kw - cap))[0];
-  })();
-  // Q11 진입 시 추천 라인업 자동 선택(미선택일 때만)
+    return [...newModels].filter((m) => m.form === form)
+      .sort((a, b) => Math.abs(a.capacity_kw - cap) - Math.abs(b.capacity_kw - cap))[0];
+  };
+  const recommendedModel = newModels.length ? nearestIn(userForm) : undefined;
+  // 탭 전환: 해당 탭의 용량 근접 모델로 재선택
+  const changeNewTab = (f: "벽걸이" | "스탠드") => {
+    setNewTab(f); setExpandedModel(null);
+    const n = nearestIn(f);
+    if (n) patch({ newModelCode: n.model_code });
+  };
+  // Q11 진입 시 추천(내 형태 용량근접) 자동 선택(미선택일 때만)
   useEffect(() => {
     if (cur.id === "q11" && newModels.length && !ans.newModelCode && recommendedModel) {
       patch({ newModelCode: recommendedModel.model_code });
@@ -432,6 +439,8 @@ export default function DiagnosePage() {
             capacity={Number(ans.capacity) || 3.6}
             userKwh={Number(ans.acKwh) || 0}
             userForm={userForm}
+            tab={activeTab}
+            onTab={changeNewTab}
             models={newModels}
             recommended={recommendedModel?.model_code}
             selected={ans.newModelCode}
@@ -536,39 +545,38 @@ function gradeCls(g: string) {
 }
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-const GROUP_LABEL: Record<string, string> = { "스탠드": "스탠드", "벽걸이": "벽걸이", "창호형": "창호형", "이동식": "이동식" };
-
-function ProductStep({ capacity, userKwh, userForm, models, recommended, selected, onSelect, expanded, onExpand }: {
-  capacity: number; userKwh: number; userForm: "벽걸이" | "스탠드"; models: NewModel[];
+function ProductStep({ capacity, userKwh, userForm, tab, onTab, models, recommended, selected, onSelect, expanded, onExpand }: {
+  capacity: number; userKwh: number; userForm: "벽걸이" | "스탠드";
+  tab: "벽걸이" | "스탠드"; onTab: (f: "벽걸이" | "스탠드") => void; models: NewModel[];
   recommended?: string; selected: string | null; onSelect: (code: string) => void;
   expanded: string | null; onExpand: (code: string) => void;
 }) {
   const sel = models.find((m) => m.model_code === selected);
-  // 그룹 순서: 내 형태 먼저, 이후 스탠드·벽걸이·창호형·이동식
-  const order = [userForm, ...["스탠드", "벽걸이", "창호형", "이동식"].filter((f) => f !== userForm)];
-  const groups = order
-    .map((f) => ({ form: f, items: models.filter((m) => m.form === f).sort((a, b) => b.capacity_kw - a.capacity_kw) }))
-    .filter((g) => g.items.length > 0);
+  const list = models.filter((m) => m.form === tab).sort((a, b) => a.capacity_kw - b.capacity_kw);
+  const counts = { 벽걸이: models.filter((m) => m.form === "벽걸이").length, 스탠드: models.filter((m) => m.form === "스탠드").length };
   return (
     <Question n={11} emoji="🆕" title={"바꾼다면 어떤 신형과\n비교해볼까요?"}
-      sub="LG 라인업 중 하나를 고르면, 그 제품의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
-      <div className="space-y-4">
-        {models.length === 0 && <p className="py-6 text-center text-[12px] text-muted">라인업을 불러오는 중…</p>}
-        {groups.map((g) => (
-          <div key={g.form} className="space-y-2.5">
-            <div className="flex items-center gap-2 px-0.5">
-              <span className="text-[12px] font-extrabold text-ink-soft">{GROUP_LABEL[g.form] ?? g.form}</span>
-              <span className="text-[11px] font-bold text-ink-300">{g.items.length}</span>
-              {g.form === userForm && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[9.5px] font-extrabold text-success">내 에어컨 형태</span>}
-            </div>
-            {g.items.map((m) => (
-              <ProductCard key={m.model_code} m={m} capacity={capacity}
-                on={m.model_code === selected} rec={m.model_code === recommended} open={expanded === m.model_code}
-                onSelect={onSelect} onExpand={onExpand} />
-            ))}
-          </div>
+      sub="형태를 고르고 라인업 하나를 선택하면, 그 제품의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
+      {/* 벽걸이 / 스탠드 탭 */}
+      <div className="flex gap-1.5 rounded-2xl border border-line bg-white/70 p-1.5">
+        {(["벽걸이", "스탠드"] as const).map((f) => (
+          <button key={f} onClick={() => onTab(f)}
+            className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold transition ${tab === f ? "bg-accent text-white shadow-[0_4px_12px_rgba(4,125,134,.28)]" : "text-ink-soft"}`}>
+            {f === "벽걸이" ? "🧱 벽걸이" : "🗼 스탠드"} <span className={tab === f ? "text-white/75" : "text-ink-300"}>{counts[f]}</span>
+          </button>
         ))}
       </div>
+      <p className="-mt-1.5 px-1 text-[10.5px] text-muted">💡 내 에어컨은 <b className="text-ink-soft">{userForm}</b>형으로 추정돼요 — 다른 형태로 바꿔 비교해도 돼요.</p>
+
+      <div className="space-y-2.5">
+        {models.length === 0 && <p className="py-6 text-center text-[12px] text-muted">라인업을 불러오는 중…</p>}
+        {list.map((m) => (
+          <ProductCard key={m.model_code} m={m} capacity={capacity}
+            on={m.model_code === selected} rec={m.model_code === recommended} open={expanded === m.model_code}
+            onSelect={onSelect} onExpand={onExpand} />
+        ))}
+      </div>
+
       {sel && <CompareBox sel={sel} userKwh={userKwh} />}
     </Question>
   );

@@ -2,15 +2,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Snowflake, ChevronRight } from "lucide-react";
-import { getLatestDevice, getDevices, type SavedDevice } from "@/lib/myDevice";
+import { getPrimaryDevice, getDevices, type SavedDevice } from "@/lib/myDevice";
 import { deviceImage, registrationRank } from "@/lib/deviceImage";
 import { GRADE_COLORS } from "@/lib/utils";
 
 export default function MyDeviceCard() {
   const [dev, setDev] = useState<SavedDevice | null>(null);
+  const [multi, setMulti] = useState(false);
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const sync = () => { setDev(getLatestDevice()); setReady(true); };
+    const sync = () => { setDev(getPrimaryDevice()); setMulti(getDevices().length > 1); setReady(true); };
     sync();
     window.addEventListener("ror:devices", sync);
     window.addEventListener("storage", sync);
@@ -45,7 +46,9 @@ export default function MyDeviceCard() {
         <span className="absolute bottom-1 right-1 flex size-[19px] items-center justify-center rounded-full text-[10px] font-extrabold text-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" style={{ background: color }}>{dev.grade}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-bold text-muted">내 에어컨</p>
+        <p className="text-[11px] font-bold text-muted">
+          내 에어컨{multi && <span className="ml-1.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[9.5px] font-extrabold text-accent">대표</span>}
+        </p>
         <p className="text-[15px] font-bold text-ink truncate">{name} ({dev.purchase_year})</p>
         <p className="text-[12px] text-muted truncate">{dev.capacity_kw}kW · 건강점수 {dev.score.toFixed(0)} · {dev.recommendation}</p>
       </div>

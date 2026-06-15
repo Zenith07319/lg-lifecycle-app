@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Plus, Trash2, Snowflake } from "lucide-react";
+import { ChevronRight, Plus, Trash2, Snowflake, Star } from "lucide-react";
 import Image from "next/image";
 import { AppHeader } from "@/components/ui";
-import { getDevices, removeDevice, type SavedDevice } from "@/lib/myDevice";
+import { getDevices, removeDevice, getPrimaryId, setPrimaryDevice, type SavedDevice } from "@/lib/myDevice";
 import { deviceImage, registrationRank } from "@/lib/deviceImage";
 
 /* 03 내 가전 — Figma 3-3/3-4 충실 재구축:
@@ -22,9 +22,10 @@ const GRADE_CARD_BG: Record<string, string> = {
 
 export default function DevicesPage() {
   const [list, setList] = useState<SavedDevice[]>([]);
+  const [primaryId, setPid] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const sync = () => { setList(getDevices()); setReady(true); };
+    const sync = () => { setList(getDevices()); setPid(getPrimaryId()); setReady(true); };
     sync();
     window.addEventListener("ror:devices", sync);
     window.addEventListener("storage", sync);
@@ -67,6 +68,7 @@ export default function DevicesPage() {
             {list.map((dev) => {
               const bg = GRADE_CARD_BG[dev.grade] ?? GRADE_CARD_BG.C;
               const img = deviceImage(dev.form, registrationRank(list, dev.sessionId));
+              const isPrimary = dev.sessionId === primaryId;
               return (
                 <div key={dev.sessionId} className="reveal relative">
                   {/* 카드 전체가 결과로 진입 */}
@@ -88,6 +90,11 @@ export default function DevicesPage() {
 
                     {/* 모델명 + 메타 */}
                     <div className="absolute left-4 top-4 right-[136px]">
+                      {isPrimary && list.length > 1 && (
+                        <span className="mb-1 inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-extrabold text-white shadow-[0_2px_6px_rgba(4,125,134,.3)]">
+                          <Star size={10} className="fill-white text-white" /> 대표
+                        </span>
+                      )}
                       <p className="truncate text-[15px] font-bold text-ink">
                         {dev.form ? `${dev.form} ` : ""}{dev.product_type} ({dev.purchase_year})
                       </p>
@@ -110,6 +117,17 @@ export default function DevicesPage() {
                   >
                     <Trash2 size={17} />
                   </button>
+
+                  {/* 대표 설정 — 2대 이상일 때, 대표가 아닌 카드에만 */}
+                  {list.length > 1 && !isPrimary && (
+                    <button
+                      onClick={() => setPrimaryDevice(dev.sessionId)}
+                      className="absolute bottom-3 left-[52px] z-10 flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1.5 text-[11px] font-bold text-ink-soft shadow-[0_2px_6px_rgba(0,0,0,.08)] backdrop-blur-sm active:scale-95 transition"
+                      aria-label="대표 에어컨으로 설정"
+                    >
+                      <Star size={13} /> 대표로 설정
+                    </button>
+                  )}
                 </div>
               );
             })}

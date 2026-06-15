@@ -42,6 +42,31 @@ export function getLatestDevice(): SavedDevice | null {
   return getDevices()[0] ?? null;
 }
 
+// ── 대표 에어컨(홈 카드에 노출할 기기) — 사용자가 직접 선택, 없으면 최신으로 폴백 ──
+const PRIMARY_KEY = "ror_primary_device";
+
+export function getPrimaryId(): string | null {
+  const list = getDevices();
+  if (!list.length) return null;
+  let id: string | null = null;
+  if (typeof window !== "undefined") {
+    try { id = window.localStorage.getItem(PRIMARY_KEY); } catch {}
+  }
+  // 저장된 대표가 현재 목록에 있으면 그것, 없으면(삭제됐거나 미설정) 최신으로 폴백
+  return id && list.some((d) => d.sessionId === id) ? id : list[0].sessionId;
+}
+
+export function getPrimaryDevice(): SavedDevice | null {
+  const id = getPrimaryId();
+  return id ? getDevices().find((d) => d.sessionId === id) ?? null : null;
+}
+
+export function setPrimaryDevice(sessionId: string) {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(PRIMARY_KEY, sessionId); } catch {}
+  window.dispatchEvent(new Event("ror:devices"));   // 홈 카드·목록 즉시 갱신
+}
+
 // sessionId 기준 upsert (재진단 시 같은 세션이면 갱신, 아니면 새 항목)
 export function saveDevice(d: SavedDevice) {
   const list = read().filter((x) => x.sessionId !== d.sessionId);

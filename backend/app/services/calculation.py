@@ -296,17 +296,9 @@ def run_full_pipeline(inputs: dict) -> dict:
         for rank, opt in enumerate(ranked, 1):
             opt.rank = rank
 
-    # ── 누수 안전 정책 (docs/04g): 점수 경쟁이 아니라 안전 — 모든 룰 이후 수리 1순위 고정 ──
-    # 04h: 복수 증상 중 하나라도 누수면 안전 규칙 발동(대표가 누수가 아니어도).
-    if any(k == "누수" for k, _ in sym_pairs):
-        rep_o = next((o for o in ranked if o.key == "수리후사용"), None)
-        if rep_o:
-            top = max(o.final_score for o in ranked if o.key != "수리후사용")
-            rep_o.final_score = round(max(rep_o.final_score, top + 0.01), 2)
-            rep_o.highlights.append("누수는 안전·2차 피해 위험 — 전문 점검·수리 우선 권장")
-            ranked = sorted(ranked, key=lambda o: (-o.final_score, o.initial_cost))
-            for rank, opt in enumerate(ranked, 1):
-                opt.rank = rank
+    # [삭제] 누수 시 '수리 후 사용' 1순위 강제 하드룰 폐지.
+    # 부품보유 초과·E등급(노후) 기기에서도 수리를 강제해 모순(부품없는데 수리 권장)이 발생 → 순위는 점수대로.
+    # 누수의 위험·시급성은 증상→전력대역(누수 24.8~36.5%)·점검필요도·건강등급에 이미 반영됨.
 
     report = generate_report(
         diagnosis      = diagnosis,

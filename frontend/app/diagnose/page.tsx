@@ -437,8 +437,6 @@ export default function DiagnosePage() {
         {cur.id === "q11" && (
           <ProductStep
             capacity={Number(ans.capacity) || 3.6}
-            userKwh={Number(ans.acKwh) || 0}
-            userForm={userForm}
             tab={activeTab}
             onTab={changeNewTab}
             models={newModels}
@@ -547,9 +545,8 @@ function gradeCls(g: string) {
 }
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-function ProductStep({ capacity, userKwh, userForm, tab, onTab, models, recommended, selected, onSelect, expanded, onExpand }: {
-  capacity: number; userKwh: number; userForm: "벽걸이" | "스탠드";
-  tab: "벽걸이" | "스탠드"; onTab: (f: "벽걸이" | "스탠드") => void; models: NewModel[];
+function ProductStep({ capacity, tab, onTab, models, recommended, selected, onSelect, expanded, onExpand }: {
+  capacity: number; tab: "벽걸이" | "스탠드"; onTab: (f: "벽걸이" | "스탠드") => void; models: NewModel[];
   recommended?: string; selected: string | null; onSelect: (code: string) => void;
   expanded: string | null; onExpand: (code: string) => void;
 }) {
@@ -562,8 +559,7 @@ function ProductStep({ capacity, userKwh, userForm, tab, onTab, models, recommen
   });
   const counts = { 벽걸이: models.filter((m) => m.form === "벽걸이").length, 스탠드: models.filter((m) => m.form === "스탠드").length };
   return (
-    <Question n={11} title={"바꾼다면 어떤 신형과\n비교해볼까요?"}
-      sub="형태를 고르고 라인업 하나를 선택하면, 그 제품의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
+    <Question n={11} title={"바꾼다면 어떤 신형과\n비교해볼까요?"}>
       {/* 벽걸이 / 스탠드 탭 */}
       <div className="flex gap-1.5 rounded-2xl border border-line bg-white/70 p-1.5">
         {(["벽걸이", "스탠드"] as const).map((f) => (
@@ -573,7 +569,6 @@ function ProductStep({ capacity, userKwh, userForm, tab, onTab, models, recommen
           </button>
         ))}
       </div>
-      <p className="-mt-1.5 px-1 text-[10.5px] text-muted">💡 내 에어컨은 <b className="text-ink-soft">{userForm}</b>형으로 추정돼요 — 다른 형태로 바꿔 비교해도 돼요.</p>
 
       <div className="space-y-2.5">
         {models.length === 0 && <p className="py-6 text-center text-[12px] text-muted">라인업을 불러오는 중…</p>}
@@ -584,7 +579,7 @@ function ProductStep({ capacity, userKwh, userForm, tab, onTab, models, recommen
         ))}
       </div>
 
-      {sel && <CompareBox sel={sel} userKwh={userKwh} />}
+      {sel && <CompareBox sel={sel} />}
     </Question>
   );
 }
@@ -651,19 +646,14 @@ function ProductCard({ m, capacity, on, rec, open, onSelect, onExpand }: {
   );
 }
 
-function CompareBox({ sel, userKwh }: { sel: NewModel; userKwh: number }) {
+function CompareBox({ sel }: { sel: NewModel }) {
   return (
     <div className="rounded-[18px] border border-[#bfe6e4] bg-accent-soft p-3.5">
       <p className="text-[12.5px] font-extrabold text-teal-900">📊 비교 기준: {sel.line}</p>
       <p className="mt-1.5 text-[11.5px] font-semibold text-ink-soft">
         월 {sel.monthly_kwh}kWh · 효율 {sel.grade || "미표기"} · 판매가 {won(sel.sale_price)}{sel.sub_fee > 0 ? ` · 구독 월 ${sel.sub_fee.toLocaleString("ko-KR")}원` : ""}
       </p>
-      {userKwh > 0 && (
-        <p className="mt-1.5 text-[11.5px] font-bold text-accent">
-          내 에어컨 {userKwh}kWh → 신형 {sel.monthly_kwh}kWh{userKwh > sel.monthly_kwh ? ` (약 ${Math.round((userKwh - sel.monthly_kwh) / userKwh * 100)}%↓)` : ""}
-        </p>
-      )}
-      <p className="mt-1.5 text-[10.5px] leading-snug text-ink-500">이 신형 기준으로 전기료 절감·탄소·5가지 순위를 계산해요.</p>
+      <p className="mt-1.5 text-[10.5px] leading-snug text-ink-500">이 신형 기준으로 전기료 절감·탄소·5가지 순위를 결과 화면에서 계산해요(현재 효율 저하까지 반영).</p>
     </div>
   );
 }

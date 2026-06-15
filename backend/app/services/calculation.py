@@ -267,6 +267,7 @@ def run_full_pipeline(inputs: dict) -> dict:
             opt.three_year_cost = sub_monthly * 60 + elec_5yr["신형"]
         elif opt.key == "신제품구매":
             opt.three_year_cost = purchase_mid + elec_5yr["신형"]
+            opt.initial_cost = purchase_mid   # 초기비용도 선택 제품 판매가와 일치(미선택 시 추정값 동일 유지)
 
     # ── 재수리 기대비용 ─────────────────────────────────────────────────
     current_year = date.today().year

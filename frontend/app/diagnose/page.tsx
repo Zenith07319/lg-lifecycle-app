@@ -98,7 +98,6 @@ export default function DiagnosePage() {
   const topRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const [newModels, setNewModels] = useState<NewModel[]>([]);
-  const [newForm, setNewForm] = useState<"벽걸이" | "스탠드" | null>(null);
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
 
   const patch = (p: Partial<Answers>) => setAns((s) => ({ ...s, ...p }));
@@ -121,31 +120,24 @@ export default function DiagnosePage() {
     if (started) screenRef.current?.focus({ preventScroll: true });
   }, [safeCursor, started]);
 
-  // 신형 비교 후보(벽걸이 4·스탠드 4) 1회 로드
+  // 신형 비교 라인업(LG 실제 라인업) 1회 로드
   useEffect(() => { getNewModels().then((r) => setNewModels(r.items)).catch(() => {}); }, []);
 
-  // 용량 근접 모델 선택 헬퍼
-  const nearestModel = (form: "벽걸이" | "스탠드") => {
+  // 내 형태(용량 기준) + 추천 라인업(내 형태 중 용량 근접, 없으면 전체 근접)
+  const userForm: "벽걸이" | "스탠드" = (Number(ans.capacity) || 3.6) >= 5.5 ? "스탠드" : "벽걸이";
+  const recommendedModel = (() => {
+    if (newModels.length === 0) return undefined;
     const cap = Number(ans.capacity) || 3.6;
-    return [...newModels].filter((m) => m.form === form)
-      .sort((a, b) => Math.abs(a.capacity_kw - cap) - Math.abs(b.capacity_kw - cap))[0];
-  };
-  // Q11 진입 시: 폼 기본값(용량 기반) + 용량 근접 모델 자동 선택(미선택일 때만)
+    const same = newModels.filter((m) => m.form === userForm);
+    const pool = same.length ? same : newModels;
+    return [...pool].sort((a, b) => Math.abs(a.capacity_kw - cap) - Math.abs(b.capacity_kw - cap))[0];
+  })();
+  // Q11 진입 시 추천 라인업 자동 선택(미선택일 때만)
   useEffect(() => {
-    if (cur.id !== "q11" || newModels.length === 0) return;
-    const form = newForm ?? ((Number(ans.capacity) || 3.6) >= 5.5 ? "스탠드" : "벽걸이");
-    if (newForm === null) setNewForm(form);
-    if (!ans.newModelCode) {
-      const n = nearestModel(form);
-      if (n) patch({ newModelCode: n.model_code });
+    if (cur.id === "q11" && newModels.length && !ans.newModelCode && recommendedModel) {
+      patch({ newModelCode: recommendedModel.model_code });
     }
-  }, [cur.id, newModels, newForm]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 형태 전환 시: 폼 변경 + 새 폼의 용량 근접 모델로 재선택
-  const changeNewForm = (f: "벽걸이" | "스탠드") => {
-    setNewForm(f); setExpandedModel(null);
-    const n = nearestModel(f);
-    patch({ newModelCode: n ? n.model_code : null });
-  };
+  }, [cur.id, newModels]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── OCR(에너지 라벨 자동입력) ──
   const onOcrFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -439,9 +431,9 @@ export default function DiagnosePage() {
           <ProductStep
             capacity={Number(ans.capacity) || 3.6}
             userKwh={Number(ans.acKwh) || 0}
+            userForm={userForm}
             models={newModels}
-            form={newForm ?? ((Number(ans.capacity) || 3.6) >= 5.5 ? "스탠드" : "벽걸이")}
-            onForm={changeNewForm}
+            recommended={recommendedModel?.model_code}
             selected={ans.newModelCode}
             onSelect={(code) => patch({ newModelCode: code })}
             expanded={expandedModel}
@@ -544,104 +536,117 @@ function gradeCls(g: string) {
 }
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-function ProductStep({ capacity, userKwh, models, form, onForm, selected, onSelect, expanded, onExpand }: {
-  capacity: number; userKwh: number; models: NewModel[];
-  form: "벽걸이" | "스탠드"; onForm: (f: "벽걸이" | "스탠드") => void;
-  selected: string | null; onSelect: (code: string) => void;
+const GROUP_LABEL: Record<string, string> = { "스탠드": "스탠드 (2in1)", "벽걸이": "벽걸이", "창호형": "창호형", "이동식": "이동식" };
+
+function ProductStep({ capacity, userKwh, userForm, models, recommended, selected, onSelect, expanded, onExpand }: {
+  capacity: number; userKwh: number; userForm: "벽걸이" | "스탠드"; models: NewModel[];
+  recommended?: string; selected: string | null; onSelect: (code: string) => void;
   expanded: string | null; onExpand: (code: string) => void;
 }) {
-  const list = models.filter((m) => m.form === form)
-    .sort((a, b) => Math.abs(a.capacity_kw - capacity) - Math.abs(b.capacity_kw - capacity));
-  const nearest = list[0]?.model_code;
   const sel = models.find((m) => m.model_code === selected);
+  // 그룹 순서: 내 형태 먼저, 이후 스탠드·벽걸이·창호형·이동식
+  const order = [userForm, ...["스탠드", "벽걸이", "창호형", "이동식"].filter((f) => f !== userForm)];
+  const groups = order
+    .map((f) => ({ form: f, items: models.filter((m) => m.form === f).sort((a, b) => b.capacity_kw - a.capacity_kw) }))
+    .filter((g) => g.items.length > 0);
   return (
     <Question n={11} emoji="🆕" title={"바꾼다면 어떤 신형과\n비교해볼까요?"}
-      sub="고른 1등급 신형의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
-      {/* 형태 토글 */}
-      <div className="flex gap-1.5 rounded-2xl border border-line bg-white/70 p-1.5">
-        {(["벽걸이", "스탠드"] as const).map((f) => (
-          <button key={f} onClick={() => onForm(f)}
-            className={`flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold transition ${form === f ? "bg-accent text-white shadow-[0_4px_12px_rgba(4,125,134,.28)]" : "text-ink-soft"}`}>
-            {f === "벽걸이" ? "🧱 벽걸이" : "🗼 스탠드"}
-          </button>
+      sub="LG 라인업 중 하나를 고르면, 그 제품의 실제 스펙·가격으로 절감액과 5가지 선택지를 다시 계산해요.">
+      <div className="space-y-4">
+        {models.length === 0 && <p className="py-6 text-center text-[12px] text-muted">라인업을 불러오는 중…</p>}
+        {groups.map((g) => (
+          <div key={g.form} className="space-y-2.5">
+            <div className="flex items-center gap-2 px-0.5">
+              <span className="text-[12px] font-extrabold text-ink-soft">{GROUP_LABEL[g.form] ?? g.form}</span>
+              <span className="text-[11px] font-bold text-ink-300">{g.items.length}</span>
+              {g.form === userForm && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[9.5px] font-extrabold text-success">내 에어컨 형태</span>}
+            </div>
+            {g.items.map((m) => (
+              <ProductCard key={m.model_code} m={m} capacity={capacity}
+                on={m.model_code === selected} rec={m.model_code === recommended} open={expanded === m.model_code}
+                onSelect={onSelect} onExpand={onExpand} />
+            ))}
+          </div>
         ))}
       </div>
+      {sel && <CompareBox sel={sel} userKwh={userKwh} />}
+    </Question>
+  );
+}
 
-      {/* 제품 카드 */}
-      <div className="space-y-2.5">
-        {list.length === 0 && <p className="py-6 text-center text-[12px] text-muted">제품을 불러오는 중…</p>}
-        {list.map((m) => {
-          const on = m.model_code === selected;
-          const big = m.capacity_kw > capacity * 1.5;
-          const open = expanded === m.model_code;
-          return (
-            <div key={m.model_code} onClick={() => onSelect(m.model_code)}
-              className={`relative rounded-[18px] p-3 shadow-[var(--shadow-card)] transition active:scale-[.99] ${on ? "border-2 border-accent bg-white" : "border border-line bg-white/80"}`}>
-              {on && <div className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-accent text-white"><Check size={13} /></div>}
-              <div className="flex gap-3">
-                <div className="flex h-[88px] w-[72px] shrink-0 items-center justify-center rounded-xl border border-[#e7e8e2] bg-gradient-to-b from-[#f3f2ee] to-[#e7e8e2]">
-                  {m.form === "벽걸이"
-                    ? <div className="h-6 w-14 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-white to-[#eceee9]" />
-                    : <div className="relative h-[70px] w-6 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-[#fbfbf8] to-[#e8e9e3]"><span className="absolute left-1/2 top-2 size-2 -translate-x-1/2 rounded-full bg-[#7a847f]" /></div>}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap gap-1">
-                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${gradeCls(m.grade)}`}>효율 {m.grade}</span>
-                    {m.grade.startsWith("1") && <span className="rounded-full border border-[#bfe6e4] bg-accent-soft px-1.5 py-0.5 text-[10px] font-extrabold text-accent">1등급 신형</span>}
-                    {m.model_code === nearest && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[10px] font-extrabold text-success">내 방에 맞음</span>}
-                  </div>
-                  <p className="mt-1 text-[13px] font-extrabold leading-tight text-ink">{m.line}</p>
-                  <p className="text-[10px] font-semibold text-ink-300">{m.model_code}</p>
-                  <p className="mt-1 text-[11.5px] font-semibold text-ink-soft">냉방 {m.pyeong}평 · {m.capacity_kw}kW · 월 {m.monthly_kwh}kWh</p>
-                  <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
-                    <span className="text-[11px] text-ink-300 line-through">{won(m.list_price)}</span>
-                    <span className="text-[14.5px] font-black text-ink">{won(m.sale_price)}</span>
-                    {m.sub_fee > 0 && <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10.5px] font-bold text-accent">구독 월 {m.sub_fee.toLocaleString("ko-KR")}원</span>}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {m.features.slice(0, 3).map((f) => <span key={f.name} className="rounded-full border border-line bg-sunken px-2 py-0.5 text-[10px] font-bold text-ink-soft">{f.name}</span>)}
-                  </div>
-                </div>
-              </div>
-              {big && <p className="mt-2 rounded-lg bg-[#FFF6E6] px-2.5 py-1.5 text-[10.5px] font-semibold text-[#9a6a00]">⚠️ 내 방({capacity}kW)보다 큰 용량이에요. 신형이 전기를 더 쓸 수 있어요.</p>}
-              <button onClick={(e) => { e.stopPropagation(); onExpand(m.model_code); }}
-                className="mt-2 w-full rounded-xl border border-dashed border-line py-1.5 text-[11.5px] font-extrabold text-accent">
-                {open ? "접기 ▲" : "기능·스펙 자세히 ▾"}
-              </button>
-              {open && (
-                <div className="mt-2.5 border-t border-line pt-2.5">
-                  <p className="text-[12.5px] font-extrabold text-ink">“{m.tagline}”</p>
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-ink-500">{m.desc}</p>
-                  <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
-                    {m.features.map((f) => (
-                      <div key={f.name}>
-                        <p className="text-[11px] font-extrabold text-ink"><span className="text-accent">· </span>{f.name}</p>
-                        <p className="pl-2 text-[10px] leading-snug text-muted">{f.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+function ProductCard({ m, capacity, on, rec, open, onSelect, onExpand }: {
+  m: NewModel; capacity: number; on: boolean; rec: boolean; open: boolean;
+  onSelect: (code: string) => void; onExpand: (code: string) => void;
+}) {
+  const big = m.capacity_kw > capacity * 1.5;
+  const tall = m.form === "스탠드";
+  return (
+    <div onClick={() => onSelect(m.model_code)}
+      className={`relative rounded-[18px] p-3 shadow-[var(--shadow-card)] transition active:scale-[.99] ${on ? "border-2 border-accent bg-white" : "border border-line bg-white/80"}`}>
+      {on && <div className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-accent text-white"><Check size={13} /></div>}
+      <div className="flex gap-3">
+        <div className="flex h-[88px] w-[72px] shrink-0 items-center justify-center rounded-xl border border-[#e7e8e2] bg-gradient-to-b from-[#f3f2ee] to-[#e7e8e2]">
+          {tall
+            ? <div className="relative h-[70px] w-6 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-[#fbfbf8] to-[#e8e9e3]"><span className="absolute left-1/2 top-2 size-2 -translate-x-1/2 rounded-full bg-[#7a847f]" /></div>
+            : <div className="h-6 w-14 rounded-lg border border-[#dcdfd8] bg-gradient-to-b from-white to-[#eceee9]" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1">
+            {m.grade
+              ? <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${gradeCls(m.grade)}`}>효율 {m.grade}</span>
+              : <span className="rounded-full bg-[#f1f1f3] px-1.5 py-0.5 text-[10px] font-extrabold text-[#6b7178]">등급 미표기</span>}
+            {m.grade.startsWith("1") && <span className="rounded-full border border-[#bfe6e4] bg-accent-soft px-1.5 py-0.5 text-[10px] font-extrabold text-accent">1등급</span>}
+            {rec && <span className="rounded-full bg-green-050 px-1.5 py-0.5 text-[10px] font-extrabold text-success">내 방에 맞음</span>}
+          </div>
+          <p className="mt-1 text-[13.5px] font-extrabold leading-tight text-ink">{m.line}</p>
+          <p className="text-[10px] font-semibold text-ink-300">{m.product_type_raw} · {m.model_code}</p>
+          <p className="mt-1 text-[11.5px] font-semibold text-ink-soft">냉방 {m.pyeong}평{m.cooling_area_m2 ? `(${m.cooling_area_m2}㎡)` : ""} · {m.capacity_kw}kW · 월 {m.monthly_kwh}kWh</p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+            <span className="text-[11px] text-ink-300 line-through">{won(m.list_price)}</span>
+            <span className="text-[14.5px] font-black text-ink">{won(m.sale_price)}</span>
+            {m.sub_fee > 0 && <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10.5px] font-bold text-accent">구독 월 {m.sub_fee.toLocaleString("ko-KR")}원</span>}
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {m.features.slice(0, 3).map((f) => <span key={f.name} className="rounded-full border border-line bg-sunken px-2 py-0.5 text-[10px] font-bold text-ink-soft">{f.name}</span>)}
+          </div>
+        </div>
       </div>
-
-      {/* 비교 하이라이트 */}
-      {sel && (
-        <div className="rounded-[18px] border border-[#bfe6e4] bg-accent-soft p-3.5">
-          <p className="text-[12.5px] font-extrabold text-teal-900">📊 비교 기준: {sel.line}</p>
-          <p className="mt-1.5 text-[11.5px] font-semibold text-ink-soft">
-            월 {sel.monthly_kwh}kWh · 효율 {sel.grade.replace("˙", "")} · 판매가 {won(sel.sale_price)}{sel.sub_fee > 0 ? ` · 구독 월 ${sel.sub_fee.toLocaleString("ko-KR")}원` : ""}
-          </p>
-          {userKwh > 0 && (
-            <p className="mt-1.5 text-[11.5px] font-bold text-accent">
-              내 에어컨 {userKwh}kWh → 신형 {sel.monthly_kwh}kWh{userKwh > sel.monthly_kwh ? ` (약 ${Math.round((userKwh - sel.monthly_kwh) / userKwh * 100)}%↓)` : ""}
-            </p>
-          )}
-          <p className="mt-1.5 text-[10.5px] leading-snug text-ink-500">이 신형 기준으로 전기료 절감·탄소·5가지 순위를 계산해요.</p>
+      {big && <p className="mt-2 rounded-lg bg-[#FFF6E6] px-2.5 py-1.5 text-[10.5px] font-semibold text-[#9a6a00]">⚠️ 내 방({capacity}kW)보다 큰 용량이에요. 신형이 전기를 더 쓸 수 있어요.</p>}
+      <button onClick={(e) => { e.stopPropagation(); onExpand(m.model_code); }}
+        className="mt-2 w-full rounded-xl border border-dashed border-line py-1.5 text-[11.5px] font-extrabold text-accent">
+        {open ? "접기 ▲" : "기능·스펙 자세히 ▾"}
+      </button>
+      {open && (
+        <div className="mt-2.5 border-t border-line pt-2.5">
+          <p className="text-[12.5px] font-extrabold text-ink">“{m.tagline}”</p>
+          {m.product_name && <p className="mt-1 text-[10px] leading-snug text-ink-300">{m.product_name}</p>}
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
+            {m.features.map((f) => (
+              <div key={f.name}>
+                <p className="text-[11px] font-extrabold text-ink"><span className="text-accent">· </span>{f.name}</p>
+                <p className="pl-2 text-[10px] leading-snug text-muted">{f.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-    </Question>
+    </div>
+  );
+}
+
+function CompareBox({ sel, userKwh }: { sel: NewModel; userKwh: number }) {
+  return (
+    <div className="rounded-[18px] border border-[#bfe6e4] bg-accent-soft p-3.5">
+      <p className="text-[12.5px] font-extrabold text-teal-900">📊 비교 기준: {sel.line}</p>
+      <p className="mt-1.5 text-[11.5px] font-semibold text-ink-soft">
+        월 {sel.monthly_kwh}kWh · 효율 {sel.grade || "미표기"} · 판매가 {won(sel.sale_price)}{sel.sub_fee > 0 ? ` · 구독 월 ${sel.sub_fee.toLocaleString("ko-KR")}원` : ""}
+      </p>
+      {userKwh > 0 && (
+        <p className="mt-1.5 text-[11.5px] font-bold text-accent">
+          내 에어컨 {userKwh}kWh → 신형 {sel.monthly_kwh}kWh{userKwh > sel.monthly_kwh ? ` (약 ${Math.round((userKwh - sel.monthly_kwh) / userKwh * 100)}%↓)` : ""}
+        </p>
+      )}
+      <p className="mt-1.5 text-[10.5px] leading-snug text-ink-500">이 신형 기준으로 전기료 절감·탄소·5가지 순위를 계산해요.</p>
+    </div>
   );
 }

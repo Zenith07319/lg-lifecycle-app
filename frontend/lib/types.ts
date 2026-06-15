@@ -38,14 +38,19 @@ export interface DiagnoseInput {
 export interface NewModelFeature { name: string; desc: string; }
 export interface NewModel {
   model_code:  string;
-  form:        string;   // 벽걸이 / 스탠드
-  line:        string;   // 라인업명
+  form:        string;   // 스탠드 / 벽걸이 / 창호형 / 이동식 (그룹)
+  line:        string;   // 라인업명(예: "타워I")
+  lineup?:     string;   // 원본 라인업명
+  product_name?: string; // 대표모델 정식 제품명
+  product_type_raw?: string; // 제품유형(예: "2in1 / 일반배관")
+  cooling_area_m2?: number;  // 냉방면적
   pyeong:      number;   // 냉방 평수
   capacity_kw: number;
   monthly_kwh: number;   // 표준 월간소비전력량
-  grade:       string;   // 효율등급(예: "1등급")
+  grade:       string;   // 효율등급(예: "1등급", 빈값=미표기)
   list_price:  number;
-  sale_price:  number;
+  sale_price:  number;   // 회원할인가
+  max_benefit_price?: number;
   sub_fee:     number;   // 월 구독료(0=구독 미제공)
   tagline:     string;
   desc:        string;

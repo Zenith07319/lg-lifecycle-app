@@ -60,7 +60,8 @@ export default function ResultPage() {
   const ranked = [...(data.ranked_options ?? [])].sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
   const rec1 = (data.report?.recommendation_1st as string) || ranked[0]?.label || "";
   const sel = data.selected_new_model ?? inp.selected_new_model;   // 사용자가 고른 신형 비교 기준(세션 user_inputs에 영속)
-  const newLabel = sel ? `신형 ${sel.grade.replace("˙", "")}` : "1등급 신형";
+  const newLabel = sel ? (sel.grade ? `신형 ${sel.grade}` : "신형") : "1등급 신형";
+  const selMeta = sel ? [sel.grade, `월 ${sel.monthly_kwh}kWh`, won(sel.sale_price)].filter(Boolean).join(" · ") : "";
 
   return (
     <div className="pb-6">
@@ -134,7 +135,7 @@ export default function ResultPage() {
           </div>
           {sel && (
             <p className="-mt-1.5 mb-2.5 text-[10.5px] font-semibold text-muted">
-              비교 기준 · <span className="font-extrabold text-ink-soft">{sel.line}</span> ({sel.grade.replace("˙", "")} · 월 {sel.monthly_kwh}kWh · {won(sel.sale_price)})
+              비교 기준 · <span className="font-extrabold text-ink-soft">{sel.line}</span> ({selMeta})
             </p>
           )}
           <div className="flex items-stretch gap-2.5">

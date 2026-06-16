@@ -5,8 +5,8 @@
       "capacity_kw": 7.2,
       "monthly_kwh": 250,
       "purchase_year": 2018,
-      "form": "스탠드",
-      "label": "거실 스탠드형(데모 추정)"
+      "form": "시스템에어컨",
+      "label": "거실 시스템에어컨(스펙 미확인 — 확인 화면에서 수정)"
     }
   }
 }

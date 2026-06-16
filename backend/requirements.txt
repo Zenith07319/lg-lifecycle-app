@@ -7,3 +7,4 @@ python-dotenv==1.0.1
 psycopg2-binary==2.9.9   # PostgreSQL(Supabase) 드라이버
 python-multipart
 thinqconnect==1.0.12     # LG ThinQ Open API 공식 패키지(에어컨 자동 불러오기) — aiohttp 의존
+pywebpush==2.3.0         # 웹 푸시(VAPID) — 여름 전 점검 알림

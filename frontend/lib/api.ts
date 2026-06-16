@@ -62,6 +62,13 @@ export const thinqDevices = () => apiFetch<ThinqDevicesResponse>("/api/thinq/dev
 export const thinqPrefill = (deviceId: string) =>
   apiFetch<ThinqPrefill>(`/api/thinq/prefill?device_id=${encodeURIComponent(deviceId)}`);
 
+// 웹 푸시(여름 전 점검 알림) — 공개키 / 구독 등록 / 데모 발송
+export const pushPublicKey = () => apiFetch<{ public_key: string; enabled: boolean }>("/api/push/public-key");
+export const pushSubscribe = (sub: PushSubscriptionJSON) =>
+  apiFetch<{ ok: boolean; count: number }>("/api/push/subscribe", { method: "POST", body: JSON.stringify(sub) });
+export const pushSendDemo = () =>
+  apiFetch<{ sent: number; failed: number; error?: string }>("/api/push/send-demo", { method: "POST" });
+
 export const SAMPLE_INPUT: DiagnoseInput = {
   product_type: "에어컨",
   purchase_year: 2014,

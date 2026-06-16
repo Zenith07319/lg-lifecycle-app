@@ -5,6 +5,7 @@ import {
   Bell, BookOpen, MapPin, FileClock, Settings, Info, ChevronRight,
 } from "lucide-react";
 import { AppHeader } from "@/components/ui";
+import PushOptIn from "@/components/PushOptIn";
 import { allAlerts } from "@/lib/alerts";
 import { getDevices, getLatestDevice, type SavedDevice } from "@/lib/myDevice";
 
@@ -55,6 +56,11 @@ export default function MorePage() {
               {devs.length > 0 ? `등록 가전 ${devs.length}대 · 최근 진단 ${ago(latest?.savedAt)}` : "아직 등록된 가전이 없어요 · 진단으로 시작하기"}
             </p>
           </div>
+        </div>
+
+        {/* 여름 전 점검 알림(웹 푸시) */}
+        <div className="mt-3.5">
+          <PushOptIn />
         </div>
 
         {/* 내 메뉴 */}

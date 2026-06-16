@@ -20,3 +20,8 @@ GOOGLE_VISION_API_KEY: str = os.getenv("GOOGLE_VISION_API_KEY", "")
 THINQ_PAT: str        = os.getenv("THINQ_PAT", "")
 THINQ_CLIENT_ID: str  = os.getenv("THINQ_CLIENT_ID", "")
 THINQ_COUNTRY: str    = os.getenv("THINQ_COUNTRY", "KR")
+
+# Web Push (VAPID) — 여름 전 점검 알림. 미설정 시 푸시 엔드포인트 비활성.
+VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "")
+VAPID_PUBLIC_KEY: str  = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_SUBJECT: str     = os.getenv("VAPID_SUBJECT", "mailto:jswjsw2240@gmail.com")

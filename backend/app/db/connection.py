@@ -50,4 +50,13 @@ def init_db():
                 logged_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """))
+        # 웹 푸시 구독 저장(여름 전 점검 알림)
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS push_subscription (
+                endpoint    TEXT PRIMARY KEY,
+                p256dh      TEXT NOT NULL,
+                auth        TEXT NOT NULL,
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
         conn.commit()

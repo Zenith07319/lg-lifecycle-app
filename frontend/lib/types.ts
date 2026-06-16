@@ -99,6 +99,8 @@ export interface OptionScore {
   final_score:        number;
   rank:               number;
   highlights:         string[];
+  elec_cost_5y?:      number;   // 5년 전기 비용(분해)
+  option_cost_5y?:    number;   // 옵션 고유 비용 5년(수리/구독/구매/셀프)
 }
 
 export interface CarbonSummary {

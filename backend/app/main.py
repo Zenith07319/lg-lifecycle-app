@@ -6,6 +6,7 @@ from app.routers.diagnose import router
 from app.routers.products import router as products_router
 from app.routers.centers import router as centers_router
 from app.routers.ocr import router as ocr_router
+from app.routers.thinq import router as thinq_router
 
 app = FastAPI(
     title="LG LifeCycle Decision Check API",
@@ -26,6 +27,7 @@ app.include_router(router)
 app.include_router(products_router)
 app.include_router(centers_router)
 app.include_router(ocr_router)
+app.include_router(thinq_router)
 
 
 @app.on_event("startup")

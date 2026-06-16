@@ -1,5 +1,5 @@
 // GitHub 자동배포 연결 검증용 주석
-import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, NewModelsResponse, CentersResponse, OcrResult } from "./types";
+import { DiagnoseInput, DiagnoseResponse, SessionData, ProductsResponse, NewModelsResponse, CentersResponse, OcrResult, ThinqDevicesResponse, ThinqPrefill } from "./types";
 
 // 환경변수 입력 경로(PowerShell 등)에서 값 앞뒤에 BOM/제로폭 문자가 섞이면
 // 절대 URL이 깨져 요청이 프론트 도메인으로 새는 사고가 난다. 보이지 않는 문자를
@@ -56,6 +56,11 @@ export const ocrEnergyLabel = async (file: File): Promise<OcrResult> => {
   if (!res.ok) throw new Error(`OCR ${res.status}: ${await res.text()}`);
   return res.json();
 };
+
+// LG ThinQ — 연결된 에어컨 목록 / 선택 기기 프리필
+export const thinqDevices = () => apiFetch<ThinqDevicesResponse>("/api/thinq/devices");
+export const thinqPrefill = (deviceId: string) =>
+  apiFetch<ThinqPrefill>(`/api/thinq/prefill?device_id=${encodeURIComponent(deviceId)}`);
 
 export const SAMPLE_INPUT: DiagnoseInput = {
   product_type: "에어컨",

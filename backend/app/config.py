@@ -15,3 +15,8 @@ CORS_ORIGINS: list[str] = os.getenv(
 
 # OCR (Google Cloud Vision). 미설정 시 OCR 엔드포인트는 mock 응답.
 GOOGLE_VISION_API_KEY: str = os.getenv("GOOGLE_VISION_API_KEY", "")
+
+# LG ThinQ Open API (에어컨 자동 불러오기). 미설정 시 ThinQ 엔드포인트는 mock 기기 응답.
+THINQ_PAT: str        = os.getenv("THINQ_PAT", "")
+THINQ_CLIENT_ID: str  = os.getenv("THINQ_CLIENT_ID", "")
+THINQ_COUNTRY: str    = os.getenv("THINQ_COUNTRY", "KR")

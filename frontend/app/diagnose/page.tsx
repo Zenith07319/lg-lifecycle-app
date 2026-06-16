@@ -1,10 +1,11 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Camera, Loader2, Check } from "lucide-react";
+import { ChevronLeft, Camera, Loader2, Check, Smartphone } from "lucide-react";
 import { diagnose, ocrEnergyLabel, getNewModels, SAMPLE_INPUT } from "@/lib/api";
 import type { DiagnoseInput, SymptomLabel, NewModel } from "@/lib/types";
 import { NewModelCard, won } from "@/components/ProductLineup";
+import ThinqSheet, { type ThinqApplied } from "@/components/ThinqSheet";
 
 /* 02 진단 — Figma "02 진단" 재구축: 시작 → 한 화면당 질문 1개(Q1~Q10) →
    증상 선택 시 조건부 심각도 분기 → 우선순위 슬라이더 → 로딩 → 결과.
@@ -74,6 +75,8 @@ type Answers = {
   hoursV: number | null; monthsV: number | null; filterV: number | null; repairIdx: number | null;
   cost: number; env: number; conv: number;
   newModelCode: string | null;   // Q11 신형 비교 기준
+  source: "thinq" | "manual";    // ThinQ 자동입력 여부(thinq면 Q1·Q2 스킵)
+  prefillYear: number | null;    // ThinQ 연식(버킷 대신 직접값)
 };
 const INIT: Answers = {
   ageKey: null, q2mode: "manual", capacity: "", acKwh: "", summerKwh: "",
@@ -81,6 +84,7 @@ const INIT: Answers = {
   hoursV: null, monthsV: null, filterV: null, repairIdx: null,
   cost: 40, env: 30, conv: 30,
   newModelCode: null,
+  source: "manual", prefillYear: null,
 };
 
 const TOTAL_Q = 11;
@@ -91,6 +95,7 @@ export default function DiagnosePage() {
   const [ans, setAns] = useState<Answers>(INIT);
   const [started, setStarted] = useState(false);
   const [cursor, setCursor] = useState(0);
+  const [thinqOpen, setThinqOpen] = useState(false);   // ThinQ 불러오기 시트
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [ocrLoading, setOcrLoading] = useState(false);
@@ -106,8 +111,11 @@ export default function DiagnosePage() {
 
   // 동적 화면 목록: 증상 선택 시 해당 심각도 화면을 q5 뒤에 삽입
   const sevSyms = ans.none ? [] : SEVERITY_ORDER.filter((s) => ans.symptoms.includes(s));
+  // ThinQ로 불러오면 Q1(연식)·Q2(냉방능력·월소비전력)는 자동입력 → 화면에서 제외하고 Q3부터.
+  const skipThinq = ans.source === "thinq";
   const SCREENS: { id: string; sym?: SymptomLabel }[] = [
-    { id: "q1" }, { id: "q2" }, { id: "q3" }, { id: "q4" }, { id: "q5" },
+    ...(skipThinq ? [] : [{ id: "q1" }, { id: "q2" }]),
+    { id: "q3" }, { id: "q4" }, { id: "q5" },
     ...sevSyms.map((s) => ({ id: "sev", sym: s })),
     { id: "q6" }, { id: "q7" }, { id: "q8" }, { id: "q9" }, { id: "q10" }, { id: "q11" },
   ];
@@ -181,7 +189,7 @@ export default function DiagnosePage() {
     const pri = pTot > 0 ? { c: ans.cost, e: ans.env, v: ans.conv } : { c: 34, e: 33, v: 33 };
     return {
       product_type: "에어컨",
-      purchase_year: age?.year ?? 2018,
+      purchase_year: ans.prefillYear ?? age?.year ?? 2018,   // ThinQ 연식 우선
       capacity_kw: clamp(Number(ans.capacity) || 3.6, 0.1, 20),
       daily_usage_hours: ans.hoursV ?? 6,
       usage_months: ans.monthsV ?? 4,
@@ -235,6 +243,27 @@ export default function DiagnosePage() {
   };
   const sampleFast = () => runDiagnose(SAMPLE_INPUT);
 
+  // ThinQ 불러오기 적용 → Q1·Q2 자동입력 후 Q3부터 시작
+  const applyThinq = (a: ThinqApplied) => {
+    patch({
+      source: "thinq",
+      capacity: a.capacity_kw != null ? String(a.capacity_kw) : "",
+      acKwh: a.ac_monthly_kwh != null ? String(a.ac_monthly_kwh) : "",
+      prefillYear: a.purchase_year,
+      ...(a.filter_months != null ? { filterV: a.filter_months } : {}),
+    });
+    setThinqOpen(false);
+    setStarted(true);
+    setCursor(0);   // skipThinq라 SCREENS[0] = q3
+  };
+  // ThinQ 자동입력값을 수기로 고치기 → manual 전환(Q1·Q2 복귀), 연식은 가장 가까운 버킷으로 매핑
+  const editThinqBasics = () => {
+    const y = ans.prefillYear ?? 2018;
+    const nearest = AGE_OPTS.reduce((best, o) => (Math.abs(o.year - y) < Math.abs(best.year - y) ? o : best), AGE_OPTS[0]);
+    patch({ source: "manual", ageKey: nearest.key });
+    setCursor(0);   // 이제 SCREENS[0] = q1
+  };
+
   // Q10 우선순위: 세 축 합을 항상 100으로 유지(드래그 시 나머지 두 축을 비율대로 재분배)
   const setPriority = (axis: "cost" | "env" | "conv", val: number) => {
     setAns((s) => {
@@ -279,8 +308,13 @@ export default function DiagnosePage() {
   /* ── 시작 화면(02-1) ── */
   if (!started) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center px-8 text-center"
+      <>
+      <div className="relative flex min-h-[100dvh] flex-col items-center px-8 text-center"
         style={{ background: "linear-gradient(180deg,#F5F8F7 0%,#E7F3EF 60%,#DBEEE8 100%)" }}>
+        <button onClick={() => setThinqOpen(true)}
+          className="absolute right-4 top-4 z-10 flex items-center gap-1 rounded-full border border-accent/30 bg-white/80 px-3 py-1.5 text-[11.5px] font-bold text-accent shadow-[0_2px_8px_rgba(4,125,134,.12)] active:scale-95 transition">
+          <Smartphone size={13} /> ThinQ 가전 불러오기
+        </button>
         <div className="mt-[14vh] reveal">
           <p className="text-[20px] font-extrabold leading-snug text-ink">반가워요! 지금부터<br />우리 집 에어컨 상태를<br />진단해볼까요?</p>
           <p className="mt-3 text-[13px] font-medium leading-relaxed text-muted">어렵지 않아요! 제가 하나씩 물어볼 테니<br />편히 답해주세요.</p>
@@ -292,6 +326,8 @@ export default function DiagnosePage() {
         </button>
         <button onClick={sampleFast} className="mb-6 -mt-6 text-[11px] font-bold text-accent/70">샘플로 빠르게 보기</button>
       </div>
+      <ThinqSheet open={thinqOpen} onClose={() => setThinqOpen(false)} onApply={applyThinq} />
+      </>
     );
   }
 
@@ -316,6 +352,16 @@ export default function DiagnosePage() {
 
       <div key={`${cur.id}:${cur.sym ?? ""}`} ref={screenRef} tabIndex={-1} role="group" aria-label={`질문 ${progNum} / ${TOTAL_Q}`}
         className="reveal flex flex-1 flex-col px-6 pb-5 pt-7 outline-none">
+        {/* ThinQ 자동입력 안내(Q1·Q2 스킵됨) */}
+        {ans.source === "thinq" && (
+          <div className="mb-4 flex items-center gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-3 py-2">
+            <Smartphone size={14} className="shrink-0 text-accent" />
+            <p className="flex-1 text-[11px] font-semibold leading-snug text-ink-soft">
+              ThinQ에서 불러옴 · 냉방 {ans.capacity || "?"}kW · 월 {ans.acKwh || "?"}kWh · 연식 {ans.prefillYear ?? "?"}
+            </p>
+            <button onClick={editThinqBasics} className="shrink-0 text-[11px] font-bold text-accent underline">수정</button>
+          </div>
+        )}
         {/* ── 질문별 본문 ── */}
         {cur.id === "q1" && (
           <Question n={1} emoji="🗓️" title={"에어컨을 구매한 지\n얼마나 됐나요?"}>

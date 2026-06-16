@@ -182,3 +182,27 @@ export interface SessionData {
   new_kwh_source?:     string;            // "selected_model" / "eff_ratio"
   disclaimer?:    string;
 }
+
+// ── LG ThinQ 연동(설문 시작 시 내 에어컨 자동 불러오기) ──
+export interface ThinqDevice {
+  device_id:  string;
+  alias:      string;
+  model_name: string;
+}
+export interface ThinqDevicesResponse {
+  source: "thinq" | "mock";
+  items:  ThinqDevice[];
+}
+export interface ThinqPrefill {
+  device_id:      string;
+  alias:          string;
+  model_name:     string;
+  capacity_kw:    number | null;   // 모델→시드
+  ac_monthly_kwh: number | null;   // 모델→시드(라벨 월간소비전력량)
+  purchase_year:  number | null;   // 모델→시드(연식 추정)
+  filter_months:  number | null;   // state usedTime→개월(기기 online일 때만)
+  online:         boolean;
+  source:         "thinq" | "mock";
+  spec_label:     string;
+  resolved:       { capacity: boolean; kwh: boolean; year: boolean; filter: boolean };
+}

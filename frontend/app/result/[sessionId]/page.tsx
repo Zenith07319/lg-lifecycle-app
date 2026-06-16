@@ -18,6 +18,7 @@ export default function ResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [data, setData] = useState<SessionData | null>(null);
   const [err, setErr] = useState("");
+  const [showCalc, setShowCalc] = useState(false);   // '점수 계산' 토글
 
   useEffect(() => {
     if (!sessionId) return;
@@ -69,13 +70,53 @@ export default function ResultPage() {
         title="진단 결과"
         subtitle={`${deviceName} · 설치 ${age}년차 · 비용 우선`}
         right={
-          <button className="flex items-center gap-1 pb-1 text-[11px] font-bold text-muted">
+          <button
+            onClick={() => setShowCalc((v) => !v)}
+            aria-expanded={showCalc}
+            className="flex items-center gap-1 pb-1 text-[11px] font-bold text-muted"
+          >
             <Megaphone size={13} /> 점수 계산이 궁금하다면?
+            <ChevronDown size={13} className={`transition-transform ${showCalc ? "rotate-180" : ""}`} />
           </button>
         }
       />
 
       <div className="space-y-4 px-5 pt-2">
+        {/* 점수 계산 설명(토글) — 건강 점수 = 100 − (점검필요도45% + 에너지낭비30% + 사용불편25%) */}
+        {showCalc && (
+          <GlassCard className="p-4">
+            <p className="text-[13px] font-extrabold text-ink">건강 점수는 이렇게 계산해요</p>
+            <p className="mt-1 text-[11.5px] leading-snug text-muted">
+              100점 만점, 높을수록 건강해요. 아래 3가지를 가중 합산해 100점에서 빼요.
+            </p>
+            <div className="mt-3 space-y-2.5">
+              {[
+                { emoji: "🔧", name: "점검 필요도", w: "45%", desc: "연식·증상·수리이력·필터 관리로 추정", val: `이번 ${insp}/100` },
+                { emoji: "⚡", name: "에너지 낭비", w: "30%", desc: "같은 성능 신제품 대비 초과 전기 비율", val: `이번 ${waste}%` },
+                { emoji: "😣", name: "사용 불편", w: "25%", desc: "소음·냄새·성능저하 등 증상 심각도", val: "" },
+              ].map((r) => (
+                <div key={r.name} className="flex items-start gap-2">
+                  <span className="text-[15px] leading-none">{r.emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-bold text-ink">
+                      {r.name} <span className="text-accent">{r.w}</span>
+                      {r.val && <span className="ml-1 text-[11px] font-semibold text-muted">· {r.val}</span>}
+                    </p>
+                    <p className="text-[10.5px] leading-snug text-muted">{r.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 rounded-xl bg-accent-soft px-3 py-2">
+              <p className="text-[11px] font-bold text-ink-soft">등급 구간</p>
+              <p className="mt-0.5 text-[11px] font-semibold text-muted">A 80↑ · B 65↑ · C 50↑ · D 35↑ · E 35 미만</p>
+            </div>
+            <p className="mt-2 text-[10px] leading-snug text-muted">
+              ※ 모든 수치는 입력 조건 기준 추정이며, 정확한 고장 예측이 아니에요.
+            </p>
+          </GlassCard>
+        )}
+
         {/* 건강점수 + 등급 링 */}
         <section className="reveal reveal-1">
           <div className="flex items-start justify-between">

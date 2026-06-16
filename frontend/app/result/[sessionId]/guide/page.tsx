@@ -74,7 +74,7 @@ function costCards(opt: OptionScore, all: OptionScore[]): CostCard[] {
 // 옵션 특이 안내(구독 특징 / 계속 사용 수리비 미반영) — 초록 톤 정보 카드.
 function noteOf(opt: OptionScore): string | null {
   if (opt.key === "구독전환") return "LG 가전 구독 — 계약 기간이 끝나면 내 소유가 되고, 12개월마다 1회 방문 케어 서비스를 받아요.";
-  if (opt.key === "계속사용") return "5년 총비용은 전기 비용 기준이에요. 노후로 고장 시 수리비가 따로 들 수 있어요(미반영).";
+  if (opt.key === "계속사용") return "5년 총비용은 전기 비용 기준이에요. 노후로 고장 시 수리비가 따로 들 수 있어요.";
   return null;
 }
 
@@ -150,8 +150,8 @@ export default function GuidePage() {
               </div>
             )}
 
-            {/* 관리 필요 옵션(셀프케어·계속사용) → 관리 가이드로 이동 (초기비용 카드와 동일 양식, 아이콘만 변경) */}
-            {(opt.key === "셀프케어" || opt.key === "계속사용") && (
+            {/* 관리 필요 옵션(셀프케어·계속사용·수리후사용) → 관리 가이드로 이동 (초기비용 카드와 동일 양식, 아이콘만 변경) */}
+            {(opt.key === "셀프케어" || opt.key === "계속사용" || opt.key === "수리후사용") && (
               <Link href="/guide">
                 <GlassCard className="mt-2 flex items-center gap-2.5 !bg-white/55 px-3.5 py-2.5 active:scale-[.99] transition">
                   <Sparkles size={20} className="text-accent" strokeWidth={1.8} />
@@ -164,8 +164,8 @@ export default function GuidePage() {
               </Link>
             )}
 
-            {/* 경고/안내 */}
-            {opt.highlights?.map((h, i) => (
+            {/* 경고/안내 ('구독 가점' 내부 점수 안내는 노출 제외) */}
+            {opt.highlights?.filter((h) => !h.includes("구독 가점")).map((h, i) => (
               <div key={i} className="mt-2 flex items-start gap-2 rounded-2xl bg-white/55 px-3 py-2.5">
                 <AlertTriangle size={15} className="mt-0.5 shrink-0 text-lg-red" strokeWidth={2} />
                 <p className="text-[10.5px] font-semibold leading-snug text-ink-soft">{h}</p>

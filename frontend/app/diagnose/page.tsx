@@ -77,6 +77,7 @@ type Answers = {
   newModelCode: string | null;   // Q11 신형 비교 기준
   source: "thinq" | "manual";    // ThinQ 자동입력 여부(thinq면 Q1·Q2 스킵)
   prefillYear: number | null;    // ThinQ 연식(버킷 대신 직접값)
+  thinqAlias: string; thinqModel: string;   // 배너 표시용(불러온 기기)
 };
 const INIT: Answers = {
   ageKey: null, q2mode: "manual", capacity: "", acKwh: "", summerKwh: "",
@@ -84,7 +85,7 @@ const INIT: Answers = {
   hoursV: null, monthsV: null, filterV: null, repairIdx: null,
   cost: 40, env: 30, conv: 30,
   newModelCode: null,
-  source: "manual", prefillYear: null,
+  source: "manual", prefillYear: null, thinqAlias: "", thinqModel: "",
 };
 
 const TOTAL_Q = 11;
@@ -250,6 +251,7 @@ export default function DiagnosePage() {
       capacity: a.capacity_kw != null ? String(a.capacity_kw) : "",
       acKwh: a.ac_monthly_kwh != null ? String(a.ac_monthly_kwh) : "",
       prefillYear: a.purchase_year,
+      thinqAlias: a.alias, thinqModel: a.model_name,
       ...(a.filter_months != null ? { filterV: a.filter_months } : {}),
     });
     setThinqOpen(false);
@@ -357,7 +359,7 @@ export default function DiagnosePage() {
           <div className="mb-4 flex items-center gap-2 rounded-2xl border border-accent/30 bg-accent-soft px-3 py-2">
             <Smartphone size={14} className="shrink-0 text-accent" />
             <p className="flex-1 text-[11px] font-semibold leading-snug text-ink-soft">
-              ThinQ에서 불러옴 · 냉방 {ans.capacity || "?"}kW · 월 {ans.acKwh || "?"}kWh · 연식 {ans.prefillYear ?? "?"}
+              ThinQ에서 불러옴 · {ans.thinqAlias || "내 에어컨"}{ans.thinqModel ? ` · ${ans.thinqModel}` : ""}
             </p>
             <button onClick={editThinqBasics} className="shrink-0 text-[11px] font-bold text-accent underline">수정</button>
           </div>

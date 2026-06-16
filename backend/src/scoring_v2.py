@@ -101,6 +101,8 @@ class OptionScoreV2:
     final_score: float = 0.0
     rank: int = 0
     highlights: list = field(default_factory=list)
+    elec_cost_5y: int = 0       # 5년 전기 비용 (결정가이드 비용 분해 표시용)
+    option_cost_5y: int = 0     # 옵션 고유 비용 5년(수리/구독/구매/셀프 등, 전기 제외)
 
 
 @dataclass

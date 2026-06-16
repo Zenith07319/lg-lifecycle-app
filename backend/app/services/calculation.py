@@ -255,18 +255,23 @@ def run_full_pipeline(inputs: dict) -> dict:
         energy_ctx           = decomp,
     )
 
-    # 효율감퇴 기반 5년 비용으로 덮어쓰기
+    # 효율감퇴 기반 5년 비용으로 덮어쓰기 (+ 비용 분해: 전기비/옵션비 — 결정가이드 표시용)
     for opt in options:
         if opt.key == "계속사용":
-            opt.three_year_cost = elec_5yr["계속사용"]
+            opt.elec_cost_5y = elec_5yr["계속사용"]; opt.option_cost_5y = 0
+            opt.three_year_cost = opt.elec_cost_5y
         elif opt.key == "셀프케어":
-            opt.three_year_cost = elec_5yr["셀프케어"] + selfcare_mid * 5
+            opt.elec_cost_5y = elec_5yr["셀프케어"]; opt.option_cost_5y = selfcare_mid * 5
+            opt.three_year_cost = opt.elec_cost_5y + opt.option_cost_5y
         elif opt.key == "수리후사용":
-            opt.three_year_cost = elec_5yr["수리후사용"] + repair_mid + visit_fee
+            opt.elec_cost_5y = elec_5yr["수리후사용"]; opt.option_cost_5y = repair_mid + visit_fee
+            opt.three_year_cost = opt.elec_cost_5y + opt.option_cost_5y
         elif opt.key == "구독전환":
-            opt.three_year_cost = sub_monthly * 60 + elec_5yr["신형"]
+            opt.elec_cost_5y = elec_5yr["신형"]; opt.option_cost_5y = sub_monthly * 60
+            opt.three_year_cost = opt.elec_cost_5y + opt.option_cost_5y
         elif opt.key == "신제품구매":
-            opt.three_year_cost = purchase_mid + elec_5yr["신형"]
+            opt.elec_cost_5y = elec_5yr["신형"]; opt.option_cost_5y = purchase_mid
+            opt.three_year_cost = opt.elec_cost_5y + opt.option_cost_5y
             opt.initial_cost = purchase_mid   # 초기비용도 선택 제품 판매가와 일치(미선택 시 추정값 동일 유지)
 
     # ── 재수리 기대비용 ─────────────────────────────────────────────────
@@ -282,6 +287,7 @@ def run_full_pipeline(inputs: dict) -> dict:
         mult       = 1.0 + (exceeded_by * 0.15 if exceeded else 0)
         rerep_prob = round(min(diagnosis.inspection_score * diagnosis.age_score * mult, 1.0), 3)
         repair_opt.three_year_cost += int(repair_mid * rerep_prob)
+        repair_opt.option_cost_5y  += int(repair_mid * rerep_prob)   # 재수리 기대비용도 수리 옵션비에 포함(합 일치)
 
     ranked = score_options(options, priority)
     ranked = apply_hard_rules(ranked, diagnosis, carbon_summary, priority)

@@ -86,9 +86,6 @@ export default function Splash() {
                 }} />
             </div>
           </div>
-
-          {/* 스킵 힌트 */}
-          <p className="pb-7 text-center text-[11px] font-medium text-muted/70">탭하면 건너뛰기</p>
         </div>
       </div>
     </div>

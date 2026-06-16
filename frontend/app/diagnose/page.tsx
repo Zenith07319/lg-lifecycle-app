@@ -337,7 +337,6 @@ export default function DiagnosePage() {
         </button>
         <h1 className="text-[16px] font-bold text-ink">가전 진단</h1>
         <span className="ml-auto text-[13px] font-semibold text-muted">{progNum}/{TOTAL_Q}</span>
-        <button onClick={sampleFast} className="rounded-full border border-accent/40 px-2.5 py-1 text-[11px] font-bold text-accent">샘플</button>
       </header>
 
       {/* 진행 바 */}

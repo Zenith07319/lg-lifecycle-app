@@ -258,13 +258,6 @@ export default function DiagnosePage() {
     setStarted(true);
     setCursor(0);   // skipThinq라 SCREENS[0] = q3
   };
-  // ThinQ 자동입력값을 수기로 고치기 → manual 전환(Q1·Q2 복귀), 연식은 가장 가까운 버킷으로 매핑
-  const editThinqBasics = () => {
-    const y = ans.prefillYear ?? 2018;
-    const nearest = AGE_OPTS.reduce((best, o) => (Math.abs(o.year - y) < Math.abs(best.year - y) ? o : best), AGE_OPTS[0]);
-    patch({ source: "manual", ageKey: nearest.key });
-    setCursor(0);   // 이제 SCREENS[0] = q1
-  };
 
   // Q10 우선순위: 세 축 합을 항상 100으로 유지(드래그 시 나머지 두 축을 비율대로 재분배)
   const setPriority = (axis: "cost" | "env" | "conv", val: number) => {
@@ -361,7 +354,6 @@ export default function DiagnosePage() {
             <p className="flex-1 text-[11px] font-semibold leading-snug text-ink-soft">
               ThinQ에서 불러옴 · {ans.thinqAlias || "내 에어컨"}{ans.thinqModel ? ` · ${ans.thinqModel}` : ""}
             </p>
-            <button onClick={editThinqBasics} className="shrink-0 text-[11px] font-bold text-accent underline">수정</button>
           </div>
         )}
         {/* ── 질문별 본문 ── */}

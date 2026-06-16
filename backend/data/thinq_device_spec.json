@@ -2,11 +2,11 @@
   "_comment": "ThinQ 모델코드 → 에어컨 스펙 시드. LG ThinQ Open API는 모델·필터(usedTime)만 주고 냉방능력·월간소비전력량·구매연식은 주지 않으므로 여기서 보완한다. 등록된 모델이 없으면 prefill은 resolved=false로 반환되어 프론트가 해당 질문(Q1·Q2)을 건너뛰지 않는다. 아래 값은 데모 추정치 — 실제 스펙 확인 후 교정할 것.",
   "models": {
     "CST_570004_WW": {
-      "capacity_kw": 7.2,
-      "monthly_kwh": 250,
-      "purchase_year": 2018,
+      "capacity_kw": 5.8,
+      "monthly_kwh": 220,
+      "purchase_year": 2017,
       "form": "시스템에어컨",
-      "label": "거실 시스템에어컨(스펙 미확인 — 확인 화면에서 수정)"
+      "label": "가정용 시스템에어컨 평균(거실 18평형급·추정)"
     }
   }
 }

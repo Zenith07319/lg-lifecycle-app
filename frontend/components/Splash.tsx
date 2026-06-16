@@ -19,6 +19,13 @@ export default function Splash() {
   const [reduce, setReduce] = useState(false);
 
   useEffect(() => {
+    // 이번 브라우저 세션에 이미 봤으면(새로고침·하드 내비 폴백·PWA 복귀 등) 즉시 스킵 → 처음 시작 때만 표시.
+    // sessionStorage는 탭/세션 단위라, 앱을 완전히 새로 열 때(새 세션)만 다시 보인다.
+    let seen = false;
+    try { seen = sessionStorage.getItem("ror_splash_seen") === "1"; } catch {}
+    if (seen) { setGone(true); return; }
+    try { sessionStorage.setItem("ror_splash_seen", "1"); } catch {}
+
     const r = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     setReduce(r);
     document.body.style.overflow = "hidden";

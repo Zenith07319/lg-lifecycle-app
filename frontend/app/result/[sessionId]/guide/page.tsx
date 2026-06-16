@@ -71,6 +71,20 @@ export default function GuidePage() {
               </div>
             </GlassCard>
 
+            {/* 관리 필요 옵션(셀프케어·계속사용) → 관리 가이드로 이동 (초기비용 카드와 동일 양식, 아이콘만 변경) */}
+            {(opt.key === "셀프케어" || opt.key === "계속사용") && (
+              <Link href="/guide">
+                <GlassCard className="mt-2 flex items-center gap-2.5 !bg-white/55 px-3.5 py-2.5 active:scale-[.99] transition">
+                  <Sparkles size={20} className="text-accent" strokeWidth={1.8} />
+                  <div>
+                    <p className="text-[12px] font-semibold text-ink">관리 가이드 보기</p>
+                    <p className="text-[9px] text-muted">필터 청소·관리로 상태 개선</p>
+                  </div>
+                  <ChevronRight size={15} className="ml-auto shrink-0 text-ink-300" />
+                </GlassCard>
+              </Link>
+            )}
+
             {/* 경고/안내 */}
             {opt.highlights?.map((h, i) => (
               <div key={i} className="mt-2 flex items-start gap-2 rounded-2xl bg-white/55 px-3 py-2.5">

@@ -65,10 +65,6 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-
-        <p className="px-1 pt-1 text-center text-[10px] leading-relaxed text-muted">
-          MVP 대상 = 에어컨 · 모든 수치는 현재 입력 조건 기준 <b>추정</b>이며, 정확한 고장 예측이 아닙니다.
-        </p>
       </div>
     </div>
   );

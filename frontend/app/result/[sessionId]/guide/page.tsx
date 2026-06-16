@@ -18,12 +18,35 @@ const OPT_ICON: Record<string, typeof Power> = {
 
 type CostCard = { icon: typeof Power; value: string; label: string; accent?: boolean };
 
-// 옵션별 비용 분해 카드(초기비용 GlassCard와 동일 양식, 아이콘만 옵션에 맞게).
-function costCards(opt: OptionScore, keepElec5y: number | null): CostCard[] {
-  const elec5 = opt.elec_cost_5y ?? null;          // 5년 전기비 (구버전 세션은 없음)
-  const optc5 = opt.option_cost_5y ?? 0;           // 옵션 고유비 5년
+// 5년 전기비 — 백엔드 필드 우선, 없으면(구버전 세션) three_year_cost/initial_cost에서 유도(검증된 정확식).
+function elecOf(opt: OptionScore, all: OptionScore[]): number | null {
+  if (opt.elec_cost_5y != null) return opt.elec_cost_5y;
   const init = opt.initial_cost ?? 0;
-  const elecCard: CostCard[] = elec5 != null ? [{ icon: Zap, value: won(elec5), label: "전기 비용 (5년)" }] : [];
+  switch (opt.key) {
+    case "계속사용":  return opt.three_year_cost;
+    case "셀프케어":  return opt.three_year_cost - init * 5;
+    case "신제품구매": return opt.three_year_cost - init;
+    case "구독전환": {                                   // 신형 전기비 = 신제품 구매와 동일
+      const buy = all.find((o) => o.key === "신제품구매");
+      return buy ? buy.three_year_cost - (buy.initial_cost ?? 0) : null;
+    }
+    default: return null;                                 // 수리후사용: 전기 카드 미표시
+  }
+}
+function optCostOf(opt: OptionScore, all: OptionScore[]): number {
+  if (opt.option_cost_5y != null && opt.option_cost_5y > 0) return opt.option_cost_5y;
+  if (opt.key === "셀프케어")  return (opt.initial_cost ?? 0) * 5;
+  if (opt.key === "신제품구매") return opt.initial_cost ?? 0;
+  if (opt.key === "구독전환") { const e = elecOf(opt, all); return e != null ? opt.three_year_cost - e : 0; }
+  return 0;
+}
+
+// 옵션별 비용 분해 카드(초기비용 GlassCard와 동일 양식, 아이콘만 옵션에 맞게).
+function costCards(opt: OptionScore, all: OptionScore[]): CostCard[] {
+  const elec5 = elecOf(opt, all);
+  const optc5 = optCostOf(opt, all);
+  const init = opt.initial_cost ?? 0;
+  const elecCard: CostCard[] = elec5 != null ? [{ icon: Zap, value: won(elec5), label: "전기 비용 (에어컨 기여·5년)" }] : [];
   switch (opt.key) {
     case "계속사용":
       return [...elecCard];
@@ -38,8 +61,9 @@ function costCards(opt: OptionScore, keepElec5y: number | null): CostCard[] {
       ];
     case "신제품구매": {
       const cards: CostCard[] = [{ icon: ShoppingBag, value: won(init), label: "구매 비용" }, ...elecCard];
-      if (elec5 != null && keepElec5y != null && keepElec5y > elec5)
-        cards.push({ icon: TrendingDown, value: "−" + won(keepElec5y - elec5), label: "기존 가전 대비 전기 절감 (5년)", accent: true });
+      const keepElec = elecOf(all.find((o) => o.key === "계속사용") ?? opt, all);
+      if (elec5 != null && keepElec != null && keepElec > elec5)
+        cards.push({ icon: TrendingDown, value: "−" + won(keepElec - elec5), label: "기존 가전 대비 전기 절감 (5년)", accent: true });
       return cards;
     }
     default:
@@ -75,9 +99,7 @@ export default function GuidePage() {
   const opt = ordered[sel];
   const Icon = OPT_ICON[opt.key] ?? Power;
   const score = Math.round(opt.final_score * 100);
-  // '계속 사용'의 5년 전기비 = 교체 절감 비교 기준
-  const keepElec5y = ordered.find((o) => o.key === "계속사용")?.elec_cost_5y ?? null;
-  const cards = costCards(opt, keepElec5y);
+  const cards = costCards(opt, ordered);
   const note = noteOf(opt);
 
   const next = [

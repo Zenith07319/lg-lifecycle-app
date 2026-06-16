@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Printer, Share2, Loader2, Check } from "lucide-react";
+import { ChevronLeft, Printer, Share2, Loader2, Check, MapPin } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { getSession } from "@/lib/api";
 import type { SessionData } from "@/lib/types";
 
@@ -11,18 +12,22 @@ export default function FastPassPage() {
   const [data, setData] = useState<SessionData | null>(null);
   const [error, setError] = useState("");
   const [now, setNow] = useState("");
+  const [passUrl, setPassUrl] = useState("");   // QR·공유 링크(절대 URL) — 스캔 시 이 리포트가 열림
 
   useEffect(() => {
     if (!sessionId) return;
     getSession(sessionId).then(setData).catch((e) => setError(e.message));
+    setPassUrl(`${window.location.origin}/fastpass/${sessionId}`);
     const d = new Date();
     setNow(`${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
   }, [sessionId]);
 
+  // 공유: 접수 요약 텍스트 + 스캔/열람용 링크를 함께 전달
   const share = async () => {
-    const text = data?.report.as_fast_pass_text ?? "";
+    const base = data?.report.as_fast_pass_text ?? "";
+    const text = passUrl ? `${base}\n\n▶ 리포트 열람: ${passUrl}` : base;
     try {
-      if (navigator.share) await navigator.share({ title: "ROR A/S Fast Pass", text });
+      if (navigator.share) await navigator.share({ title: "ROR A/S Fast Pass", text, url: passUrl || undefined });
       else { await navigator.clipboard.writeText(text); alert("접수 내용을 클립보드에 복사했어요."); }
     } catch { /* 사용자 취소 */ }
   };
@@ -53,24 +58,25 @@ export default function FastPassPage() {
       </div>
 
       <div className="px-5 pt-4">
-        {/* Fast Pass 번호 카드 (다크) */}
+        {/* Fast Pass 번호 카드 (다크) — 실제 QR: 스캔하면 이 리포트가 열림 */}
         <div className="no-print rounded-[20px] p-4 flex items-center gap-3.5" style={{ background: "#1A1C21" }}>
-          <div className="size-[68px] shrink-0 rounded-[12px] bg-white p-2 flex items-center justify-center">
-            <div className="grid grid-cols-6 gap-[2px]" aria-hidden>
-              {Array.from({ length: 36 }).map((_, i) => (
-                <span key={i} className={`size-[7px] rounded-[1px] ${(i * 7 + 3) % 3 ? "bg-black" : "bg-white"}`} />
-              ))}
-            </div>
+          <div className="size-[80px] shrink-0 rounded-[12px] bg-white p-2 flex items-center justify-center">
+            {passUrl
+              ? <QRCodeSVG value={passUrl} size={64} level="M" aria-label="A/S Fast Pass QR" />
+              : <div className="size-full rounded bg-[#E3E6E6] animate-pulse" aria-hidden />}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold tracking-wider text-white/55" style={{ fontFamily: "var(--font-display)" }}>FAST PASS No.</p>
             <p className="text-[17px] font-extrabold text-white leading-tight" style={{ fontFamily: "var(--font-display)" }}>{sid}</p>
             <span className="mt-2 inline-flex items-center gap-1.5 rounded-[9px] bg-white/12 px-2.5 py-1">
               <Check size={11} className="text-green-400" strokeWidth={3} />
-              <span className="text-[10px] font-bold text-white">센터 제시 시 접수 대기 단축</span>
+              <span className="text-[10px] font-bold text-white">QR 스캔 시 리포트 열람 · 대기 단축</span>
             </span>
           </div>
         </div>
+        <p className="no-print mt-2 px-1 text-[11px] text-muted leading-snug">
+          센터에서 위 QR을 스캔하거나 아래 문서를 PDF로 보여주면 증상·진단 요약이 바로 전달돼요.
+        </p>
 
         <p className="mt-5 mb-2 px-0.5 text-[13px] font-bold text-muted">공유 문서 미리보기</p>
 
@@ -82,10 +88,18 @@ export default function FastPassPage() {
               <div>
                 <p className="text-[9px] font-bold tracking-[0.72px] text-white/85" style={{ fontFamily: "var(--font-display)" }}>ROR × LG ThinQ</p>
                 <p className="mt-0.5 text-[16px] font-extrabold">가전 상태 리포트</p>
+                <p className="mt-0.5 text-[10.5px] font-semibold text-white/85">접수번호 {sid}</p>
               </div>
-              <span className="shrink-0 text-[10.5px] font-semibold text-white/85 mt-1">접수번호 {sid}</span>
+              <div className="shrink-0 flex flex-col items-center gap-1">
+                <span className="rounded-[7px] bg-white p-1">
+                  {passUrl
+                    ? <QRCodeSVG value={passUrl} size={50} level="M" aria-label="A/S Fast Pass QR" />
+                    : <span className="block size-[50px] rounded bg-white/40" aria-hidden />}
+                </span>
+                <span className="text-[8px] font-semibold text-white/80">스캔 시 리포트 열람</span>
+              </div>
             </div>
-            <p className="mt-1 text-[11px] text-white/85">방문 전 증상·진단 요약을 미리 전달해 상담을 빠르게</p>
+            <p className="mt-1.5 text-[11px] text-white/85">방문 전 증상·진단 요약을 미리 전달해 상담을 빠르게</p>
           </div>
 
           <div className="px-4 py-4 space-y-4">
@@ -140,18 +154,19 @@ export default function FastPassPage() {
             {/* 푸터 면책 */}
             <p className="text-[10.5px] text-muted leading-relaxed border-t border-[#E3E6E6] pt-3">
               ※ 본 접수증은 ROR 진단 결과 기반 <b>참고용 추정</b>이며 정확한 고장 진단이 아닙니다.
-              실제 점검·수리는 LG전자 고객지원(1544-7777)에서 진행됩니다. · 생성 {now} · 접수번호 {sid}
+              QR·링크를 스캔하면 이 리포트가 열려요(생성 후 30일간 유효). 접수번호는 ROR 참고번호이며 LG 공식 접수번호가 아닙니다.
+              실제 점검·수리·방문 예약은 LG전자 고객지원(1544-7777) 또는 서비스센터에서 진행됩니다. · 생성 {now} · 접수번호 {sid}
             </p>
           </div>
         </div>
 
-        {/* 공유 / 센터 전송 (인쇄 제외) */}
+        {/* 공유 / 서비스센터 예약 (인쇄 제외) */}
         <div className="no-print grid grid-cols-2 gap-2.5 mt-4">
           <button onClick={share} className="flex items-center justify-center gap-1.5 rounded-full bg-white border border-line-200 text-ink-soft font-bold py-3 text-[13px]">
-            <Share2 size={15} /> 공유하기
+            <Share2 size={15} /> 링크 공유
           </button>
-          <button onClick={share} className="flex items-center justify-center gap-1.5 rounded-full bg-white border border-line-200 text-ink-soft font-bold py-3 text-[13px]">
-            <Share2 size={15} /> 센터에 전송
+          <button onClick={() => router.push("/centers")} className="flex items-center justify-center gap-1.5 rounded-full bg-white border border-line-200 text-ink-soft font-bold py-3 text-[13px]">
+            <MapPin size={15} /> 서비스센터 예약
           </button>
         </div>
 

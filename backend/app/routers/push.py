@@ -8,8 +8,8 @@ from app.services import push_service
 router = APIRouter(prefix="/api/push", tags=["push"])
 
 # 시연용 알림 문구(여름 전 선제 점검 → 수요 분산)
-DEMO_TITLE = "여름 오기 전, 에어컨 점검하세요 🌬️"
-DEMO_BODY = "올여름 더 더워지기 전에 미리 점검받고 시원하게 준비해요. 무료 진단 받기 →"
+DEMO_TITLE = "여름 오기 전, 에어컨 점검하세요"
+DEMO_BODY = "올 여름 더 더워지기 전에 미리 셀프 점검하고 시원하게 준비해요"
 DEMO_URL = "/diagnose"
 
 

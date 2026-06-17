@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Bell, BellRing, Loader2, Send, Check, Smartphone } from "lucide-react";
+import { Bell, BellRing, Loader2, Send, Check, Smartphone, ChevronDown } from "lucide-react";
 import { pushPublicKey, pushSubscribe, pushSendDemo } from "@/lib/api";
 
 // VAPID 공개키(base64url) → Uint8Array(applicationServerKey)
@@ -76,10 +76,10 @@ export default function PushOptIn() {
           <p className="text-[15px] font-bold text-ink">여름 전 점검 알림</p>
           <p className="text-[11px] text-muted">더워지기 전에 미리 점검받도록 알려드려요</p>
         </div>
-        {/* 텍스트 없는 토글 — 켜면 시연용 발송 버튼 노출(평소 숨김) */}
-        <button role="switch" aria-checked={showDemo} aria-label=" " onClick={() => setShowDemo((v) => !v)}
-          className={`ml-auto flex h-5 w-9 shrink-0 items-center rounded-full px-0.5 transition-colors ${showDemo ? "bg-accent" : "bg-line"}`}>
-          <span className={`block size-4 rounded-full bg-white shadow-sm transition-transform ${showDemo ? "translate-x-4" : ""}`} />
+        {/* 작은 아래 화살표 토글 — 켜면 시연용 발송 버튼 노출(평소 숨김) */}
+        <button aria-label=" " aria-expanded={showDemo} onClick={() => setShowDemo((v) => !v)}
+          className="ml-auto shrink-0 p-1 text-ink-300 active:scale-90 transition">
+          <ChevronDown size={15} className={`transition-transform ${showDemo ? "rotate-180" : ""}`} />
         </button>
       </div>
 

@@ -19,6 +19,7 @@ export default function PushOptIn() {
   const [status, setStatus] = useState<Status>("checking");
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState("");
+  const [showDemo, setShowDemo] = useState(false);   // 시연용 발송 버튼 숨김(영상 노출 방지)
 
   useEffect(() => {
     const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -75,6 +76,11 @@ export default function PushOptIn() {
           <p className="text-[15px] font-bold text-ink">여름 전 점검 알림</p>
           <p className="text-[11px] text-muted">더워지기 전에 미리 점검받도록 알려드려요</p>
         </div>
+        {/* 텍스트 없는 토글 — 켜면 시연용 발송 버튼 노출(평소 숨김) */}
+        <button role="switch" aria-checked={showDemo} aria-label=" " onClick={() => setShowDemo((v) => !v)}
+          className={`ml-auto flex h-5 w-9 shrink-0 items-center rounded-full px-0.5 transition-colors ${showDemo ? "bg-accent" : "bg-line"}`}>
+          <span className={`block size-4 rounded-full bg-white shadow-sm transition-transform ${showDemo ? "translate-x-4" : ""}`} />
+        </button>
       </div>
 
       {/* 상태별 액션 */}
@@ -105,17 +111,18 @@ export default function PushOptIn() {
         )}
 
         {subscribed && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 rounded-full bg-green-050 py-2.5 text-[13px] font-bold text-success">
-              <Check size={15} className="mx-auto -mr-1" strokeWidth={3} /> <span className="mx-auto -ml-1">알림 켜짐</span>
-            </div>
-            {/* 시연용 즉시 발송 */}
-            <button onClick={sendDemo} disabled={sending}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full border border-accent/40 bg-white py-2.5 text-[12.5px] font-bold text-accent active:scale-[.99] transition disabled:opacity-60">
-              {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              {sending ? "보내는 중…" : "[데모] 점검 알림 보내기"}
-            </button>
+          <div className="flex items-center justify-center gap-1.5 rounded-full bg-green-050 py-2.5 text-[13px] font-bold text-success">
+            <Check size={15} strokeWidth={3} /> 알림 켜짐
           </div>
+        )}
+
+        {/* 시연용 발송 — 헤더의 토글 ON일 때만 노출(영상엔 안 보임) */}
+        {showDemo && (
+          <button onClick={sendDemo} disabled={sending}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-accent/40 bg-white py-2.5 text-[12.5px] font-bold text-accent active:scale-[.99] transition disabled:opacity-60">
+            {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            {sending ? "보내는 중…" : "[데모] 점검 알림 보내기"}
+          </button>
         )}
 
         {msg && <p className="mt-2 text-[11px] leading-snug text-muted">{msg}</p>}

@@ -100,11 +100,6 @@ export default function MorePage() {
             <span className="text-[12px] font-medium text-muted">v2.4.1</span>
           </div>
         </div>
-
-        <p className="px-1 pt-4 text-center text-[10px] leading-relaxed text-muted">
-          ROR — Replace or Repair Check · LG ThinQ 내 가정용 에어컨 의사결정 지원<br />
-          모든 수치는 입력 조건 기준 추정이며 정확한 고장 예측이 아닙니다.
-        </p>
       </div>
     </div>
   );

@@ -24,12 +24,18 @@ export default function ResultPage() {
     if (!sessionId) return;
     getSession(sessionId).then((s) => {
       setData(s);
+      const nowMs = Date.now();
       saveDevice({
         sessionId, product_type: s.user_inputs.product_type, purchase_year: s.user_inputs.purchase_year,
         capacity_kw: s.user_inputs.capacity_kw, grade: s.diagnosis.health_grade as string,
         score: s.diagnosis.health_score as number, recommendation: s.report.recommendation_1st,
-        form: s.user_inputs.form_estimated, savedAt: Date.now(),
+        form: s.user_inputs.form_estimated, savedAt: nowMs,
         age_years: s.diagnosis.age_years as number, filter_months: s.user_inputs.filter_clean_months,
+        // 낭비 심화 알림 기준선(진단 시점 고정)
+        diagnosed_at: nowMs,
+        energy_waste_ratio: s.diagnosis.energy_waste_ratio as number,
+        ac_monthly_cost: s.delta_old.ac_delta_cost as number,
+        usage_months: (s.user_inputs.usage_months as number) || 4,
       });
     }).catch((e) => setErr(e.message));
   }, [sessionId]);

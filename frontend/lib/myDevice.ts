@@ -13,6 +13,11 @@ export interface SavedDevice {
   // 알림 도출용(구버전 저장값엔 없을 수 있어 옵셔널)
   age_years?:    number;
   filter_months?:number;
+  // 낭비 심화 알림 기준선(진단 시점 1회 고정 — 결과 재방문해도 불변)
+  diagnosed_at?:      number;   // 최초 진단 시각(ms) — 방치 시 소비 증가 예측의 기준 시각
+  energy_waste_ratio?:number;   // 진단 시 낭비율(0~1)
+  ac_monthly_cost?:   number;   // 진단 시 에어컨 월 전기요금(원) — 추가 비용 추정용
+  usage_months?:      number;   // 연 냉방 사용 개월수
 }
 
 const KEY = "ror_my_devices";
@@ -68,10 +73,13 @@ export function setPrimaryDevice(sessionId: string) {
 }
 
 // sessionId 기준 upsert (재진단 시 같은 세션이면 갱신, 아니면 새 항목)
+// 같은 세션 재저장 시 diagnosed_at(예측 기준 시각)은 최초값을 보존한다 —
+// 결과 화면을 다시 열 때마다 savedAt이 갱신돼도 '방치 경과시간' 기준이 흔들리지 않도록.
 export function saveDevice(d: SavedDevice) {
-  const list = read().filter((x) => x.sessionId !== d.sessionId);
-  list.push(d);
-  write(list);
+  const list = read();
+  const prev = list.find((x) => x.sessionId === d.sessionId);
+  const merged: SavedDevice = { ...d, diagnosed_at: prev?.diagnosed_at ?? d.diagnosed_at ?? d.savedAt };
+  write(list.filter((x) => x.sessionId !== d.sessionId).concat(merged));
 }
 
 export function removeDevice(sessionId: string) {

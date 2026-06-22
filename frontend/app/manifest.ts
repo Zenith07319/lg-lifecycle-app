@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 // PWA 매니페스트 — /manifest.webmanifest 로 자동 제공·링크됨
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ROR — Replace or Repair Check",
+    name: "ROR — Right Option Recommendation",
     short_name: "ROR",
     description: "우리 집 에어컨, 계속 쓸까 · 고칠까 · 바꿀까? 데이터로 비교해 결정.",
     start_url: "/",

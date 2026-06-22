@@ -4,9 +4,10 @@ import BottomNav from "@/components/BottomNav";
 import AmbientBlobs from "@/components/AmbientBlobs";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import Splash from "@/components/Splash";
+import WasteAlertModal from "@/components/WasteAlertModal";
 
 export const metadata: Metadata = {
-  title: "ROR — Replace or Repair Check",
+  title: "ROR — Right Option Recommendation",
   description: "ThinQ 내 가정용 에어컨 의사결정 — 계속 쓸까 · 고칠까 · 바꿀까?",
   applicationName: "ROR",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "ROR" },
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <BottomNav />
         </div>
         <Splash />
+        <WasteAlertModal />
       </body>
     </html>
   );

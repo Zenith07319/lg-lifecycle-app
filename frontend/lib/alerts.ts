@@ -5,6 +5,17 @@ import { getDevices } from "@/lib/myDevice";
 export const PART_HOLD_YEARS = 8;     // 에어컨 부품 보유기간(연식 초과 알림 기준)
 export const EXPECTED_LIFE = 16.7;    // 기대수명(KESIS HEPS 역산)
 
+// ── 에너지 낭비 심화 알림(방치 시 전력 소비 증가) ───────────────────────────
+// 진단 시 낭비율을 기준선으로, 청소·수리 없이 방치하면 FSEC 2018 중앙값 5.2%/년으로
+// 효율이 더 떨어진다고 보고 '전력 소비 증가율'을 예측한다. 소비가 +10%씩 늘 때마다 알림.
+// 엔진 정의상 낭비율 = block/100(정확) → 소비 증가배수 = (1+block_t/100)/(1+block_0/100).
+// (block_t = block_0 + 5.2 × 경과연수, 효율 바닥에서 상한)
+export const WASTE_DRIFT_PCT_PER_YEAR = 5.2;   // 방치 시 연 효율 열화(FSEC 2018 총 중앙값)
+const WASTE_BLOCK_FLOOR = 57.5;                // 효율 바닥(EFF_FLOOR 0.635) → 1/0.635 − 1 = 0.575
+const WASTE_STEP_PCT   = 10;                   // 소비 +10%마다 1회 알림(래칫)
+const WASTE_MIN_DAYS   = 60;                   // 진단 직후 유예(노이즈 방지)
+const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
+
 export type AlertLevel = "warn" | "info";
 export interface DeviceAlert {
   id:    string;
@@ -65,6 +76,30 @@ export function alertsFor(dev: SavedDevice): DeviceAlert[] {
       title: `건강등급 ${dev.grade} — 점검 권장`, device: dev,
       body: `진단 결과 ${dev.grade}등급입니다. 1순위 추천은 “${dev.recommendation}”이에요.${partsCaveat}` });
   }
+
+  // 에너지 낭비 심화 — 진단 기준선 대비, 방치 시 전력 소비가 +10% 늘 때마다 경고.
+  //   (기대수명 도달 기기는 위 '기대수명/교체' 알림이 맡으므로 제외 → 메시지 중복 방지)
+  if (typeof dev.energy_waste_ratio === "number" && age < EXPECTED_LIFE) {
+    const block0 = dev.energy_waste_ratio * 100;                       // 낭비율 = block/100
+    const baseAt = dev.diagnosed_at ?? dev.savedAt;
+    // 시연용 가속: localStorage.ror_demo_waste = "2.5" → 경과 2.5년으로 강제(데모에서 팝업 확인)
+    const demo = typeof window !== "undefined" ? Number(window.localStorage.getItem("ror_demo_waste")) : 0;
+    const years = demo > 0 ? demo : Math.max(0, (Date.now() - baseAt) / MS_PER_YEAR);
+    if (years * 365.25 >= WASTE_MIN_DAYS) {
+      const blockT  = Math.min(block0 + WASTE_DRIFT_PCT_PER_YEAR * years, WASTE_BLOCK_FLOOR);
+      const risePct = ((1 + blockT / 100) / (1 + block0 / 100) - 1) * 100;   // 전력 소비 증가율(%)
+      const step    = Math.floor(risePct / WASTE_STEP_PCT);                  // 1=+10%, 2=+20% …
+      if (step >= 1) {
+        const shown = step * WASTE_STEP_PCT;
+        const extra = (typeof dev.ac_monthly_cost === "number" && typeof dev.usage_months === "number")
+          ? Math.round(dev.ac_monthly_cost * dev.usage_months * (shown / 100)) : 0;
+        const wonTxt = extra > 0 ? ` 한 시즌이면 약 ₩${extra.toLocaleString("ko-KR")}을 더 쓰는 셈이에요.` : "";
+        out.push({ id: `${dev.sessionId}-wasteup-${step}`, level: "warn", icon: "💸",
+          title: `방치 중 전기 소비 +${shown}%`, device: dev,
+          body: `진단 이후 그대로 두면서 노후가 진행돼, 냉방 전기 소비가 약 +${shown}% 늘어난 것으로 추정돼요.${wonTxt} 지금 필터·코일을 청소하면 상당 부분 되돌릴 수 있어요(영구 노화는 연 1.5% 수준).` });
+      }
+    }
+  }
   return out;
 }
 
@@ -98,4 +133,24 @@ export function allAlerts(): DeviceAlert[] {
     .flatMap(alertsFor)
     .filter((a) => !dismissed.has(a.id))
     .sort((a, b) => order[a.level] - order[b.level]);
+}
+
+// ── 낭비 심화 '팝업' 1회 노출 관리 ──────────────────────────────────────────
+// 팝업을 닫아도 알림함(notifications)엔 그대로 남도록, '삭제'와 별개의 seen 집합을 쓴다.
+const SEEN_KEY = "ror_seen_popups";
+function seenSet(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try { return new Set(JSON.parse(window.localStorage.getItem(SEEN_KEY) || "[]") as string[]); }
+  catch { return new Set(); }
+}
+export function markPopupSeen(id: string) {
+  if (typeof window === "undefined") return;
+  const s = seenSet(); s.add(id);
+  try { window.localStorage.setItem(SEEN_KEY, JSON.stringify([...s])); } catch {}
+  window.dispatchEvent(new Event("ror:devices"));
+}
+// 아직 팝업으로 안 띄운 '낭비 심화' 경고 1건(없으면 null) — 삭제된 알림은 제외(allAlerts 기준)
+export function pendingWastePopup(): DeviceAlert | null {
+  const seen = seenSet();
+  return allAlerts().find((a) => a.id.includes("-wasteup-") && !seen.has(a.id)) ?? null;
 }
